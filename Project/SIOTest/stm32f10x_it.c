@@ -13,7 +13,11 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x_it.h"
 
-extern volatile uint32_t uIntFlag;
+#define DEBOUNCE_DELAY		300	/* 300msec key debouncer */
+
+volatile uint16_t u16IRQFlag = 0;
+volatile uint16_t u16SysTick = 0;
+volatile uint16_t u16Debouncer = 0;
 
 
 /* Private typedef -----------------------------------------------------------*/
@@ -122,6 +126,13 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
+	/* System 1msec tick */
+	if(u16SysTick < 0xFFFF)
+		u16SysTick++;
+
+	/* Debounce timer */
+	if(u16Debouncer)
+		u16Debouncer--;
 }
 
 /******************************************************************************/
@@ -138,14 +149,24 @@ void SysTick_Handler(void)
   */
 void EXTI2_IRQHandler(void)
 {
-	uIntFlag = 2;
+	if(u16Debouncer == 0){
+		u16IRQFlag = 2;
+		u16Debouncer = DEBOUNCE_DELAY;
+	}
 	EXTI_ClearITPendingBit(EXTI_Line2);
 }
 
 void EXTI3_IRQHandler(void)
 {
-	uIntFlag = 3;
+	if(u16Debouncer == 0){
+		u16IRQFlag = 3;
+		u16Debouncer = DEBOUNCE_DELAY;
+	}
 	EXTI_ClearITPendingBit(EXTI_Line3);
 }
 
+void ADC1_2_IRQHandler(void)
+{
+
+}
 /*END OF FILE*/

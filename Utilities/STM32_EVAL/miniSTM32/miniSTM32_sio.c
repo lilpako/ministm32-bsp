@@ -13,14 +13,14 @@
 #include "stm32f10x_gpio.h"
 #include "stm32f10x_tim.h"
 
-/**
-  * Initialization of SIO board pepherals
-  *		SIO_BTNn	: GPIO input / EXTI
-  *		SIO_LED1	: GPIO output
-  *		SIO_LED2	: TIM PWM output
-  *		SIO_PIEZO	: TIM PWM output
-  *		SIO_POT		: ADC input
-  */
+/*
+ * Initialization of SIO board pepherals
+ *		SIO_BTNn	: GPIO input / EXTI
+ *		SIO_LED1	: GPIO output
+ *		SIO_LED2	: TIM PWM output
+ *		SIO_PIEZO	: TIM PWM output
+ *		SIO_POT		: ADC input
+ */
 
 void miniSTM32_SIO_BoardInit(void)
 {
@@ -29,16 +29,24 @@ void miniSTM32_SIO_BoardInit(void)
 	NVIC_InitTypeDef NVIC_InitStructure;
 	TIM_OCInitTypeDef TIM_OCInitStructure;
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+	ADC_InitTypeDef ADC_InitStructure;
 
-	/* Enable the GPIO Clocks */
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB |
-		RCC_APB2Periph_GPIOE | RCC_APB2Periph_AFIO, ENABLE);
+	/*
+	 * Common to all: Enable the GPIO Clocks 
+	 */
+	RCC_APB2PeriphClockCmd(
+//		RCC_APB2Periph_GPIOA | 
+		RCC_APB2Periph_GPIOB |			// LED output
+//		RCC_APB2Periph_GPIOC |
+		RCC_APB2Periph_GPIOE |			// button inputs, LED output
+		RCC_APB2Periph_ADC1 |			// potentiometer
+		RCC_APB2Periph_AFIO, ENABLE);	// piezo buzzer
 
-	/**
-	  * DI: Two push buttons connected to interrupt lines
-	  *		SIO_BTN1 - PE2 - EXIN2
-	  *		SIO_BTN2 - PE3 - EXIN3
-	  */
+	/*
+	 * DI: Two push buttons connected to interrupt lines
+	 *		SIO_BTN1 - PE2 - EXIN2
+	 *		SIO_BTN2 - PE3 - EXIN3
+	 */
 	
 	/* Configure SIO_BTN1 */
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
@@ -84,19 +92,19 @@ void miniSTM32_SIO_BoardInit(void)
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure); 
 
-	/**
-	  * DO: Two GPIO out
-	  *		SIO_LED1 - PE4
-	  *		SIO_LED2 - PB0
-	  */
+	/*
+	 * DO: Two GPIO out
+	 *		SIO_LED1 - PE4
+	 *		SIO_LED2 - PB0
+	 */
 
-	/* Configure the PE4 pin */
+	/* Configure the PE4 pin : output push-pull */
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOE, &GPIO_InitStructure);
 
-	/* Configure the PB0 pin */
+	/* Configure the PB0 pin : output push-pull */
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
@@ -110,7 +118,7 @@ void miniSTM32_SIO_BoardInit(void)
 	 *		CCR value: PULSE = PERIOD / 2 (always 50% PWM) 	
 	 */
 
-	/* Configure the PA1 pin */
+	/* Configure the PA1 pin : alternative push-pull */
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
@@ -135,17 +143,43 @@ void miniSTM32_SIO_BoardInit(void)
 	TIM_ARRPreloadConfig(TIM2, ENABLE);
 
 	TIM_Cmd(TIM2, DISABLE);
-	/**
-	  * AI: ADC input
-	  *		SIO_POT - ADC123_IN11
-	  */
+
+	/*
+	 * AI: ADC input
+	 *		SIO_POT - PC1 / ADC123_IN11
+	 */
+
+	/* Configure the PC1 pin : analog input */
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+	/* Configure ADC1_IN11 */
+	ADC_InitStructure.ADC_Mode = ADC_Mode_Independent;
+	ADC_InitStructure.ADC_ScanConvMode = DISABLE;
+	ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
+	ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
+	ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
+	ADC_InitStructure.ADC_NbrOfChannel = 1;
+	ADC_Init(ADC1, &ADC_InitStructure);
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_11, 1, ADC_SampleTime_28Cycles5);
+	ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE);
+
+	/* Calibrate ADC1 */
+	ADC_Cmd(ADC1, ENABLE);
+	ADC_ResetCalibration(ADC1);
+	while(ADC_GetResetCalibrationStatus(ADC1));
+	ADC_StartCalibration(ADC1);
+	while(ADC_GetCalibrationStatus(ADC1));
+
 }
 
-/**
-  * Controls LEDs. Actual function depends on the type of control
-  *		SIO_LED1 - GPIO: simple on/off
-  *		SIO_LED2 - PWM: duty control
-  */
+/*
+ * Controls LEDs. Actual function depends on the type of control
+ *		SIO_LED1 - GPIO: simple on/off
+ *		SIO_LED2 - PWM: duty control
+ */
 void miniSTM32_SIO_LEDControl(uint16_t Led, uint16_t Duty)
 {
 }
@@ -160,17 +194,17 @@ void miniSTM32_SIO_LEDToggle(uint16_t Led)
 	}
 }
 
-/**
-  * Get current status of the button
-  *
-  */
+/*
+ * Get current status of the button
+ *
+ */
 void miniSTM32_SIO_PBGetState(uint16_t Button)
 {
 }
 
-/**
-  * Piezo PWM control
-  */
+/*
+ * Piezo PWM control
+ */
 void miniSTM32_SIO_PiezoControl(uint16_t Freq)
 {
 	uint16_t u16Period = 0;
@@ -191,14 +225,18 @@ void miniSTM32_SIO_PiezoControl(uint16_t Freq)
 	}
 }
 
-/**
-  * Read potentiomener (voltage) value
-  */
+/*
+ * Read potentiomener (voltage) value
+ */
 uint16_t miniSTM32_SIO_POTGetValue(void)
 {
-	uint16_t value = 0;
 
-	return value;
+	ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+
+	while(ADC_GetSoftwareStartConvStatus(ADC1));
+
+	return ADC_GetConversionValue(ADC1);
+
 }
 
 /* END OF FILE */

@@ -18,9 +18,23 @@
 #include "stm32_eval.h"
 #include <stdio.h>
 
+extern volatile uint16_t u16IRQFlag;
+extern volatile uint16_t u16SysTick;
+
+enum menuItem{
+	menuFirst = 0,
+	menuLED = 0,
+	menuPIEZO,
+	menuPOT,
+	menuLast
+	};
+char* menuString[] = {
+	"(1) LED On//OFF Control\n", \
+	"(2) Piezo Buzzer Frequency Control\n", \
+	"(3) Potentiometer Readout\n"
+	};
+
 void COMPort_Init(void);
-void delay_loop(void);
-volatile uint32_t uIntFlag = 0;
 
 #if 0
 #ifdef __GNUC__
@@ -32,19 +46,16 @@ volatile uint32_t uIntFlag = 0;
 #endif /* __GNUC__ */
 #endif
 
-void delay_loop(void)
-{
-	volatile uint32_t u32Count = 1000000L;
-
-	while ( u32Count > 0 )
-		u32Count--;
-}
-
 int main(void)
 {
 	uint16_t u16Freq = MIN_PIEZO_FREQ;
+	uint16_t u16Menu = menuFirst;  
+	uint16_t u16Value;
 
-	/* Initialize the main board peripherals */
+	/* Initialize SysTick - 1msec */
+	SysTick_Config(SystemCoreClock / 1000);
+
+	/* Initialize peripherals */
 	COMPort_Init();
 	printf("COM Port initialized\n");
 
@@ -52,25 +63,48 @@ int main(void)
 	miniSTM32_SIO_BoardInit();
 	printf("SIO board initialized\n");
 
-	while (1) {
-		if( uIntFlag == 2 ) {
-			miniSTM32_SIO_LEDToggle(SIO_LED1);
-			printf("Key 1 is depressed.\n");
-			delay_loop();	/* quick and dirty method of debouncing */
-			uIntFlag = 0;
+	/* First menu item */
+	printf(menuString[u16Menu]);
+
+	while (1) 
+	{
+		/* menu selection button */
+		if( u16IRQFlag == 2 ) 
+		{
+			u16IRQFlag = 0;
+			
+			u16Menu++;
+			if(u16Menu == menuLast)
+				u16Menu = menuFirst;
+
+			printf(menuString[u16Menu]);
+
+			/* stop pieze output */
+			miniSTM32_SIO_PiezoControl( 0 );
 		}
-		else if( uIntFlag == 3 ) {
+		/* menu execution button */
+		else if( u16IRQFlag == 3 ) 
+		{
+			u16IRQFlag = 0;
+			
+			if(u16Menu == menuLED) 
+			{
+				miniSTM32_SIO_LEDToggle(SIO_LED2);
+			}
+			else if(u16Menu == menuPIEZO) 
+			{
+				miniSTM32_SIO_PiezoControl( u16Freq );
 
-			miniSTM32_SIO_PiezoControl( u16Freq );
-
-			u16Freq += 1000;
-			if( u16Freq > MAX_PIEZO_FREQ )
-				u16Freq = MIN_PIEZO_FREQ;
-
-			miniSTM32_SIO_LEDToggle(SIO_LED2);
-			printf("Key 2 is depressed.\n");
-			delay_loop();	/* quick and dirty method of debouncing */
-			uIntFlag = 0;
+				u16Freq += 1000;
+				if( u16Freq > MAX_PIEZO_FREQ )
+					u16Freq = MIN_PIEZO_FREQ;
+			}
+			else if(u16Menu == menuPOT) 
+			{
+				u16Value = miniSTM32_SIO_POTGetValue();
+				printf(" ---%d\n", u16Value);
+				
+			}
 		}
 	}
 }
