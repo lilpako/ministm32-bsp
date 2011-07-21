@@ -15,9 +15,10 @@
 
 #define DEBOUNCE_DELAY		300	/* 300msec key debouncer */
 
-volatile uint16_t u16IRQFlag = 0;
-volatile uint16_t u16SysTick = 0;
-volatile uint16_t u16Debouncer = 0;
+volatile uint16_t u16IRQFlag = 0;		/* IRQ number */
+volatile uint16_t u16SysTick = 0;		/* 1msec reference counter */
+volatile uint16_t u16Debouncer = 0;		/* key debouncer timer */
+volatile uint16_t u16LEDFlasher = 0;	/* LED auto turn-off timer */
 
 
 /* Private typedef -----------------------------------------------------------*/
@@ -133,6 +134,10 @@ void SysTick_Handler(void)
 	/* Debounce timer */
 	if(u16Debouncer)
 		u16Debouncer--;
+
+	/* LED Flasher timer */
+	if(u16LEDFlasher)
+		u16LEDFlasher--;
 }
 
 /******************************************************************************/
@@ -147,21 +152,32 @@ void SysTick_Handler(void)
   * @param  None
   * @retval None
   */
+
+/*
+ * EXTI2_IRQ is connected to the Button 1 
+ */
 void EXTI2_IRQHandler(void)
 {
+	/* only accept key input after debuncing dead zone */
 	if(u16Debouncer == 0){
 		u16IRQFlag = 2;
 		u16Debouncer = DEBOUNCE_DELAY;
 	}
+	
 	EXTI_ClearITPendingBit(EXTI_Line2);
 }
 
+/*
+ * EXTI3_IRQ is connected to the Button 2
+ */
 void EXTI3_IRQHandler(void)
 {
+	/* only accept key input after debuncing dead zone */
 	if(u16Debouncer == 0){
 		u16IRQFlag = 3;
 		u16Debouncer = DEBOUNCE_DELAY;
 	}
+
 	EXTI_ClearITPendingBit(EXTI_Line3);
 }
 

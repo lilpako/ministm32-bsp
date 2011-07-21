@@ -21,7 +21,6 @@
  *		SIO_PIEZO	: TIM PWM output
  *		SIO_POT		: ADC input
  */
-
 void miniSTM32_SIO_BoardInit(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
@@ -176,14 +175,31 @@ void miniSTM32_SIO_BoardInit(void)
 }
 
 /*
- * Controls LEDs. Actual function depends on the type of control
- *		SIO_LED1 - GPIO: simple on/off
- *		SIO_LED2 - PWM: duty control
+ * Turn on or off each LED
+ *
+ * Led: either SIO_LED1 or SIO_LED2
+ * Flag: O to turn off the LED, others to turn on
+ *
+ *		SIO_LED1 - GPIOE.Pin4
+ *		SIO_LED2 - GPIOB.Pin0
  */
-void miniSTM32_SIO_LEDControl(uint16_t Led, uint16_t Duty)
+void miniSTM32_SIO_LEDControl(uint16_t Led, uint16_t Flag)
 {
+	if(Led == SIO_LED1) {
+		if(Flag) GPIOE->BSRR = GPIO_Pin_4;
+		else GPIOE->BRR = GPIO_Pin_4;
+	}
+	else if(Led == SIO_LED2) {
+		if(Flag) GPIOB->BSRR = GPIO_Pin_0;
+		else GPIOB->BRR = GPIO_Pin_0;
+	}
 }
 
+/*
+ * Toggle LED
+ *
+ * Led: either SIO_LED1 or SIO_LED2
+ */
 void miniSTM32_SIO_LEDToggle(uint16_t Led)
 {
 	if(Led == SIO_LED1){
@@ -195,15 +211,48 @@ void miniSTM32_SIO_LEDToggle(uint16_t Led)
 }
 
 /*
+ * Get status of LEDs
+ *
+ * Led: either SIO_LED1 or SIO_LED2
+ * Return value: 0 means off, otherwise on
+ */
+uint16_t miniSTM32_SIO_LEDGetStatus(uint16_t Led)
+{
+	if(Led == SIO_LED1)
+		return((GPIOE->IDR) & GPIO_Pin_4);
+	else if(Led == SIO_LED2)
+		return((GPIOB->IDR) & GPIO_Pin_0);
+	else return 0;
+}
+
+/* Just let it be like this for now
+void miniSTM32_SIO_LEDPWMControl(uint16_t Led, uint16_t Duty)
+{
+}
+*/
+
+/*
  * Get current status of the button
  *
+ * Button: either SIO_BTN1 or SIO_BTN2
+ * Return value: 0 means off, otherwise on
  */
-void miniSTM32_SIO_PBGetState(uint16_t Button)
+uint16_t miniSTM32_SIO_ButtonGetState(uint16_t Button)
 {
+
+	if(Button == SIO_BTN1)
+		return((GPIOE->IDR) & GPIO_Pin_2);
+	else if(Button == SIO_BTN2)
+		return((GPIOE->IDR) & GPIO_Pin_3);
+	else return 0;
 }
 
 /*
- * Piezo PWM control
+ * Piezo PWM control, duty is always 50 %
+ *
+ * Freq: PWM drive frequency, it should be between MIN_PIEZO_FREQ and 
+ *       MAX_PIEZO_FREQ to make corresponding output. others to turn off
+ *
  */
 void miniSTM32_SIO_PiezoControl(uint16_t Freq)
 {
@@ -226,7 +275,9 @@ void miniSTM32_SIO_PiezoControl(uint16_t Freq)
 }
 
 /*
- * Read potentiomener (voltage) value
+ * Read potentiomener (voltage?) value
+ *
+ * Output should be between 0(min) and 2^12-1 = 4097(max)
  */
 uint16_t miniSTM32_SIO_POTGetValue(void)
 {

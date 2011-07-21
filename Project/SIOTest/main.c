@@ -2,12 +2,10 @@
   ******************************************************************************
   * SIOTest/main.c 
   * author: Brian
-  * version: V0.1.0
-  * date: 06 July 2011
+  * version: V0.1.1
+  * date: 21 July 2011
   * To Do List:
-  *		- PWM output to the piezo transducer
-  *		- ADC input from the potentiometer
-  *		- key debouncing algorithm (may require FreeRTOS)
+  *			Documentation!
   ******************************************************************************
   * This file demonstrate the function of SIO board
   * Be sure to turn on the -D USE_MINISTM32_SIO flag in your Makefile
@@ -18,8 +16,8 @@
 #include "stm32_eval.h"
 #include <stdio.h>
 
-extern volatile uint16_t u16IRQFlag;
-extern volatile uint16_t u16SysTick;
+extern volatile uint16_t u16IRQFlag;		/* IRQ number for your reference */
+extern volatile uint16_t u16LEDFlasher;		/* LED auto turn-off duration */
 
 enum menuItem{
 	menuFirst = 0,
@@ -48,9 +46,9 @@ void COMPort_Init(void);
 
 int main(void)
 {
-	uint16_t u16Freq = MIN_PIEZO_FREQ;
-	uint16_t u16Menu = menuFirst;  
-	uint16_t u16Value;
+	uint16_t u16Freq = MIN_PIEZO_FREQ;	/* pwn frequency of piezo drive */
+	uint16_t u16Menu = menuFirst;		/* menu index */
+	uint16_t u16Value;					/* general use */
 
 	/* Initialize SysTick - 1msec */
 	SysTick_Config(SystemCoreClock / 1000);
@@ -68,7 +66,7 @@ int main(void)
 
 	while (1) 
 	{
-		/* menu selection button */
+		/* IRQ2: menu selection button pressed */
 		if( u16IRQFlag == 2 ) 
 		{
 			u16IRQFlag = 0;
@@ -79,10 +77,20 @@ int main(void)
 
 			printf(menuString[u16Menu]);
 
-			/* stop pieze output */
-			miniSTM32_SIO_PiezoControl( 0 );
+			/* flash LED1 once */
+			miniSTM32_SIO_LEDControl(SIO_LED1, 1);
+			/* after 300msec it will turn off */
+			u16LEDFlasher = 300;
+
+			/* it would be nice to turn off LED and Piezo
+			 * when you change the menu 
+			 */
+			{
+				miniSTM32_SIO_LEDControl(SIO_LED2, 0);
+				miniSTM32_SIO_PiezoControl( 0 );
+			}
 		}
-		/* menu execution button */
+		/* IRQ3: menu execution button pressed */
 		else if( u16IRQFlag == 3 ) 
 		{
 			u16IRQFlag = 0;
@@ -90,12 +98,21 @@ int main(void)
 			if(u16Menu == menuLED) 
 			{
 				miniSTM32_SIO_LEDToggle(SIO_LED2);
+
+				/* now read the LED status back */
+				if(miniSTM32_SIO_LEDGetStatus(SIO_LED2))
+					printf(" ---LED ON\n");
+				else
+					printf(" ---LED OFF\n");
 			}
 			else if(u16Menu == menuPIEZO) 
 			{
 				miniSTM32_SIO_PiezoControl( u16Freq );
+				printf(" ---%dHz\n", u16Freq);
 
+				/* increse the frequency automatically */
 				u16Freq += 1000;
+
 				if( u16Freq > MAX_PIEZO_FREQ )
 					u16Freq = MIN_PIEZO_FREQ;
 			}
@@ -103,8 +120,14 @@ int main(void)
 			{
 				u16Value = miniSTM32_SIO_POTGetValue();
 				printf(" ---%d\n", u16Value);
-				
 			}
+		}
+
+		/* usual household routines */
+		{
+			/* turn off the LED1 after some time */
+			if( u16LEDFlasher == 0)
+				miniSTM32_SIO_LEDControl(SIO_LED1, 0);
 		}
 	}
 }

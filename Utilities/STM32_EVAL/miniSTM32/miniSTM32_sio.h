@@ -34,9 +34,8 @@
 
 /**
   * Simpile I/O extension board consists of 
-  *		- Two push button switch (floating)
-  *		- One GPIO controlled LED
-  *		- One PWM controlled LED
+  *		- Two push button switch input (floating)
+  *		- Two GPIO controlled LED
   *		- One PWM controlled piezo transducer
   *		- One potentiometer input
   */
@@ -49,9 +48,13 @@
 #define MAX_PIEZO_FREQ			(15000)
 
 void miniSTM32_SIO_BoardInit(void);
-void miniSTM32_SIO_LEDControl(uint16_t Led, uint16_t Duty);
+void miniSTM32_SIO_LEDControl(uint16_t Led, uint16_t Flag);
 void miniSTM32_SIO_LEDToggle(uint16_t Led);
-void miniSTM32_SIO_PBGetState(uint16_t Button);
+uint16_t miniSTM32_SIO_LEDGetStatus(uint16_t Led);
+/* maybe I can do it later
+void miniSTM32_SIO_LEDPWMControl(uint16_t Led, uint16_t Duty);
+*/
+uint16_t miniSTM32_SIO_ButtonGetState(uint16_t Button);
 void miniSTM32_SIO_PiezoControl(uint16_t Duty);
 uint16_t miniSTM32_SIO_POTGetValue(void);
 

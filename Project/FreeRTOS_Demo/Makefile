@@ -2,7 +2,7 @@
 # Makefile                                                         #
 ####################################################################
 
-.PHONY: all clean xref
+.PHONY: all clean xref flash
 
 ####################################################################
 # Definitions                                                      #
@@ -114,7 +114,7 @@ C_SRC += ../../Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x/system_stm32f10x.c
 
 # Pepheral support : choose files you need
 C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/misc.c
-#C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_adc.c
+C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_adc.c
 #C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_bkp.c
 #C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_can.c
 #C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_cec.c
@@ -133,7 +133,7 @@ C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_rcc.c
 #C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_rtc.c
 C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_sdio.c
 C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_spi.c
-#C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_tim.c
+C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_tim.c
 C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_usart.c
 #C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_wwdg.c
 
@@ -159,7 +159,7 @@ C_SRC += ../../FreeRTOS_Source/timers.c
 C_SRC += ../../FreeRTOS_Source/portable/GCC/ARM_CM3/port.c
 C_SRC += ../../FreeRTOS_Source/portable/MemMang/heap_1.c
 
-# Startup
+# Startup 
 S_SRC = ../../Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x/startup/gcc_ride7/startup_stm32f10x_hd.s
 
 ####################################################################
@@ -226,3 +226,7 @@ clean:
 # Create cross-reference file for cscope
 xref:
 	cscope -R -b $(INCLUDEPATHS) $(XREFSPATHS)
+
+# Flash download via openocd
+flash:
+	sh ./flash.sh
