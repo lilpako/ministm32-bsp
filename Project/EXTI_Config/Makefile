@@ -2,7 +2,7 @@
 # Makefile                                                         #
 ####################################################################
 
-.PHONY: all clean xref
+.PHONY: all clean xref flash
 
 ####################################################################
 # Definitions                                                      #
@@ -215,3 +215,6 @@ clean:
 # Create cross-reference file for cscope
 xref:
 	cscope -R -b $(INCLUDEPATHS) $(XREFSPATHS)
+
+flash:
+	openocd -f stm32flash.cfg

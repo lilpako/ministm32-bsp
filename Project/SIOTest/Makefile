@@ -217,4 +217,4 @@ xref:
 
 # Flash download via openocd
 flash:
-	sh ./flash.sh
+	openocd -f stm32flash.cfg

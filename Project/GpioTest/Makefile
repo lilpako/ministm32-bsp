@@ -214,3 +214,6 @@ clean:
 # Create cross-reference file for cscope
 xref:
 	cscope -R -b $(INCLUDEPATHS) $(XREFSPATHS)
+
+flash:
+	openocd -f stm32flash.cfg
