@@ -18,6 +18,7 @@ syntax: glob
 *.out
 *.map
 *.d
+*.swp
 
 #
 # Top-level generic files

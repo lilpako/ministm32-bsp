@@ -17,7 +17,6 @@
 #include <stdio.h>
 
 extern volatile uint16_t u16IRQFlag;		/* IRQ number for your reference */
-extern volatile uint16_t u16LEDFlasher;		/* LED auto turn-off duration */
 
 enum menuItem{
 	menuFirst = 0,
@@ -78,15 +77,13 @@ int main(void)
 			printf(menuString[u16Menu]);
 
 			/* flash LED1 once */
-			miniSTM32_SIO_LEDOn(SIO_LED1);
-			/* after 300msec it will turn off */
-			u16LEDFlasher = 300;
+			miniSTM32_SIO_LEDControl(SIO_LED1, 1);
 
 			/* it would be nice to turn off LED and Piezo
 			 * when you change the menu 
 			 */
 			{
-				miniSTM32_SIO_LEDOff(SIO_LED2);
+				miniSTM32_SIO_LEDControl(SIO_LED2, 0);
 				miniSTM32_SIO_PiezoControl( 0 );
 			}
 		}
@@ -125,9 +122,6 @@ int main(void)
 
 		/* usual household routines */
 		{
-			/* turn off the LED1 after some time */
-			if( u16LEDFlasher == 0)
-				miniSTM32_SIO_LEDOff(SIO_LED1);
 		}
 	}
 }

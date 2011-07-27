@@ -7,7 +7,7 @@
   ******************************************************************************
   */ 
 
-#define PIEZO_INIT_PERIOD		(1000)
+
   
 #include "miniSTM32_sio.h"
 #include "stm32f10x_gpio.h"
@@ -34,12 +34,13 @@ void miniSTM32_SIO_BoardInit(void)
 	 * Common to all: Enable the GPIO Clocks 
 	 */
 	RCC_APB2PeriphClockCmd(
-//		RCC_APB2Periph_GPIOA | 
-		RCC_APB2Periph_GPIOB |			// LED output
-//		RCC_APB2Periph_GPIOC |
-		RCC_APB2Periph_GPIOE |			// button inputs, LED output
-		RCC_APB2Periph_ADC1 |			// potentiometer
-		RCC_APB2Periph_AFIO, ENABLE);	// piezo buzzer
+		SIO_LED1_GPIO_CLK |
+		SIO_LED2_GPIO_CLK |
+		SIO_BTN1_GPIO_CLK |
+		SIO_BTN2_GPIO_CLK |
+		SIO_PZO_GPIO_CLK |
+		SIO_POT_GPIO_CLK,
+		ENABLE);
 
 	/*
 	 * DI: Two push buttons connected to interrupt lines
@@ -49,21 +50,21 @@ void miniSTM32_SIO_BoardInit(void)
 	
 	/* Configure SIO_BTN1 */
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
-	GPIO_Init(GPIOE, &GPIO_InitStructure);
+	GPIO_InitStructure.GPIO_Pin = SIO_BTN1_GPIO_PIN;
+	GPIO_Init(SIO_BTN1_GPIO_PORT, &GPIO_InitStructure);
 
 	/* Connect Button EXTI Lines to SIO_BTN1 */
-	GPIO_EXTILineConfig(GPIO_PortSourceGPIOE, GPIO_PinSource2);
+	GPIO_EXTILineConfig(SIO_BTN1_EXTI_PORT, SIO_BTN1_EXTI_PIN);
 
 	/* Configure SIO_BTN1 EXTI line */
-	EXTI_InitStructure.EXTI_Line = EXTI_Line2;
-	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;  
+	EXTI_InitStructure.EXTI_Line = SIO_BTN1_EXTI_LINE;
+	EXTI_InitStructure.EXTI_Mode = SIO_BTN1_EXTI_MODE;
+	EXTI_InitStructure.EXTI_Trigger = SIO_BTN1_EXTI_TRIG;  
 	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
 	EXTI_Init(&EXTI_InitStructure);
 	
 	/* Enable and set Button EXTI Interrupt to the lowest priority */
-	NVIC_InitStructure.NVIC_IRQChannel = EXTI2_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannel = SIO_BTN1_EXTI_IRQn;
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0F;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
@@ -71,21 +72,21 @@ void miniSTM32_SIO_BoardInit(void)
 	
 	/* Configure SIO_BTN2 */
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
-	GPIO_Init(GPIOE, &GPIO_InitStructure);
+	GPIO_InitStructure.GPIO_Pin = SIO_BTN2_GPIO_PIN;
+	GPIO_Init(SIO_BTN2_GPIO_PORT, &GPIO_InitStructure);
 	
 	/* Connect Button EXTI Lines to and SIO_BTN2 */
-	GPIO_EXTILineConfig(GPIO_PortSourceGPIOE, GPIO_PinSource3);
+	GPIO_EXTILineConfig(SIO_BTN2_EXTI_PORT, SIO_BTN2_EXTI_PIN);
 	
 	/* Configure SIO_BTN2 EXTI line */
-	EXTI_InitStructure.EXTI_Line = EXTI_Line3;
-	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;  
+	EXTI_InitStructure.EXTI_Line = SIO_BTN2_EXTI_LINE;
+	EXTI_InitStructure.EXTI_Mode = SIO_BTN2_EXTI_MODE;
+	EXTI_InitStructure.EXTI_Trigger = SIO_BTN2_EXTI_TRIG;  
 	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
 	EXTI_Init(&EXTI_InitStructure);
 	
 	/* Enable and set Button EXTI Interrupt to the lowest priority */
-	NVIC_InitStructure.NVIC_IRQChannel = EXTI3_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannel = SIO_BTN2_EXTI_IRQn;
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0F;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
@@ -99,19 +100,19 @@ void miniSTM32_SIO_BoardInit(void)
 
 	/* Configure the PE4 pin : output push-pull */
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOE, &GPIO_InitStructure);
+	GPIO_InitStructure.GPIO_Pin = SIO_LED1_GPIO_PIN;
+	GPIO_InitStructure.GPIO_Speed = SIO_GPIO_SPEED;
+	GPIO_Init(SIO_LED1_GPIO_PORT, &GPIO_InitStructure);
 
 	/* Configure the PB0 pin : output push-pull */
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOB, &GPIO_InitStructure);
+	GPIO_InitStructure.GPIO_Pin = SIO_LED2_GPIO_PIN;
+	GPIO_InitStructure.GPIO_Speed = SIO_GPIO_SPEED;
+	GPIO_Init(SIO_LED2_GPIO_PORT, &GPIO_InitStructure);
 
 	/*
 	 * PWM OUT: Frequency control(1KHz - 10KHz) with 50% PWM
-	 *		SIO_PIEZO - PA1 / TIM2_CH2
+	 *		SIO_PZO - PA1 / TIM2_CH2
 	 *		Base Freq: 1MHz = 72MHz / 72
 	 *		ARR value: PERIOD = 1MHz / FREQ
 	 *		CCR value: PULSE = PERIOD / 2 (always 50% PWM) 	
@@ -119,58 +120,58 @@ void miniSTM32_SIO_BoardInit(void)
 
 	/* Configure the PA1 pin : alternative push-pull */
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	GPIO_InitStructure.GPIO_Pin = SIO_PZO_GPIO_PIN;
+	GPIO_InitStructure.GPIO_Speed = SIO_GPIO_SPEED;
+	GPIO_Init(SIO_PZO_GPIO_PORT, &GPIO_InitStructure);
 
-	/* Enable TIM2 clock */
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+	/* Enable Pieze timer clock */
+	RCC_APB1PeriphClockCmd(SIO_PZO_TIMER_CLK, ENABLE);
 
-	/* Configure TIM2 */
+	/* Configure Piezo timer */
 	TIM_TimeBaseStructure.TIM_Period = PIEZO_INIT_PERIOD;
 	TIM_TimeBaseStructure.TIM_Prescaler = 72; /* 1MHz base clock */
 	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-	TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
+	TIM_TimeBaseInit(SIO_PZO_TIMER, &TIM_TimeBaseStructure);
 
 	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
 	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
 	TIM_OCInitStructure.TIM_Pulse = (PIEZO_INIT_PERIOD>>1);
 	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-	TIM_OC2Init(TIM2, &TIM_OCInitStructure);
-	TIM_OC2PreloadConfig(TIM2, TIM_OCPreload_Enable);
-	TIM_ARRPreloadConfig(TIM2, ENABLE);
+	TIM_OC2Init(SIO_PZO_TIMER, &TIM_OCInitStructure);
+	TIM_OC2PreloadConfig(SIO_PZO_TIMER, TIM_OCPreload_Enable);
+	TIM_ARRPreloadConfig(SIO_PZO_TIMER, ENABLE);
 
-	TIM_Cmd(TIM2, DISABLE);
+	TIM_Cmd(SIO_PZO_TIMER, DISABLE);
 
 	/*
 	 * AI: ADC input
 	 *		SIO_POT - PC1 / ADC123_IN11
 	 */
 
-	/* Configure the PC1 pin : analog input */
+	/* Configure the Potentiometer pin : analog input */
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOC, &GPIO_InitStructure);
+	GPIO_InitStructure.GPIO_Pin = SIO_POT_GPIO_PIN;
+	GPIO_InitStructure.GPIO_Speed = SIO_GPIO_SPEED;
+	GPIO_Init(SIO_POT_GPIO_PORT, &GPIO_InitStructure);
 
-	/* Configure ADC1_IN11 */
+	/* Configure Potentiometer ADC */
 	ADC_InitStructure.ADC_Mode = ADC_Mode_Independent;
 	ADC_InitStructure.ADC_ScanConvMode = DISABLE;
 	ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
 	ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
 	ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
 	ADC_InitStructure.ADC_NbrOfChannel = 1;
-	ADC_Init(ADC1, &ADC_InitStructure);
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_11, 1, ADC_SampleTime_28Cycles5);
-	ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE);
+	ADC_Init(SIO_POT_ADC, &ADC_InitStructure);
+	ADC_RegularChannelConfig(SIO_POT_ADC, SIO_POT_ADC_CHN, 1, ADC_SampleTime_28Cycles5);
+	ADC_ITConfig(SIO_POT_ADC, ADC_IT_EOC, ENABLE);
 
-	/* Calibrate ADC1 */
-	ADC_Cmd(ADC1, ENABLE);
-	ADC_ResetCalibration(ADC1);
-	while(ADC_GetResetCalibrationStatus(ADC1));
-	ADC_StartCalibration(ADC1);
-	while(ADC_GetCalibrationStatus(ADC1));
+	/* Calibrate Potentiomenter ADC */
+	ADC_Cmd(SIO_POT_ADC, ENABLE);
+	ADC_ResetCalibration(SIO_POT_ADC);
+	while(ADC_GetResetCalibrationStatus(SIO_POT_ADC));
+	ADC_StartCalibration(SIO_POT_ADC);
+	while(ADC_GetCalibrationStatus(SIO_POT_ADC));
 
 }
 
@@ -178,20 +179,26 @@ void miniSTM32_SIO_BoardInit(void)
  * Turn on or off each LED
  *
  * Led: either SIO_LED1 or SIO_LED2
- * Flag: O to turn off the LED, others to turn on
  *
- *		SIO_LED1 - GPIOE.Pin4
- *		SIO_LED2 - GPIOB.Pin0
  */
-void miniSTM32_SIO_LEDControl(uint16_t Led, uint16_t Flag)
+
+void miniSTM32_SIO_LEDOn(SIO_LED_TypeDef Led)
 {
 	if(Led == SIO_LED1) {
-		if(Flag) GPIOE->BSRR = GPIO_Pin_4;
-		else GPIOE->BRR = GPIO_Pin_4;
+		GPIOE->BSRR = SIO_LED1_GPIO_PIN;
 	}
 	else if(Led == SIO_LED2) {
-		if(Flag) GPIOB->BSRR = GPIO_Pin_0;
-		else GPIOB->BRR = GPIO_Pin_0;
+		GPIOB->BSRR = SIO_LED2_GPIO_PIN;
+	}
+}
+
+void miniSTM32_SIO_LEDOff(SIO_LED_TypeDef Led)
+{
+	if(Led == SIO_LED1) {
+		GPIOE->BRR = SIO_LED1_GPIO_PIN;
+	}
+	else if(Led == SIO_LED2) {
+		GPIOB->BRR = SIO_LED2_GPIO_PIN;
 	}
 }
 
@@ -200,13 +207,13 @@ void miniSTM32_SIO_LEDControl(uint16_t Led, uint16_t Flag)
  *
  * Led: either SIO_LED1 or SIO_LED2
  */
-void miniSTM32_SIO_LEDToggle(uint16_t Led)
+void miniSTM32_SIO_LEDToggle(SIO_LED_TypeDef Led)
 {
 	if(Led == SIO_LED1){
-		GPIOE->ODR ^= GPIO_Pin_4;
+		SIO_LED1_GPIO_PORT->ODR ^= SIO_LED1_GPIO_PIN;
 	}
 	else if(Led == SIO_LED2){
-		GPIOB->ODR ^= GPIO_Pin_0;
+		SIO_LED2_GPIO_PORT->ODR ^= SIO_LED2_GPIO_PIN;
 	}
 }
 
@@ -214,19 +221,19 @@ void miniSTM32_SIO_LEDToggle(uint16_t Led)
  * Get status of LEDs
  *
  * Led: either SIO_LED1 or SIO_LED2
- * Return value: 0 means off, otherwise on
+ * Return value: 0 means off, 0xffff error, otherwise on
  */
-uint16_t miniSTM32_SIO_LEDGetStatus(uint16_t Led)
+uint16_t miniSTM32_SIO_LEDGetStatus(SIO_LED_TypeDef Led)
 {
 	if(Led == SIO_LED1)
-		return((GPIOE->IDR) & GPIO_Pin_4);
+		return((SIO_LED1_GPIO_PORT->IDR) & SIO_LED1_GPIO_PIN);
 	else if(Led == SIO_LED2)
-		return((GPIOB->IDR) & GPIO_Pin_0);
-	else return 0;
+		return((SIO_LED2_GPIO_PORT->IDR) & SIO_LED2_GPIO_PIN);
+	else return 0xffff;
 }
 
 /* Just let it be like this for now
-void miniSTM32_SIO_LEDPWMControl(uint16_t Led, uint16_t Duty)
+void miniSTM32_SIO_LEDPWMControl(SIO_LED_TypeDef Led, uint16_t Duty)
 {
 }
 */
@@ -235,16 +242,16 @@ void miniSTM32_SIO_LEDPWMControl(uint16_t Led, uint16_t Duty)
  * Get current status of the button
  *
  * Button: either SIO_BTN1 or SIO_BTN2
- * Return value: 0 means off, otherwise on
+ * Return value: 0 means off, 0xffff error, otherwise on
  */
-uint16_t miniSTM32_SIO_ButtonGetState(uint16_t Button)
+uint16_t miniSTM32_SIO_ButtonGetState(SIO_Button_TypeDef Button)
 {
 
 	if(Button == SIO_BTN1)
-		return((GPIOE->IDR) & GPIO_Pin_2);
+		return((SIO_BTN1_GPIO_PORT->IDR) & SIO_BTN1_GPIO_PIN);
 	else if(Button == SIO_BTN2)
-		return((GPIOE->IDR) & GPIO_Pin_3);
-	else return 0;
+		return((SIO_BTN2_GPIO_PORT->IDR) & SIO_BTN2_GPIO_PIN);
+	else return 0xffff;
 }
 
 /*
@@ -259,18 +266,18 @@ void miniSTM32_SIO_PiezoControl(uint16_t Freq)
 	uint16_t u16Period = 0;
 
 	if( (Freq < MIN_PIEZO_FREQ) || (Freq > MAX_PIEZO_FREQ) ){
-		/* Stop TIM2 */
-		TIM_Cmd(TIM2, DISABLE);
+		/* Stop Piezo timer */
+		TIM_Cmd(SIO_PZO_TIMER, DISABLE);
 	}
 	else{
 		/* Calculate required ARR value */
 		u16Period = 1000000L / Freq;
 
-		TIM_SetAutoreload(TIM2, u16Period);
-		TIM_SetCompare2(TIM2, (u16Period>>1));
+		TIM_SetAutoreload(SIO_PZO_TIMER, u16Period);
+		TIM_SetCompare2(SIO_PZO_TIMER, (u16Period>>1));
 
 		/* Start TIM2 */
-		TIM_Cmd(TIM2, ENABLE);
+		TIM_Cmd(SIO_PZO_TIMER, ENABLE);
 	}
 }
 
@@ -282,11 +289,11 @@ void miniSTM32_SIO_PiezoControl(uint16_t Freq)
 uint16_t miniSTM32_SIO_POTGetValue(void)
 {
 
-	ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+	ADC_SoftwareStartConvCmd(SIO_POT_ADC, ENABLE);
 
-	while(ADC_GetSoftwareStartConvStatus(ADC1));
+	while(ADC_GetSoftwareStartConvStatus(SIO_POT_ADC));
 
-	return ADC_GetConversionValue(ADC1);
+	return ADC_GetConversionValue(SIO_POT_ADC);
 
 }
 
