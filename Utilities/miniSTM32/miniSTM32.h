@@ -88,63 +88,39 @@ typedef enum
  */
 
 
-#define sFLASH_WIP_FLAG           0x01
+#define sFLASH_WIP_FLAG					0x01
 
+#define sFLASH_DUMMY_BYTE				0xA5
+#define sFLASH_BP_ALL					0x1C	/* all block  */
+#define sFLASH_BP_NONE					0x00	/* no block   */
+#define sFLASH_BP_32					0x04	/* upper 1/32 */
+#define sFLASH_BP_16					0x08	/* upper 1/16 */
+#define sFLASH_BP_8						0x0C	/* upper 1/8  */
+#define sFLASH_BP_4						0x10	/* upper 1/4  */
+#define sFLASH_BP_2						0x14	/* upper 1/2  */
 
-#define sFLASH_DUMMY_BYTE			0xA5
-#define sFLASH_BP_ALL				0x1C	/* all block  */
-#define sFLASH_BP_NONE				0x00	/* no block   */
-#define sFLASH_BP_32				0x04	/* upper 1/32 */
-#define sFLASH_BP_16				0x08	/* upper 1/16 */
-#define sFLASH_BP_8					0x0C	/* upper 1/8  */
-#define sFLASH_BP_4					0x10	/* upper 1/4  */
-#define sFLASH_BP_2					0x14	/* upper 1/2  */
+#define sFLASH_SST25VF016_ID			0xBF2541
 
+#define sFLASH_CMD_RD25M				0x03
+#define sFLASH_CMD_RD80M				0x0B
+#define sFLASH_CMD_ER04K				0x20
+#define sFLASH_CMD_ER32K				0x52
+#define sFLASH_CMD_ER64K				0xD8
+#define sFLASH_CMD_ERCHIP				0x60
+#define sFLASH_CMD_WRBYTE				0x02
+#define sFLASH_CMD_WRAAIW				0xAD
+#define sFLASH_CMD_RDSR					0x05
+#define sFLASH_CMD_EWSR					0x50
+#define sFLASH_CMD_WRSR					0x01
+#define sFLASH_CMD_WREN					0x06
+#define sFLASH_CMD_WRDI					0x04
+#define sFLASH_CMD_RDID					0x90
+#define sFLASH_CMD_JEDEC				0x9F
+#define sFLASH_CMD_EBSY					0x70
+#define sFLASH_CMD_DBSY					0x80
 
-
-
-
-#define sFLASH_SST25VF016_ID		0xBF2541
-
-#define sFLASH_CMD_RD25M			0x03
-#define sFLASH_CMD_RD80M			0x0B
-#define sFLASH_CMD_ER04K			0x20
-#define sFLASH_CMD_ER32K			0x52
-#define sFLASH_CMD_ER64K			0xD8
-#define sFLASH_CMD_ERCHIP			0x60
-#define sFLASH_CMD_WRBYTE			0x02
-#define sFLASH_CMD_WRAAIW			0xAD
-#define sFLASH_CMD_RDSR				0x05
-#define sFLASH_CMD_EWSR				0x50
-#define sFLASH_CMD_WRSR				0x01
-#define sFLASH_CMD_WREN				0x06
-#define sFLASH_CMD_WRDI				0x04
-#define sFLASH_CMD_RDID				0x90
-#define sFLASH_CMD_JEDEC			0x9F
-#define sFLASH_CMD_EBSY				0x70
-#define sFLASH_CMD_DBSY				0x80
-
-#define sFLASH_CS_LOW()				GPIO_ResetBits(sFLASH_CS_GPIO_PORT, sFLASH_CS_PIN)
-#define sFLASH_CS_HIGH()			GPIO_SetBits(sFLASH_CS_GPIO_PORT, sFLASH_CS_PIN)   
-
-
-/*
- * SD FLASH SDIO Interface, not tested
- */ 
-
-#define SD_DETECT_PIN                    GPIO_Pin_11                 /* PC.11 */
-#define SD_DETECT_GPIO_PORT              GPIOC                       /* GPIOC */
-#define SD_DETECT_GPIO_CLK               RCC_APB2Periph_GPIOC
-
-#define SDIO_FIFO_ADDRESS                ((uint32_t)0x40018080)
-/** 
-  * SDIO Intialization Frequency (400KHz max)
-  */
-#define SDIO_INIT_CLK_DIV                ((uint8_t)0xB2)
-/** 
-  * SDIO Data Transfer Frequency (25MHz max) 
-  */
-#define SDIO_TRANSFER_CLK_DIV            ((uint8_t)0x00)
+#define sFLASH_CS_LOW()					GPIO_ResetBits(sFLASH_CS_GPIO_PORT, sFLASH_CS_PIN)
+#define sFLASH_CS_HIGH()				GPIO_SetBits(sFLASH_CS_GPIO_PORT, sFLASH_CS_PIN)   
 
 typedef enum{
 	EBSIZE_4KB,
@@ -154,6 +130,13 @@ typedef enum{
 } BlockSize_TypeDef;
 
 
+/*
+ * SD FLASH SDIO Interface
+ */ 
+
+#define SDIO_FIFO_ADDRESS                ((uint32_t)0x40018080)
+#define SDIO_INIT_CLK_DIV                ((uint8_t)0xB2)
+#define SDIO_TRANSFER_CLK_DIV            ((uint8_t)0x01)
 
 /*
  * miniSTM32 Exported Functions
@@ -186,9 +169,6 @@ void sFLASH_ReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr, uint16_t NumByte);
 uint32_t sFLASH_ReadID(void);
 uint8_t sFLASH_ReadRegister(void);
 void sFLASH_WriteRegister(uint8_t RegData);
-
-
-
 
 void SD_LowLevel_DeInit(void);
 void SD_LowLevel_Init(void); 

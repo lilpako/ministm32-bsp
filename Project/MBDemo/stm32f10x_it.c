@@ -161,4 +161,18 @@ void EXTI15_10_IRQHandler(void)
 		EXTI_ClearITPendingBit(MAIN_BTN_EXTI_LINE);
 	}
 }
+
+
+/**
+  * @brief  This function handles SDIO global interrupt request.
+  * @param  None
+  * @retval None
+  */
+void SDIO_IRQHandler(void)
+{
+  /* Process All SDIO Interrupt Sources */
+  SD_ProcessIRQSrc();
+}
+
+
 /*END OF FILE*/

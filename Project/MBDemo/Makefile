@@ -131,7 +131,7 @@ C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_usart.c
 
 # Board support 
 C_SRC += ../../Utilities/miniSTM32/miniSTM32.c
-
+C_SRC += ../../Utilities/miniSTM32/miniSTM32_sd.c
 
 
 # Support functions
