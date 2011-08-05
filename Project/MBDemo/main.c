@@ -12,11 +12,13 @@
   ******************************************************************************
   */ 
 
-#include "stm32f10x.h"
-#include "miniSTM32.h"
-#include "miniSTM32_sd.h"
+#include "stm32f10x.h"			/* CMSIS */
+#include "miniSTM32.h"			/* mainboard BSP */
+#include "miniSTM32_sd.h"		/* SDIO - SD support */
+#include "ff.h"					/* FatFs support */
 #include <stdio.h>
 
+/* demo menu list */
 enum{
 	MENU_LED_ON = 0,
 	MENU_LED_OFF,
@@ -25,36 +27,39 @@ enum{
 	MENU_FLASH_READ,
 	MENU_FLASH_ERASE,
 	MENU_FLASH_ERASECHECK,
+/*
+ * DO NOT RUN SD raw read/write test with FAT test at the same time
+ *
 	MENU_SD_ERASE,
 	MENU_SD_BLOCK,
 	MENU_SD_MULTIBLOCK,
+*/
+	MENU_FAT_TEST,
 	MENU_END
 };
 
+/* interrupt ID from IRQ routines */
 extern volatile uint16_t u16IRQFlag;
 
+/* sflash demo parameters */
 #define READ_BUFFER_SIZE		30
 #define FLASH_ADDRESS			0x10000
 
-
-/* Private typedef -----------------------------------------------------------*/
+/* sd demo typedef */
 typedef enum {FAILED = 0, PASSED = !FAILED} TestStatus;
 
-/* Private define ------------------------------------------------------------*/
+/* sd demo parameters */
 #define BLOCK_SIZE            512 /* Block Size in Bytes */
-
 #define NUMBER_OF_BLOCKS      32  /* For Multi Blocks operation (Read/Write) */
 #define MULTI_BUFFER_SIZE    (BLOCK_SIZE * NUMBER_OF_BLOCKS)
 
-
-/* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
+/* sd demo variables ---------------------------------------------------------*/
 uint8_t Buffer_Block_Tx[BLOCK_SIZE], Buffer_Block_Rx[BLOCK_SIZE];
 uint8_t Buffer_MultiBlock_Tx[MULTI_BUFFER_SIZE], Buffer_MultiBlock_Rx[MULTI_BUFFER_SIZE];
 volatile TestStatus EraseStatus = FAILED, TransferStatus1 = FAILED, TransferStatus2 = FAILED;
 SD_Error Status = SD_OK;
 
-/* Private function prototypes -----------------------------------------------*/
+/* sd demo function prototypes -----------------------------------------------*/
 void NVIC_Configuration(void);
 void SD_EraseTest(void);
 void SD_SingleBlockTest(void);
@@ -63,6 +68,8 @@ void Fill_Buffer(uint8_t *pBuffer, uint32_t BufferLength, uint32_t Offset);
 TestStatus Buffercmp(uint8_t* pBuffer1, uint8_t* pBuffer2, uint32_t BufferLength);
 TestStatus eBuffercmp(uint8_t* pBuffer, uint32_t BufferLength);
 
+/* FAT demo function prototypes */
+TestStatus FAT_Test (void);
 
 int main(void)
 {
@@ -83,16 +90,20 @@ int main(void)
 	sFLASH_Init();
 	printf("serial FLASH  initialized\n");
 
-	/* NVIC for SD */
+	/* NVIC setting for SD */
 	NVIC_Configuration();
 
 	/* Initialize SD subsystem */
+	/*
+	 * You don't have to initialize SD subsystem 
+	 * when you use FatFs
+	 *
 	if(SD_Init() == SD_OK)
 	{
 		printf("SD interface initialized\n");
 	}
+	*/
         
-
 	while (1) 
 	{
 		if( u16IRQFlag == MAIN_BTN_EXTI_LINE ) {
@@ -114,20 +125,23 @@ int main(void)
 			else if( u16Menu == MENU_FLASH_WRITE ) {
 				sFLASH_Erase(EBSIZE_4KB, FLASH_ADDRESS);
 				sFLASH_WriteBuffer(Tx_Buffer, FLASH_ADDRESS, sizeof(Tx_Buffer));
-				printf("Write Data: %s\n", Tx_Buffer);
+				printf("sFLASH Write Data: %s\n", Tx_Buffer);
 			}
 			else if( u16Menu == MENU_FLASH_READ ) {
 				sFLASH_ReadBuffer(Rx_Buffer, FLASH_ADDRESS, sizeof(Rx_Buffer) - 1);
-				printf("Read Back: %s\n", Rx_Buffer);
+				printf("sFLASH Read Back: %s\n", Rx_Buffer);
 			}
 			else if( u16Menu == MENU_FLASH_ERASE ) {
 				sFLASH_Erase(EBSIZE_4KB, FLASH_ADDRESS);
-				printf("Erase Block: Data Erased\n");
+				printf("sFLASH Erase Block: Data Erased\n");
 			}
 			else if( u16Menu == MENU_FLASH_ERASECHECK ) {
 				sFLASH_ReadBuffer(Rx_Buffer, FLASH_ADDRESS, sizeof(Rx_Buffer) - 1);
-				printf("Read Data Again: %s\n", Rx_Buffer);
+				printf("sFLASH Read Data Again: %s\n", Rx_Buffer);
 			}
+	/*
+	 * Do not run SD raw read/write test with FAT test at the same time
+	 *
 			else if( u16Menu == MENU_SD_ERASE ) {
 				SD_EraseTest();
 			}
@@ -137,7 +151,13 @@ int main(void)
 			else if( u16Menu == MENU_SD_MULTIBLOCK ) {
 				SD_MultiBlockTest();
 			}
-
+	*/
+			else if( u16Menu == MENU_FAT_TEST ) {
+				if(FAT_Test() == PASSED)
+					printf("FAT Test Passed\n");
+				else
+					printf("FAT Test Failed\n");;
+			}
 
 			if( ++u16Menu == MENU_END )
 				u16Menu = 0;
@@ -151,32 +171,9 @@ int main(void)
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /*
- * Brian: SD routine
+ * Brian: SD routines here
  */
-
 
 void NVIC_Configuration(void)
 {
@@ -377,6 +374,70 @@ TestStatus eBuffercmp(uint8_t* pBuffer, uint32_t BufferLength)
 
   return PASSED;
 }
+
+
+TestStatus FAT_Test (void)
+{
+	FRESULT rc;				/* Result code */
+	FATFS fatfs;			/* File system object */
+	FIL fil;				/* File object */
+	DIR dir;				/* Directory object */
+	FILINFO fno;			/* File information object */
+	UINT bw, br, i;
+	BYTE buff[512];
+
+	uint32_t u32index;
+
+	f_mount(0, &fatfs);		/* Register volume work area (never fails) */
+
+	printf("\nOpen a test file (message.txt).\n");
+	rc = f_open(&fil, "MESSAGE.TXT", FA_READ);
+	if (rc) return FAILED;
+
+	printf("\nType the file content.\n");
+	for (;;) {
+		rc = f_read(&fil, buff, sizeof(buff), &br);	/* Read a chunk of file */
+		if (rc || !br) break;			/* Error or end of file */
+		for (i = 0; i < br; i++)		/* Type the data */
+			putchar(buff[i]);
+	}
+	if (rc) return FAILED;
+
+	printf("\nClose the file.\n");
+	rc = f_close(&fil);
+	if (rc) return FAILED;
+
+	printf("\nCreate a new file (hello.txt).\n");
+	rc = f_open(&fil, "HELLO.TXT", FA_WRITE | FA_CREATE_ALWAYS);
+	if (rc) return FAILED;
+
+	printf("\nWrite a text data. (Hello world!)\n");
+	rc = f_write(&fil, "Hello world!\r\n", 700, &bw);
+	if (rc) return FAILED;
+	printf("%u bytes written.\n", bw);
+
+	printf("\nClose the file.\n");
+	rc = f_close(&fil);
+	if (rc) return FAILED;
+
+	printf("\nOpen root directory.\n");
+	rc = f_opendir(&dir, "");
+	if (rc) return FAILED;
+
+	printf("\nDirectory listing...\n");
+	for (;;) {
+		rc = f_readdir(&dir, &fno);	
+		if (rc || !fno.fname[0]) break;
+		if (fno.fattrib & AM_DIR)
+			printf("   <dir>  %s\n", fno.fname);
+		else
+			printf("%8lu  %s\n", fno.fsize, fno.fname);
+	}
+	if (rc) return FAILED;
+
+	return PASSED;
+}
+
 
 
 #ifdef  USE_FULL_ASSERT

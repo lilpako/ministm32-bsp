@@ -191,6 +191,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "miniSTM32_sd.h"
+#include "diskio.h"
 
 /** 
   * @brief  SDIO Static flags, TimeOut, FIFO Address  
@@ -297,10 +298,8 @@ static SD_Error FindSCR(uint16_t rca, uint32_t *pscr);
 uint8_t convert_from_bytes_to_power_of_two(uint16_t NumberOfBytes);
   
 
-
-/** @defgroup STM32_EVAL_SDIO_SD_Private_Functions
-  * @{
-  */  
+/* FAT parameters */
+static DSTATUS Stat = STA_NOINIT;	/* Disk status */
 
 /**
   * @brief  DeInitializes the SDIO interface.
@@ -879,16 +878,6 @@ SD_Error SD_GetCardInfo(SD_CardInfo *cardinfo)
   return(errorstatus);
 }
 
-/**
-  * @brief  Enables wide bus opeartion for the requeseted card if supported by 
-  *         card.
-  * @param  WideMode: Specifies the SD card wide bus mode. 
-  *   This parameter can be one of the following values:
-  *     @arg SDIO_BusWide_8b: 8-bit data transfer (Only for MMC)
-  *     @arg SDIO_BusWide_4b: 4-bit data transfer
-  *     @arg SDIO_BusWide_1b: 1-bit data transfer
-  * @retval SD_Error: SD Card Error code.
-  */
 SD_Error SD_GetCardStatus(SD_CardStatus *cardstatus)
 {
   SD_Error errorstatus = SD_OK;
@@ -1249,7 +1238,6 @@ SD_Error SD_ReadMultiBlocks(uint8_t *readbuff, uint32_t ReadAddr, uint16_t Block
   */
 SD_Error SD_WaitReadOperation(void)
 {
-  SD_Error errorstatus = SD_OK;
 
   while ((SD_DMAEndOfTransferStatus() == RESET) && (TransferEnd == 0) && (TransferError == SD_OK))
   {}
@@ -1259,7 +1247,7 @@ SD_Error SD_WaitReadOperation(void)
     return(TransferError);
   }
 
-  return(errorstatus);
+  return(SD_OK);
 }
 
 /**
@@ -2410,5 +2398,202 @@ uint8_t convert_from_bytes_to_power_of_two(uint16_t NumberOfBytes)
   return(count);
 }
 
+/*
+ * Get Disk Status
+ * ouput
+ *		STA_OK		: disk is ready
+ *		STA_NOINIT	: initialization required
+ *		STA_NODISK	: disk not available
+ */
 
-/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/
+DSTATUS disk_status ( BYTE drv )
+{
+	/* only one drive is supported */
+	if( drv != 0 )  return STA_NODISK;
+
+	/* check if SDIO module is powered on */
+	if( SDIO_GetPowerState() == SDIO_PowerState_OFF )
+		return STA_NOINIT;
+	else 
+		return STA_OK;
+
+}
+
+/*
+ * Initialize SD module
+ *	output
+ *		STA_OK		: disk is ready
+ *		STA_NOINIT	: initialization required
+ *		STA_NODISK	: disk not available
+ */
+
+DSTATUS disk_initialize ( BYTE drv )
+{
+	/* only one drive is supported */
+	if(drv != 0) return STA_NODISK;
+
+	if(SD_Init() == SD_OK)
+	{
+		/* Set Block Size with FAT_SECTORSIZE once and for all */
+		/* regardless of SD card type */
+		SDIO_CmdInitStructure.SDIO_Argument = FAT_SECTORSIZE;
+		SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_SET_BLOCKLEN;
+		SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+		SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+		SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+		SDIO_SendCommand(&SDIO_CmdInitStructure);
+
+		if( CmdResp1Error(SD_CMD_SET_BLOCKLEN) != SD_OK )
+			return STA_NOINIT;
+		else
+			return STA_OK;
+	}
+	else
+		return STA_NOINIT;
+}
+
+/*
+ * Read sector
+ *	output
+ *		RES_OK		
+ *		RES_ERROR	: R/W error
+ *		RES_WRPRT
+ *		RES_NOTRDY	: disk not ready
+ *		RES_PARERR	: invalid parameter
+ */
+
+DRESULT disk_read (BYTE drv, BYTE *buff, DWORD sector, BYTE count)
+{
+	SDCardState s;
+
+	if( drv != 0 ) return RES_PARERR;
+	if( !count ) return RES_PARERR;
+
+	s = SD_GetState();
+
+	if( (s == SD_CARD_READY) || (s == SD_CARD_IDENTIFICATION) )
+		return RES_NOTRDY;
+	else if( (s == SD_CARD_ERROR) || (s == SD_CARD_DISCONNECTED) )
+		return RES_ERROR;
+	else if( s != SD_CARD_TRANSFER )
+		while( SD_GetState() != SD_CARD_TRANSFER );
+
+	sector *= FAT_SECTORSIZE; /* Convert LBA to byte address */
+
+	if( count == 1 )
+	{
+		SD_ReadBlock( buff, sector, FAT_SECTORSIZE );
+	}
+	else
+	{
+		SD_ReadMultiBlocks( buff, sector, FAT_SECTORSIZE, count );
+	}
+	SD_WaitReadOperation();
+
+	while(SD_GetStatus() != SD_TRANSFER_OK);
+
+	return RES_OK;
+
+}
+
+
+/*
+ * Write Sector                                                       
+ *	output
+ *		RES_OK		
+ *		RES_ERROR	: R/W error
+ *		RES_WRPRT
+ *		RES_NOTRDY	: disk not ready
+ *		RES_PARERR	: invalid parameter
+ */
+
+DRESULT disk_write (BYTE drv, const BYTE *buff, DWORD sector, BYTE count)
+{
+
+	SDCardState s;
+
+	if( drv != 0 ) return RES_PARERR;
+	if( !count ) return RES_PARERR;
+
+	s = SD_GetState();
+
+	if( (s == SD_CARD_READY) || (s == SD_CARD_IDENTIFICATION) )
+		return RES_NOTRDY;
+	else if( (s == SD_CARD_ERROR) || (s == SD_CARD_DISCONNECTED) )
+		return RES_ERROR;
+	else if( s != SD_CARD_TRANSFER )
+		while( SD_GetState() != SD_CARD_TRANSFER );
+
+	sector *= FAT_SECTORSIZE; /* Convert LBA to byte address */
+
+	if( count == 1 )
+	{
+		SD_WriteBlock((uint8_t*)buff, sector, FAT_SECTORSIZE);
+	}
+	else
+	{
+		SD_WriteMultiBlocks((uint8_t*)buff, sector, FAT_SECTORSIZE, count);
+	}
+	SD_WaitWriteOperation();
+
+	while(SD_GetStatus() != SD_TRANSFER_OK);
+
+	return RES_OK;
+
+}
+
+
+/* 
+ * Miscellaneous Functions
+ */
+
+DRESULT disk_ioctl ( BYTE drv, BYTE ctrl, void *buff )
+{
+
+	if( drv != 0 ) return RES_PARERR;
+
+	if ( disk_status(drv) & STA_NOINIT) return RES_NOTRDY;
+
+	if( ctrl == CTRL_SYNC ) {
+		/* do something here */
+		return RES_OK;
+	}
+	else if( ctrl == GET_SECTOR_SIZE ) {
+		*(DWORD*)buff = FAT_SECTORSIZE;
+		return RES_OK;
+	}
+#if _USE_MKFS && !_FS_READONLY
+	else if( ctrl == GET_SECTOR_COUNT ) {
+		*(DWORD*)buff = SDCardInfo.CardCapacity/FAT_SECTORSIZE;
+		return RES_OK;
+	}
+	else if( ctrl == GET_BLOCK_SIZE ) {
+		*(DWORD*)buff = SDCardInfo.CardBlockSize;
+		return RES_OK;
+	}
+#endif
+	else if( ctrl == CTRL_ERASE_SECTOR ) {
+		if(SD_Erase( (*((DWORD*)buff)) * FAT_SECTORSIZE, 
+			(*((DWORD*)buff+1)) * FAT_SECTORSIZE) == SD_OK)
+			return RES_OK;
+		else
+			return RES_ERROR;
+	}
+
+}
+
+/*
+ * User Provided Timer Function for FatFs module
+ */
+
+DWORD get_fattime (void)
+{
+	return	  ((DWORD)(2010 - 1980) << 25)	/* Fixed to Jan. 1, 2010 */
+			| ((DWORD)1 << 21)
+			| ((DWORD)1 << 16)
+			| ((DWORD)0 << 11)
+			| ((DWORD)0 << 5)
+			| ((DWORD)0 >> 1);
+}
+
+/* END OF FILE */

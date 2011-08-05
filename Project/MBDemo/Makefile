@@ -134,10 +134,12 @@ C_SRC += ../../Utilities/miniSTM32/miniSTM32.c
 C_SRC += ../../Utilities/miniSTM32/miniSTM32_sd.c
 
 
-# Support functions
+# Support functions : NewLibrary
 C_SRC += ../../Utilities/Support/syscalls.c
 C_SRC += ../../Utilities/Support/term_io.c
 C_SRC += ../../Utilities/Support/comm.c
+# Support functions : FAT
+C_SRC += ../../Utilities/Support/ff.c
 
 # Startup 
 S_SRC = ../../Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x/startup/gcc_ride7/startup_stm32f10x_hd.s

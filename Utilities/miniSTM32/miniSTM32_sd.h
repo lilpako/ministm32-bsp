@@ -6,17 +6,6 @@
   * @date    07-March-2011
   * @brief   This file contains all the functions prototypes for the SD Card 
   *          stm32_eval_sdio_sd driver firmware library.
-  ******************************************************************************
-  * @attention
-  *
-  * THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
-  * WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE
-  * TIME. AS A RESULT, STMICROELECTRONICS SHALL NOT BE HELD LIABLE FOR ANY
-  * DIRECT, INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY CLAIMS ARISING
-  * FROM THE CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE
-  * CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
-  *
-  * <h2><center>&copy; COPYRIGHT 2011 STMicroelectronics</center></h2>
   ******************************************************************************  
   */ 
 
@@ -31,25 +20,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "miniSTM32.h"
 
-/** @addtogroup Utilities
-  * @{
-  */
-  
-/** @addtogroup STM32_EVAL
-  * @{
-  */ 
-
-/** @addtogroup Common
-  * @{
-  */
-  
-/** @addtogroup STM32_EVAL_SDIO_SD
-  * @{
-  */  
-
-/** @defgroup STM32_EVAL_SDIO_SD_Exported_Types
-  * @{
-  */ 
 typedef enum
 {
 /** 
@@ -222,14 +192,6 @@ typedef struct
   uint8_t CardType;
 } SD_CardInfo;
 
-/**
-  * @}
-  */
-  
-/** @defgroup STM32_EVAL_SDIO_SD_Exported_Constants
-  * @{
-  */ 
-
 /** 
   * @brief SDIO Commands  Index 
   */
@@ -310,10 +272,10 @@ typedef struct
 #define SD_CMD_SD_APP_SECURE_WRITE_MKB             ((uint8_t)48) /*!< For SD Card only */
   
 /* Uncomment the following line to select the SDIO Data transfer mode */  
-#define SD_DMA_MODE                                ((uint32_t)0x00000000)
 /*
 #define SD_POLLING_MODE                            ((uint32_t)0x00000002)
 */
+#define SD_DMA_MODE                                ((uint32_t)0x00000000)
 
 
 /**
@@ -334,20 +296,6 @@ typedef struct
 #define SDIO_SECURE_DIGITAL_IO_COMBO_CARD          ((uint32_t)0x00000006)
 #define SDIO_HIGH_CAPACITY_MMC_CARD                ((uint32_t)0x00000007)
 
-/**
-  * @}
-  */ 
-  
-/** @defgroup STM32_EVAL_SDIO_SD_Exported_Macros
-  * @{
-  */ 
-/**
-  * @}
-  */ 
-
-/** @defgroup STM32_EVAL_SDIO_SD_Exported_Functions
-  * @{
-  */ 
 void SD_DeInit(void);
 SD_Error SD_Init(void);
 SDTransferState SD_GetStatus(void);
@@ -371,29 +319,16 @@ SD_Error SD_SendSDStatus(uint32_t *psdstatus);
 SD_Error SD_ProcessIRQSrc(void);
 SD_Error SD_WaitReadOperation(void);
 SD_Error SD_WaitWriteOperation(void);
+
+
+/* FatFs support */
+#define FAT_SECTORSIZE			512
+
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __STM32_EVAL_SDIO_SD_H */
-/**
-  * @}
-  */
+#endif /*  __MINISTM32_SD_H */
 
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */ 
-
-/**
-  * @}
-  */ 
-
-/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/
+/**** END OF FILE ****/
