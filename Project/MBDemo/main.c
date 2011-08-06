@@ -1,14 +1,13 @@
 /**
   ******************************************************************************
-  * SIOTest/main.c 
+  * MBDemo/main.c 
   * author: Brian
   * version: V0.1.1
   * date: 21 July 2011
   * To Do List:
   *			Documentation!
   ******************************************************************************
-  * This file demonstrate the function of SIO board
-  * Be sure to turn on the -D USE_MINISTM32_SIO flag in your Makefile
+  * This file demonstrate the function of main board
   ******************************************************************************
   */ 
 

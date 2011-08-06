@@ -8,7 +8,6 @@
   *			Documentation!
   ******************************************************************************
   * This file demonstrate the function of SIO board
-  * Be sure to turn on the -D USE_MINISTM32_SIO flag in your Makefile
   ******************************************************************************
   */ 
 

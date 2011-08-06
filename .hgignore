@@ -19,6 +19,7 @@ syntax: glob
 *.map
 *.d
 *.swp
+*.htm
 
 #
 # Top-level generic files
