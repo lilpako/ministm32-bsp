@@ -1,25 +1,29 @@
-/**
-  ******************************************************************************
-  * miniSTM32_sio.h
-  * Brian
-  * V0.1.0
-  * 06-July-2011
-  * This file contains definitions for the simple I/O extension board
-  * 
-  * Connection pinout
-  *
-  *		miniSTM32				SIO
-  *		1 (3V)					1 (3V3)
-  *		2 (PE2)					2 (BTN01)
-  *		3 (PE3)					3 (BTN02)
-  *		5 (PE4)					4 (LED01)
-  *		10 (PB0/TIM3_CH3)		5 (LED02)
-  *		13 (PA1/TIM2_CH2)		6 (PIEZO)
-  *		9 (PC1/ADC123_IN11)		7 (POTENTIOMETER)
-  *		8 (GND)					8 (GND)
-  *
-  ******************************************************************************
-  */ 
+/*******************************************************************************
+ * @file	miniSTM32_sio.h
+ * @author	Brian
+ * @version	V0.1.0
+ * @date	06-July-2011
+ * @brief	This file contains definitions for the simple I/O extension board.
+ * 
+ * Simpile I/O extension board consists of 
+ *		- Two push button switch input (floating)
+ *		- Two GPIO controlled LED
+ *		- One PWM controlled piezo transducer
+ *		- One potentiometer input
+ *
+ * Connection pinout
+ *
+ *		miniSTM32				SIO
+ *		1 (3V)					1 (3V3)
+ *		2 (PE2)					2 (BTN01)
+ *		3 (PE3)					3 (BTN02)
+ *		5 (PE4)					4 (LED01)
+ *		10 (PB0/TIM3_CH3)		5 (LED02)
+ *		13 (PA1/TIM2_CH2)		6 (PIEZO)
+ *		9 (PC1/ADC123_IN11)		7 (POTENTIOMETER)
+ *		8 (GND)					8 (GND)
+ *
+ */ 
   
 #ifndef __MINISTM32_SIO_H
 #define __MINISTM32_SIO_H
@@ -30,17 +34,6 @@
 
 #include "stm32f10x.h"
 
-/****************************************************************************
-  * MINISTM32 Exported Functions : Depends on each extension board
-  */
-
-/**
-  * Simpile I/O extension board consists of 
-  *		- Two push button switch input (floating)
-  *		- Two GPIO controlled LED
-  *		- One PWM controlled piezo transducer
-  *		- One potentiometer input
-  */
 
 typedef enum
 {
@@ -55,7 +48,7 @@ typedef enum
 } SIO_Button_TypeDef;
 
 
-#ifndef SIO_DEFINITION_OVERRIDE
+/* definition of pepheral resources: some of these can be overriden */
 #define SIO_BTN1_GPIO_PIN		GPIO_Pin_2
 #define SIO_BTN1_GPIO_PORT		GPIOE
 #define SIO_BTN1_GPIO_CLK		(RCC_APB2Periph_GPIOE|RCC_APB2Periph_AFIO)
@@ -95,7 +88,6 @@ typedef enum
 #define SIO_POT_GPIO_CLK		RCC_APB2Periph_ADC1
 #define SIO_POT_ADC				ADC1
 #define SIO_POT_ADC_CHN			ADC_Channel_11
-#endif /* SIO_DEFINTION_OVERRIDE */
 
 #define SIO_GPIO_SPEED			GPIO_Speed_50MHz
 #define PIEZO_INIT_PERIOD		(1000)

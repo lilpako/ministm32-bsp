@@ -1,12 +1,9 @@
-/**
-  ******************************************************************************
-  * miniSTM32.c
-  * Brian
-  * V0.1.0(based on ST version V4.5.0)
-  * 06-July-2011
-  ******************************************************************************
-  */ 
-
+/*******************************************************************************
+ * @file	miniSTM32.c
+ * @author	Brian
+ * @version	V0.1.0(based on ST version V4.5.0)
+ * @date	06-July-2011
+ */ 
 
   
 #include "miniSTM32_sio.h"
@@ -14,12 +11,14 @@
 #include "stm32f10x_tim.h"
 
 /*
- * Initialization of SIO board pepherals
+ * @brief	Initialization of SIO board pepherals:
  *		SIO_BTNn	: GPIO input / EXTI
  *		SIO_LED1	: GPIO output
  *		SIO_LED2	: TIM PWM output
  *		SIO_PIEZO	: TIM PWM output
- *		SIO_POT		: ADC input
+ *		SIO_POT		: ADC input.
+ * @param	None
+ * @retval	None
  */
 void miniSTM32_SIO_BoardInit(void)
 {

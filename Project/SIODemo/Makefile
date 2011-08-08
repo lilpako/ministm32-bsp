@@ -1,5 +1,5 @@
 ####################################################################
-# Makefile                                                         #
+# PHONY definitions                                                #
 ####################################################################
 
 .PHONY: all clean xref flash
@@ -15,8 +15,6 @@ LST_DIR = lst
 
 ####################################################################
 # Definitions of toolchain.                                        #
-# You might need to change paths/etc to match your system          #
-# This makefile assumes that the tools are in the users PATH       #
 ####################################################################
 
 # CodeSourcery G++ Lite

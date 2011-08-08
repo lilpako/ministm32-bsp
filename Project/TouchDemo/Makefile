@@ -8,7 +8,7 @@
 # Definitions                                                      #
 ####################################################################
 
-PROJECTNAME = LCDDemo
+PROJECTNAME = TouchDemo
 OBJ_DIR = build
 EXE_DIR = exe
 LST_DIR = lst

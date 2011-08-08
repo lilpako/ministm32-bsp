@@ -1,5 +1,5 @@
 /*******************************************************************************
- * @file    Project/MBDemo/stm32f10x_it.h 
+ * @file    Project/TouchDemo/stm32f10x_it.h 
  * @author	Brian
  * @version	V0.2.0
  * @date    07-August-2011
@@ -22,7 +22,6 @@ void PendSV_Handler(void);
 void SysTick_Handler(void);
 
 void EXTI15_10_IRQHandler(void);	/* pushbutton interrupt handler */
-void SDIO_IRQHandler(void);			/* SDIO interrupt handler */
 
 #endif /* __STM32F10x_IT_H */
 

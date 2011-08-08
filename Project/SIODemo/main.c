@@ -1,15 +1,11 @@
-/**
-  ******************************************************************************
-  * SIODemo/main.c 
-  * author: Brian
-  * version: V0.1.1
-  * date: 21 July 2011
-  * To Do List:
-  *			Documentation!
-  ******************************************************************************
-  * This file demonstrate the function of SIO board
-  ******************************************************************************
-  */ 
+/*******************************************************************************
+ * @file	Project/SIODemo/main.c 
+ * @author	Brian
+ * @version	V0.1.1
+ * @date	21 July 2011
+ * @brief	This file demonstrate the function of SIO board
+ ******************************************************************************
+ */ 
 
 #include "stm32f10x.h"
 #include "miniSTM32.h"
@@ -19,6 +15,7 @@
 extern volatile uint16_t u16IRQFlag;		/* IRQ number for your reference */
 extern volatile uint16_t u16LEDFlasher;		/* LED auto turn-off duration */
 
+/* demo menu list */
 enum menuItem{
 	menuFirst = 0,
 	menuLED = 0,
@@ -26,14 +23,20 @@ enum menuItem{
 	menuPOT,
 	menuLast
 	};
+
+/* menu string */
 char* menuString[] = {
 	"(1) LED On//OFF Control\n", \
 	"(2) Piezo Buzzer Frequency Control\n", \
 	"(3) Potentiometer Readout\n"
-	};
+};
 
 
-
+/**
+ * @brief	Main program
+ * @param	None
+ * @retval	None: no exit point
+ */
 int main(void)
 {
 	uint16_t u16Freq = MIN_PIEZO_FREQ;	/* pwn frequency of piezo drive */
@@ -126,12 +129,12 @@ int main(void)
 #ifdef  USE_FULL_ASSERT
 
 /**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
+ * @brief  Reports the name of the source file and the source line number
+ *         where the assert_param error has occurred.
+ * @param  file: pointer to the source file name
+ * @param  line: assert_param error line source number
+ * @retval None
+ */
 void assert_failed(uint8_t* file, uint32_t line)
 { 
   /* User can add his own implementation to report the file name and line number,
@@ -143,6 +146,6 @@ void assert_failed(uint8_t* file, uint32_t line)
   }
 }
 
-#endif
+#endif // USE_FULL_ASSERT
 
-/* END OF FILE */
+/* End of File */

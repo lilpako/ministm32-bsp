@@ -1,14 +1,19 @@
-/*******************************************************************************
- * @file		Project/LCDDemo/main.c 
- * @author		Brian
- * @version		V0.2.0
- * @date		21 July 2011
- * @brief		This file demonstrate the function of LCD board
- */ 
+/**
+  ******************************************************************************
+  * TouchDemo/main.c 
+  * author: Brian
+  * version: V0.1.1
+  * date: 21 July 2011
+  * To Do List:
+  *			Documentation!
+  ******************************************************************************
+  * This file demonstrate the function of LCD board
+  ******************************************************************************
+  */ 
 
 #include "stm32f10x.h"			/* CMSIS */
 #include "miniSTM32.h"			/* mainboard BSP */
-#include "miniSTM32_lcd.h"		/* LCD support */
+#include "miniSTM32_lcd.h"		/* SDIO - SD support */
 #include <stdio.h>
 
 /* demo menu list */
@@ -19,16 +24,14 @@ enum{
 	MENU_END
 };
 
-/* interrupt ID from IRQ routine */
+/* interrupt ID from IRQ routines */
 extern volatile uint16_t u16IRQFlag;
-
-/* milisecond delay routine */
 extern void MsecDelay( uint16_t u16Delay );
+
 
 extern unsigned int  HDP;
 extern unsigned int  VDP;
 
-/* delay parameters */
 #define VERYSHORT_DELAY	100
 #define SHORT_DELAY		200
 #define MEDIUM_DELAY	500
@@ -36,32 +39,26 @@ extern unsigned int  VDP;
 
 void TestLCD(void);
 
-/**
- * @brief	Main program
- * @param	None
- * @retval	None: no exit point
- */
 int main(void)
 {
 	uint16_t u16Menu=0;
 
-	/* Initialize SysTick - 1msec resolution */
+	/* Initialize SysTick - 1msec */
 	SysTick_Config(SystemCoreClock / 1000);
 
 	/* Initialize main board peripherals */
 	miniSTM32_BoardInit();
 	printf("miniSTM32 mainboard initialized\n");
 
-	/* Initialize LCD support */
+	/* Initialize LCD */
 	LCD_Init();
 	printf("LCD initialized\n");
 
+        
 	while (1) 
 	{
-		/* main menu controlled by pushbutton interrupt */
 		if( u16IRQFlag == MAIN_BTN_EXTI_LINE ) {
 
-			/* clear button interrupt flag */
 			u16IRQFlag = 0;
 
 			if( u16Menu == MENU_LED_ON ) {
@@ -77,7 +74,6 @@ int main(void)
 				printf("LCD test finished\n");
 			}
 
-			/* at the end of menu, restart all over */
 			if( ++u16Menu == MENU_END )
 				u16Menu = 0;
 
@@ -89,11 +85,6 @@ int main(void)
 	}
 }
 
-/**
- * @brief	Test output to LCD
- * @param	None
- * @retval	None
- */
 void TestLCD(void)
 {
 
@@ -380,23 +371,23 @@ void TestLCD(void)
 #ifdef  USE_FULL_ASSERT
 
 /**
- * @brief	Reports the name of the source file and the source line number
- *			where the assert_param error has occurred.
- * @param	file: pointer to the source file name
- * @param	line: assert_param error line source number
- * @retval	None
- */
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
 void assert_failed(uint8_t* file, uint32_t line)
 { 
-	/* User can add his own implementation to report the file name and line number,
-	ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+  /* User can add his own implementation to report the file name and line number,
+     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
 
-	/* Infinite loop */
-	while (1)
-	{
-	}
+  /* Infinite loop */
+  while (1)
+  {
+  }
 }
 
 #endif // USE_FULL_ASSERT
 
-/* End of File */
+/* END OF FILE */

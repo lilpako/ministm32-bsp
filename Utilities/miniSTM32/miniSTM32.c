@@ -1,18 +1,15 @@
-/**
-  ******************************************************************************
-  * file    miniSTM32.c
-  * author  Brian
-  * version V0.1.1(based on ST Peripheral Library V4.5.0)
-  * date    28-June-2011
-  * brief   This file provides:
-  *         - set of firmware functions to manage Leds, push-button and COM ports
-  *         - low level initialization functions for SD card (on SDIO), SPI serial
-  *           flash (sFLASH)
-  *			 
-  ******************************************************************************
-  */ 
+/*******************************************************************************
+ * @file    miniSTM32.c
+ * @author  Brian
+ * @version V0.1.1
+ * @date    28-June-2011
+ * @brief   This file provides:
+ *         - set of firmware functions to manage Leds, push-button and COM ports
+ *         - low level initialization functions for SD card (on SDIO), SPI serial
+ *           flash (sFLASH)
+ *			 
+ */ 
   
-/* Includes ------------------------------------------------------------------*/
 #include "miniSTM32.h"
 #include "stm32f10x_dma.h"
 #include "stm32f10x_sdio.h"
@@ -20,17 +17,24 @@
 #include "stm32f10x_usart.h"
 
 
+/**
+ * @brief	Initialize main board
+ * @param	None
+ * @retval	None
+ */
+
 void miniSTM32_BoardInit(void)
 {
-	/* LED */
+	/* Initialize LED */
 	miniSTM32_LEDInit();
 
-	/* Push button */
+	/* Initialize push buttons */
 	miniSTM32_PBInit(BTN_MODE_EXTI);
 
-	/* COM port */
+	/* Initialize COM port */
 	miniSTM32_COMInit2(115200);
 }
+
 
 void miniSTM32_LEDInit(void)
 {

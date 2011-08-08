@@ -1,5 +1,5 @@
 /*******************************************************************************
- * @file    Project/LCDDemo/stm32f10x_it.c 
+ * @file    Project/TouchDemo/stm32f10x_it.c 
  * @author  Brian
  * @version V0.2.0
  * @date    07-August-2011

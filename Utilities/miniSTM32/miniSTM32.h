@@ -1,13 +1,13 @@
-/**
-  ******************************************************************************
-  * @file    miniSTM32.h
-  * @author  Brian
-  * @version V0.1.1 (based on STM32_EVAL version V4.5.0)
-  * @date    28-June-2011
-  * @brief   This file contains definitions	for miniSTM32 board's peripherals, 
-  *			 i.e., led, push-button, COM port, serial EEPROM. 
-  ******************************************************************************
-  */ 
+/*
+ ******************************************************************************
+ * miniSTM32.h
+ * Brian
+ * (based on STM32_EVAL version V4.5.0)
+ * 28-June-2011
+ * This file contains definitions	for miniSTM32 board's peripherals, 
+ *	i.e., led, push-button, COM port, serial EEPROM. 
+ ******************************************************************************
+ */ 
   
 #ifndef __MINISTM32_H
 #define __MINISTM32_H

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * @file    Project/MBDemo/stm32f10x_conf.h 
+ * @file    Project/TouchDemo/stm32f10x_conf.h 
  * @author  Brian
  * @version V0.2.0
  * @date    07-August-2011
@@ -34,7 +34,7 @@
 #include "stm32f10x_wwdg.h"
 #include "misc.h" /* High level functions for NVIC and SysTick */
 
-/* Uncomment the line below to expanse the "assert_param" macro in the 
+/* Uncomment the line below to expand the "assert_param" macro in the 
    Standard Peripheral Library drivers code */
 
 /* #define USE_FULL_ASSERT    1 */
