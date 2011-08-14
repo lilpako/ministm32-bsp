@@ -16,6 +16,99 @@
 #include "stm32f10x_spi.h"
 #include "stm32f10x_usart.h"
 
+/*
+ * LED
+ */
+#define MAIN_LED_PIN					GPIO_Pin_5
+#define MAIN_LED_GPIO_PORT				GPIOB
+#define MAIN_LED_GPIO_CLK				RCC_APB2Periph_GPIOB
+
+/*
+ * COM port
+ */ 
+#define MAIN_COM_USART					USART1
+#define MAIN_COM_CLK					RCC_APB2Periph_USART1
+#define MAIN_COM_TX_PIN					GPIO_Pin_9
+#define MAIN_COM_TX_GPIO_PORT			GPIOA
+#define MAIN_COM_TX_GPIO_CLK			RCC_APB2Periph_GPIOA
+#define MAIN_COM_RX_PIN					GPIO_Pin_10
+#define MAIN_COM_RX_GPIO_PORT			GPIOA
+#define MAIN_COM_RX_GPIO_CLK			RCC_APB2Periph_GPIOA
+#define MAIN_COM_IRQn					USART1_IRQn
+#define MAIN_COM_USART_CLK				(RCC_APB2Periph_USART1 | RCC_APB2Periph_AFIO)
+
+/*
+ * FLASH SPI Interface pins
+ */  
+#define sFLASH_SPI                       SPI1
+#define sFLASH_SPI_CLK                   RCC_APB2Periph_SPI1
+#define sFLASH_SPI_SCK_PIN               GPIO_Pin_5                  /* PA.05 */
+#define sFLASH_SPI_SCK_GPIO_PORT         GPIOA                       /* GPIOA */
+#define sFLASH_SPI_SCK_GPIO_CLK          RCC_APB2Periph_GPIOA
+#define sFLASH_SPI_MISO_PIN              GPIO_Pin_6                  /* PA.06 */
+#define sFLASH_SPI_MISO_GPIO_PORT        GPIOA                       /* GPIOA */
+#define sFLASH_SPI_MISO_GPIO_CLK         RCC_APB2Periph_GPIOA
+#define sFLASH_SPI_MOSI_PIN              GPIO_Pin_7                  /* PA.07 */
+#define sFLASH_SPI_MOSI_GPIO_PORT        GPIOA                       /* GPIOA */
+#define sFLASH_SPI_MOSI_GPIO_CLK         RCC_APB2Periph_GPIOA
+#define sFLASH_CS_PIN                    GPIO_Pin_4                  /* PA.04 */
+#define sFLASH_CS_GPIO_PORT              GPIOA                       /* GPIOA */
+#define sFLASH_CS_GPIO_CLK               RCC_APB2Periph_GPIOA
+
+/*
+ * SST25VF016B SPI Flash supported commands
+ */
+#define sFLASH_WIP_FLAG					0x01
+
+#define sFLASH_DUMMY_BYTE				0xA5
+#define sFLASH_BP_ALL					0x1C	/* all block  */
+#define sFLASH_BP_NONE					0x00	/* no block   */
+#define sFLASH_BP_32					0x04	/* upper 1/32 */
+#define sFLASH_BP_16					0x08	/* upper 1/16 */
+#define sFLASH_BP_8						0x0C	/* upper 1/8  */
+#define sFLASH_BP_4						0x10	/* upper 1/4  */
+#define sFLASH_BP_2						0x14	/* upper 1/2  */
+
+#define sFLASH_SST25VF016_ID			0xBF2541
+
+#define sFLASH_CMD_RD25M				0x03
+#define sFLASH_CMD_RD80M				0x0B
+#define sFLASH_CMD_ER04K				0x20
+#define sFLASH_CMD_ER32K				0x52
+#define sFLASH_CMD_ER64K				0xD8
+#define sFLASH_CMD_ERCHIP				0x60
+#define sFLASH_CMD_WRBYTE				0x02
+#define sFLASH_CMD_WRAAIW				0xAD
+#define sFLASH_CMD_RDSR					0x05
+#define sFLASH_CMD_EWSR					0x50
+#define sFLASH_CMD_WRSR					0x01
+#define sFLASH_CMD_WREN					0x06
+#define sFLASH_CMD_WRDI					0x04
+#define sFLASH_CMD_RDID					0x90
+#define sFLASH_CMD_JEDEC				0x9F
+#define sFLASH_CMD_EBSY					0x70
+#define sFLASH_CMD_DBSY					0x80
+
+#define sFLASH_CS_LOW()					GPIO_ResetBits(sFLASH_CS_GPIO_PORT, sFLASH_CS_PIN)
+#define sFLASH_CS_HIGH()				GPIO_SetBits(sFLASH_CS_GPIO_PORT, sFLASH_CS_PIN)   
+
+/* serial flash */
+uint8_t sFLASH_SendByte(uint8_t byte);
+uint16_t sFLASH_SendHalfWord(uint16_t HalfWord);
+void sFLASH_WriteEnable(void);
+void sFLASH_WriteDisable(void);
+void sFLASH_WaitForWriteEnd(void);
+void sFLASH_WriteByte(uint8_t Byte, uint32_t WriteAddr);
+uint8_t sFLASH_ReadRegister(void);
+void sFLASH_WriteRegister(uint8_t RegData);
+
+/* sdcard*/
+void SD_LowLevel_DeInit(void);
+void SD_LowLevel_Init(void); 
+void SD_LowLevel_DMA_TxConfig(uint32_t *BufferSRC, uint32_t BufferSize);
+void SD_LowLevel_DMA_RxConfig(uint32_t *BufferDST, uint32_t BufferSize);
+uint32_t SD_DMAEndOfTransferStatus(void);
+
 
 /**
  * @brief	Initialize main board
@@ -181,7 +274,7 @@ uint32_t miniSTM32_PBGetState(void)
 /*
  * This function initializes the peripherals used by the SPI FLASH driver.
  */
-void sFLASH_Init(void)
+void miniSTM32_FlashInit(void)
 {
 	SPI_InitTypeDef  SPI_InitStructure;
 	GPIO_InitTypeDef GPIO_InitStructure;
@@ -218,13 +311,21 @@ void sFLASH_Init(void)
 	/*!< Deselect the FLASH: Chip Select high */
 	sFLASH_CS_HIGH();
 
-	/*!< SPI configuration */
+	/* SPI configuration */
 	SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
 	SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
 	SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
+	/* SPI Mode 0: CPOL=0, CPHA=0 */
+	/*
+	SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
+	SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;
+	*/
+	/* SPI Mode 3: CPOL=1, CPHA=1 */
 	SPI_InitStructure.SPI_CPOL = SPI_CPOL_High;
 	SPI_InitStructure.SPI_CPHA = SPI_CPHA_2Edge;
+	/* Separate CS control */
 	SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
+	/* SPI clock: PCLK2/4 = 18MHz */
 	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_4;
 	SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
 	SPI_InitStructure.SPI_CRCPolynomial = 7;
@@ -237,39 +338,6 @@ void sFLASH_Init(void)
 	sFLASH_WriteRegister( sFLASH_BP_NONE );
 }
 
-/*
- * This function deinitializes the peripherals used by the SPI FLASH driver.
- */
-void sFLASH_DeInit(void)
-{
-	GPIO_InitTypeDef GPIO_InitStructure;
-
-	/*!< Disable the sFLASH_SPI  */
-	SPI_Cmd(sFLASH_SPI, DISABLE);
-  
-	/*!< DeInitializes the sFLASH_SPI */
-	SPI_I2S_DeInit(sFLASH_SPI);
-  
-	/*!< sFLASH_SPI Periph clock disable */
-	RCC_APB2PeriphClockCmd(sFLASH_SPI_CLK, DISABLE);
-
-	/*!< Configure sFLASH_SPI pins: SCK */
-	GPIO_InitStructure.GPIO_Pin = sFLASH_SPI_SCK_PIN;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-	GPIO_Init(sFLASH_SPI_SCK_GPIO_PORT, &GPIO_InitStructure);
-
-	/*!< Configure sFLASH_SPI pins: MISO */
-	GPIO_InitStructure.GPIO_Pin = sFLASH_SPI_MISO_PIN;
-	GPIO_Init(sFLASH_SPI_MISO_GPIO_PORT, &GPIO_InitStructure);
-
-	/*!< Configure sFLASH_SPI pins: MOSI */
-	GPIO_InitStructure.GPIO_Pin = sFLASH_SPI_MOSI_PIN;
-	GPIO_Init(sFLASH_SPI_MOSI_GPIO_PORT, &GPIO_InitStructure);
-
-	/*!< Configure sFLASH_CS_PIN pin: sFLASH Card CS pin */
-	GPIO_InitStructure.GPIO_Pin = sFLASH_CS_PIN;
-	GPIO_Init(sFLASH_CS_GPIO_PORT, &GPIO_InitStructure);
-}
 
 /*
  * @brief  Sends a byte through the SPI interface and return the byte received
@@ -368,7 +436,7 @@ void sFLASH_WaitForWriteEnd(void)
 }
 
 
-void sFLASH_Erase(BlockSize_TypeDef Size, uint32_t StartAddr)
+void miniSTM32_FlashErase(BlockSize_TypeDef Size, uint32_t StartAddr)
 {
 	uint8_t u8CmdByte;
 
@@ -443,7 +511,7 @@ void sFLASH_WriteByte(uint8_t Byte, uint32_t WriteAddr)
 }
 
 
-void sFLASH_WriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByte)
+void miniSTM32_FlashWriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByte)
 {
 	uint16_t u16Index = 0;
 
@@ -518,7 +586,7 @@ void sFLASH_WriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByte)
  * @param  NumByteToRead: number of bytes to read from the FLASH.
  * @retval None
  */
-void sFLASH_ReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr, uint16_t NumByte)
+void miniSTM32_FlashReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr, uint16_t NumByte)
 {
 	/*!< Select the FLASH: Chip Select low */
 	sFLASH_CS_LOW();
@@ -560,7 +628,7 @@ void sFLASH_ReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr, uint16_t NumByte)
  * @param  None
  * @retval FLASH identification
  */
-uint32_t sFLASH_ReadID(void)
+uint32_t miniSTM32_FlashReadID(void)
 {
 	uint32_t u32Temp = 0, u32TempX;
 

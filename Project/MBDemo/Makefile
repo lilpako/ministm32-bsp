@@ -2,7 +2,7 @@
 # Makefile                                                         #
 ####################################################################
 
-.PHONY: all clean xref flash
+.PHONY: all clean xref flash reset
 
 ####################################################################
 # Definitions                                                      #
@@ -55,12 +55,17 @@ CFLAGS += -mlittle-endian
 CFLAGS += -g 
 # Optimization
 CFLAGS += -Os 
-CFLAGS += -ffunction-sections 
 # preprocessor
 CFLAGS += -MD 
-# stm32f10x.h
+# stm32f10x.h specific
 CFLAGS += -D STM32F10X_HD
 CFLAGS += -D USE_STDPERIPH_DRIVER 
+# miniSTM32 specific
+CFLAGS += -D USE_SD_SUPPORT
+CFLAGS += -D USE_SD_FAT
+# garbage collection: this doesn't seem to work in CSLite
+CFLAGS += -ffunction-sections 
+CFLAGS += -Wl,--gc-sections
 
 # ARM specific
 ASMFLAGS += -mthumb 
@@ -213,3 +218,9 @@ xref:
 # Flash download via openocd
 flash:
 	openocd -f stm32flash.cfg
+
+# Reset via openocd
+reset:
+	openocd -f stm32reset.cfg
+
+# End of File #

@@ -25,6 +25,7 @@
 #include "miniSTM32_sd.h"		/* SDIO - SD support */
 #include <stdio.h>
 
+#define SD_TEST_RAW
 #if !defined(SD_TEST_RAW)
 #include "ff.h"					/* FatFs support */
 #endif
@@ -111,12 +112,12 @@ int main(void)
 	printf("miniSTM32 mainboard initialized\n");
 
 	/* Initialize SPI FLASH driver */
-	sFLASH_Init();
+	miniSTM32_FlashInit();
 	printf("serial FLASH  initialized\n");
 
 #ifdef SD_TEST_RAW
 	/* Initialize SD subsystem : for FAT test it is automatic */
-	if(SD_Init() == SD_OK)
+	if(miniSTM32_SDInit() == SD_OK)
 	{
 		printf("SD interface initialized\n");
 	}
@@ -139,25 +140,25 @@ int main(void)
 				printf("LED1 Turned Off\n");
 			}
 			else if( u16Menu == MENU_FLASH_READID ) {
-				u32FlashID = sFLASH_ReadID();
+				u32FlashID = miniSTM32_FlashReadID();
 				printf("JEDEC Flash ID: %X\n", u32FlashID);
 			}
 			else if( u16Menu == MENU_FLASH_WRITE ) {
-				sFLASH_Erase(EBSIZE_4KB, FLASH_ADDRESS);
-				sFLASH_WriteBuffer(Tx_Buffer, FLASH_ADDRESS, sizeof(Tx_Buffer));
-				printf("sFLASH Write Data: %s\n", Tx_Buffer);
+				miniSTM32_FlashErase(EBSIZE_4KB, FLASH_ADDRESS);
+				miniSTM32_FlashWriteBuffer(Tx_Buffer, FLASH_ADDRESS, sizeof(Tx_Buffer));
+				printf("FLASH Write Data: %s\n", Tx_Buffer);
 			}
 			else if( u16Menu == MENU_FLASH_READ ) {
-				sFLASH_ReadBuffer(Rx_Buffer, FLASH_ADDRESS, sizeof(Rx_Buffer) - 1);
-				printf("sFLASH Read Back: %s\n", Rx_Buffer);
+				miniSTM32_FlashReadBuffer(Rx_Buffer, FLASH_ADDRESS, sizeof(Rx_Buffer) - 1);
+				printf("FLASH Read Back: %s\n", Rx_Buffer);
 			}
 			else if( u16Menu == MENU_FLASH_ERASE ) {
-				sFLASH_Erase(EBSIZE_4KB, FLASH_ADDRESS);
-				printf("sFLASH Erase Block: Data Erased\n");
+				miniSTM32_FlashErase(EBSIZE_4KB, FLASH_ADDRESS);
+				printf("FLASH Erase Block: Data Erased\n");
 			}
 			else if( u16Menu == MENU_FLASH_ERASECHECK ) {
-				sFLASH_ReadBuffer(Rx_Buffer, FLASH_ADDRESS, sizeof(Rx_Buffer) - 1);
-				printf("sFLASH Read Data Again: %s\n", Rx_Buffer);
+				miniSTM32_FlashReadBuffer(Rx_Buffer, FLASH_ADDRESS, sizeof(Rx_Buffer) - 1);
+				printf("FLASH Read Data Again: %s\n", Rx_Buffer);
 			}
 
 #ifdef SD_TEST_RAW
@@ -200,17 +201,17 @@ int main(void)
 void SD_EraseTest(void)
 {
 	/* Erase NumberOfBlocks Blocks of WRITE_BL_LEN(512 Bytes) */
-    Status = SD_Erase(0x00, (BLOCK_SIZE * NUMBER_OF_BLOCKS));
+    Status = miniSTM32_SDErase(0x00, (BLOCK_SIZE * NUMBER_OF_BLOCKS));
 
 	if (Status == SD_OK)
 	{
-		Status = SD_ReadMultiBlocks(Buffer_MultiBlock_Rx, 0x00, BLOCK_SIZE, NUMBER_OF_BLOCKS);
+		Status = miniSTM32_SDReadMultiBlocks(Buffer_MultiBlock_Rx, 0x00, BLOCK_SIZE, NUMBER_OF_BLOCKS);
 
 		/* Check if the Transfer is finished */
-		Status = SD_WaitReadOperation();
+		Status = miniSTM32_SDWaitReadOperation();
 
 		/* Wait until end of DMA transfer */
-		while(SD_GetStatus() != SD_TRANSFER_OK);
+		while(miniSTM32_SDGetStatus() != SD_TRANSFER_OK);
 	}
 
 	/* Check the correctness of erased blocks */
@@ -240,20 +241,20 @@ void SD_SingleBlockTest(void)
 	Fill_Buffer(Buffer_Block_Tx, BLOCK_SIZE, 0x320F);
 
 	/* Write block of 512 bytes on address 0 */
-	Status = SD_WriteBlock(Buffer_Block_Tx, 0x00, BLOCK_SIZE);
+	Status = miniSTM32_SDWriteBlock(Buffer_Block_Tx, 0x00, BLOCK_SIZE);
 
 	/* Check if the Transfer is finished */
-	Status = SD_WaitWriteOperation();
-	while(SD_GetStatus() != SD_TRANSFER_OK);
+	Status = miniSTM32_SDWaitWriteOperation();
+	while(miniSTM32_SDGetStatus() != SD_TRANSFER_OK);
 	
 	if (Status == SD_OK)
 	{
 		/* Read block of 512 bytes from address 0 */
-		Status = SD_ReadBlock(Buffer_Block_Rx, 0x00, BLOCK_SIZE);
+		Status = miniSTM32_SDReadBlock(Buffer_Block_Rx, 0x00, BLOCK_SIZE);
 
 		/* Check if the Transfer is finished */
-		Status = SD_WaitReadOperation();
-		while(SD_GetStatus() != SD_TRANSFER_OK);
+		Status = miniSTM32_SDWaitReadOperation();
+		while(miniSTM32_SDGetStatus() != SD_TRANSFER_OK);
 	}
 
 	/* Check the correctness of written data */
@@ -283,19 +284,19 @@ void SD_MultiBlockTest(void)
 	Fill_Buffer(Buffer_MultiBlock_Tx, MULTI_BUFFER_SIZE, 0x0);
 	
 	/* Write multiple block of many bytes on address 0 */
-	Status = SD_WriteMultiBlocks(Buffer_MultiBlock_Tx, 0x00, BLOCK_SIZE, NUMBER_OF_BLOCKS);
+	Status = miniSTM32_SDWriteMultiBlocks(Buffer_MultiBlock_Tx, 0x00, BLOCK_SIZE, NUMBER_OF_BLOCKS);
 
 	/* Check if the Transfer is finished */
-	Status = SD_WaitWriteOperation();
-	while(SD_GetStatus() != SD_TRANSFER_OK);
+	Status = miniSTM32_SDWaitWriteOperation();
+	while(miniSTM32_SDGetStatus() != SD_TRANSFER_OK);
 	
 	if (Status == SD_OK)
 	{
 		/* Read block of many bytes from address 0 */
-		Status = SD_ReadMultiBlocks(Buffer_MultiBlock_Rx, 0x00, BLOCK_SIZE, NUMBER_OF_BLOCKS);
+		Status = miniSTM32_SDReadMultiBlocks(Buffer_MultiBlock_Rx, 0x00, BLOCK_SIZE, NUMBER_OF_BLOCKS);
 		/* Check if the Transfer is finished */
-		Status = SD_WaitReadOperation();
-		while(SD_GetStatus() != SD_TRANSFER_OK);
+		Status = miniSTM32_SDWaitReadOperation();
+		while(miniSTM32_SDGetStatus() != SD_TRANSFER_OK);
 	}
 	
 	/* Check the correctness of written data */

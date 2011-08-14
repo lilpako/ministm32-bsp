@@ -13,30 +13,30 @@
  *			Programming Model (raw read/write case)
  *          ======================================= 
  *			// Initialization
- *			Status = SD_Init(); 
+ *			Status = miniSTM32_SDInit(); 
  *               
  *			// Enable SDIO interrupt
  *			SD_NVICConfig();
  *             
  *			// Raw write operation(single block)
- *			Status = SD_WriteBlock(buffer, address, 512);
- *			Status = SD_WaitWriteOperation();
- *			while(SD_GetStatus() != SD_TRANSFER_OK); 
+ *			Status = miniSTM32_SDWriteBlock(buffer, address, 512);
+ *			Status = miniSTM32_SDWaitWriteOperation();
+ *			while(miniSTM32_SDGetStatus() != SD_TRANSFER_OK); 
  *             
  *			// Raw write operation(multiple block)
- *			Status = SD_WriteMultiBlocks(buffer, address, 512, NUMBEROFBLOCKS);
- *			Status = SD_WaitWriteOperation();
- *			while(SD_GetStatus() != SD_TRANSFER_OK);     
+ *			Status = miniSTM32_SDWriteMultiBlocks(buffer, address, 512, NUMBEROFBLOCKS);
+ *			Status = miniSTM32_SDWaitWriteOperation();
+ *			while(miniSTM32_SDGetStatus() != SD_TRANSFER_OK);     
  *             
  *			// Raw read operation(single block)
- *			Status = SD_ReadBlock(buffer, address, 512);
- *			Status = SD_WaitReadOperation();
- *			while(SD_GetStatus() != SD_TRANSFER_OK);
+ *			Status = miniSTM32_SDReadBlock(buffer, address, 512);
+ *			Status = miniSTM32_SDWaitReadOperation();
+ *			while(miniSTM32_SDGetStatus() != SD_TRANSFER_OK);
  *             
  *			// Raw read operation(multiple block)
- *			Status = SD_ReadMultiBlocks(buffer, address, 512, NUMBEROFBLOCKS);
- *			Status = SD_WaitReadOperation();
- *			while(SD_GetStatus() != SD_TRANSFER_OK);            
+ *			Status = miniSTM32_SDReadMultiBlocks(buffer, address, 512, NUMBEROFBLOCKS);
+ *			Status = miniSTM32_SDWaitReadOperation();
+ *			while(miniSTM32_SDGetStatus() != SD_TRANSFER_OK);            
  *               
  *			Programming Model (raw read/write case)
  *          ======================================= 
@@ -260,16 +260,6 @@
 
 
 /** 
- * @brief  SDIO Transfer state  
- */   
-typedef enum
-{
-  SD_TRANSFER_OK  = 0,
-  SD_TRANSFER_BUSY = 1,
-  SD_TRANSFER_ERROR
-} SDTransferState;
-
-/** 
  * @brief  SD Card States 
  */   
 typedef enum
@@ -391,8 +381,8 @@ SDIO_InitTypeDef SDIO_InitStructure;
 SDIO_CmdInitTypeDef SDIO_CmdInitStructure;
 SDIO_DataInitTypeDef SDIO_DataInitStructure;   
 
+void SD_NVICConfig(void);
 void SD_DeInit(void);
-SDTransferState SD_GetStatus(void);
 SDCardState SD_GetState(void);
 SD_Error SD_PowerON(void);
 SD_Error SD_PowerOFF(void);
@@ -457,7 +447,7 @@ void SD_DeInit(void)
  * @param	None
  * @retval	SD_Error: SD Card Error code.
  */
-SD_Error SD_Init(void)
+SD_Error miniSTM32_SDInit(void)
 {
 	NVIC_InitTypeDef NVIC_InitStructure;
 	SD_Error errorstatus = SD_OK;
@@ -526,7 +516,7 @@ SD_Error SD_Init(void)
  *        - SD_TRANSFER_OK: No data transfer is acting
  *        - SD_TRANSFER_BUSY: Data transfer is acting
  */
-SDTransferState SD_GetStatus(void)
+SDTransferState miniSTM32_SDGetStatus(void)
 {
   SDCardState cardstate =  SD_CARD_TRANSFER;
 
@@ -1195,14 +1185,14 @@ SD_Error SD_SelectDeselect(uint32_t addr)
  *         DMA Controller and SD Card status.
  *          - SD_ReadWaitOperation(): this function insure that the DMA
  *            controller has finished all data transfer.
- *          - SD_GetStatus(): to check that the SD Card has finished the 
+ *          - miniSTM32_SDGetStatus(): to check that the SD Card has finished the 
  *            data transfer and it is ready for data.            
  * @param  readbuff: pointer to the buffer that will contain the received data
  * @param  ReadAddr: Address from where data are to be read.  
  * @param  BlockSize: the SD card Data block size. The Block size should be 512.
  * @retval SD_Error: SD Card Error code.
  */
-SD_Error SD_ReadBlock(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize)
+SD_Error miniSTM32_SDReadBlock(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize)
 {
   SD_Error errorstatus = SD_OK;
 #if defined (SD_POLLING_MODE) 
@@ -1309,7 +1299,7 @@ SD_Error SD_ReadBlock(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize)
  *         DMA Controller and SD Card status.
  *          - SD_ReadWaitOperation(): this function insure that the DMA
  *            controller has finished all data transfer.
- *          - SD_GetStatus(): to check that the SD Card has finished the 
+ *          - miniSTM32_SDGetStatus(): to check that the SD Card has finished the 
  *            data transfer and it is ready for data.   
  * @param  readbuff: pointer to the buffer that will contain the received data.
  * @param  ReadAddr: Address from where data are to be read.
@@ -1317,7 +1307,7 @@ SD_Error SD_ReadBlock(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize)
  * @param  NumberOfBlocks: number of blocks to be read.
  * @retval SD_Error: SD Card Error code.
  */
-SD_Error SD_ReadMultiBlocks(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize, uint32_t NumberOfBlocks)
+SD_Error miniSTM32_SDReadMultiBlocks(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize, uint32_t NumberOfBlocks)
 {
   SD_Error errorstatus = SD_OK;
   TransferError = SD_OK;
@@ -1385,7 +1375,7 @@ SD_Error SD_ReadMultiBlocks(uint8_t *readbuff, uint32_t ReadAddr, uint16_t Block
  * @param  None.
  * @retval SD_Error: SD Card Error code.
  */
-SD_Error SD_WaitReadOperation(void)
+SD_Error miniSTM32_SDWaitReadOperation(void)
 {
 
   while ((SD_DMAEndOfTransferStatus() == RESET) && (TransferEnd == 0) && (TransferError == SD_OK))
@@ -1406,14 +1396,14 @@ SD_Error SD_WaitReadOperation(void)
  *         DMA Controller and SD Card status.
  *          - SD_ReadWaitOperation(): this function insure that the DMA
  *            controller has finished all data transfer.
- *          - SD_GetStatus(): to check that the SD Card has finished the 
+ *          - miniSTM32_SDGetStatus(): to check that the SD Card has finished the 
  *            data transfer and it is ready for data.      
  * @param  writebuff: pointer to the buffer that contain the data to be transferred.
  * @param  WriteAddr: Address from where data are to be read.   
  * @param  BlockSize: the SD card Data block size. The Block size should be 512.
  * @retval SD_Error: SD Card Error code.
  */
-SD_Error SD_WriteBlock(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSize)
+SD_Error miniSTM32_SDWriteBlock(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSize)
 {
   SD_Error errorstatus = SD_OK;
 
@@ -1523,7 +1513,7 @@ SD_Error SD_WriteBlock(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSiz
  *         DMA Controller and SD Card status.
  *          - SD_ReadWaitOperation(): this function insure that the DMA
  *            controller has finished all data transfer.
- *          - SD_GetStatus(): to check that the SD Card has finished the 
+ *          - miniSTM32_SDGetStatus(): to check that the SD Card has finished the 
  *            data transfer and it is ready for data.     
  * @param  WriteAddr: Address from where data are to be read.
  * @param  writebuff: pointer to the buffer that contain the data to be transferred.
@@ -1531,7 +1521,7 @@ SD_Error SD_WriteBlock(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSiz
  * @param  NumberOfBlocks: number of blocks to be written.
  * @retval SD_Error: SD Card Error code.
  */
-SD_Error SD_WriteMultiBlocks(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSize, uint32_t NumberOfBlocks)
+SD_Error miniSTM32_SDWriteMultiBlocks(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSize, uint32_t NumberOfBlocks)
 {
   SD_Error errorstatus = SD_OK;
   __IO uint32_t count = 0;
@@ -1617,7 +1607,7 @@ SD_Error SD_WriteMultiBlocks(uint8_t *writebuff, uint32_t WriteAddr, uint16_t Bl
  * @param  None.
  * @retval SD_Error: SD Card Error code.
  */
-SD_Error SD_WaitWriteOperation(void)
+SD_Error miniSTM32_SDWaitWriteOperation(void)
 {
   SD_Error errorstatus = SD_OK;
 
@@ -1678,7 +1668,7 @@ SD_Error SD_StopTransfer(void)
  * @param  endaddr: the end address.
  * @retval SD_Error: SD Card Error code.
  */
-SD_Error SD_Erase(uint32_t startaddr, uint32_t endaddr)
+SD_Error miniSTM32_SDErase(uint32_t startaddr, uint32_t endaddr)
 {
   SD_Error errorstatus = SD_OK;
   uint32_t delay = 0;
@@ -2585,7 +2575,7 @@ DSTATUS disk_initialize ( BYTE drv )
 	/* only one drive is supported */
 	if(drv != 0) return STA_NODISK;
 
-	if(SD_Init() == SD_OK)
+	if(miniSTM32_SDInit() == SD_OK)
 	{
 		/* Set Block Size with FAT_SECTORSIZE once and for all */
 		/* regardless of SD card type */
@@ -2640,15 +2630,15 @@ DRESULT disk_read (BYTE drv, BYTE *buff, DWORD sector, BYTE count)
 
 	if( count == 1 )
 	{
-		SD_ReadBlock( buff, sector, FAT_SECTORSIZE );
+		miniSTM32_SDReadBlock( buff, sector, FAT_SECTORSIZE );
 	}
 	else
 	{
-		SD_ReadMultiBlocks( buff, sector, FAT_SECTORSIZE, count );
+		miniSTM32_SDReadMultiBlocks( buff, sector, FAT_SECTORSIZE, count );
 	}
-	SD_WaitReadOperation();
+	miniSTM32_SDWaitReadOperation();
 
-	while(SD_GetStatus() != SD_TRANSFER_OK);
+	while(miniSTM32_SDGetStatus() != SD_TRANSFER_OK);
 
 	return RES_OK;
 
@@ -2691,15 +2681,15 @@ DRESULT disk_write (BYTE drv, const BYTE *buff, DWORD sector, BYTE count)
 
 	if( count == 1 )
 	{
-		SD_WriteBlock((uint8_t*)buff, sector, FAT_SECTORSIZE);
+		miniSTM32_SDWriteBlock((uint8_t*)buff, sector, FAT_SECTORSIZE);
 	}
 	else
 	{
-		SD_WriteMultiBlocks((uint8_t*)buff, sector, FAT_SECTORSIZE, count);
+		miniSTM32_SDWriteMultiBlocks((uint8_t*)buff, sector, FAT_SECTORSIZE, count);
 	}
-	SD_WaitWriteOperation();
+	miniSTM32_SDWaitWriteOperation();
 
-	while(SD_GetStatus() != SD_TRANSFER_OK);
+	while(miniSTM32_SDGetStatus() != SD_TRANSFER_OK);
 
 	return RES_OK;
 
@@ -2748,7 +2738,7 @@ DRESULT disk_ioctl ( BYTE drv, BYTE ctrl, void *buff )
 	}
 #endif
 	else if( ctrl == CTRL_ERASE_SECTOR ) {
-		if(SD_Erase( (*((DWORD*)buff)) * FAT_SECTORSIZE, 
+		if(miniSTM32_SDErase( (*((DWORD*)buff)) * FAT_SECTORSIZE, 
 			(*((DWORD*)buff+1)) * FAT_SECTORSIZE) == SD_OK)
 			return RES_OK;
 		else

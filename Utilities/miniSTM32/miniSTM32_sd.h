@@ -91,17 +91,28 @@ typedef enum
   SD_OK = 0 
 } SD_Error;
 
+/** 
+ * @brief  SDIO Transfer state  
+ */   
+typedef enum
+{
+  SD_TRANSFER_OK  = 0,
+  SD_TRANSFER_BUSY = 1,
+  SD_TRANSFER_ERROR
+} SDTransferState;
 
-void SD_NVICConfig(void);
-SD_Error SD_Init(void);
 
-SD_Error SD_ReadBlock(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize);
-SD_Error SD_ReadMultiBlocks(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize, uint32_t NumberOfBlocks);
-SD_Error SD_WriteBlock(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSize);
-SD_Error SD_WriteMultiBlocks(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSize, uint32_t NumberOfBlocks);
-SD_Error SD_Erase(uint32_t startaddr, uint32_t endaddr);
-SD_Error SD_WaitReadOperation(void);
-SD_Error SD_WaitWriteOperation(void);
+
+SD_Error miniSTM32_SDInit(void);
+
+SD_Error miniSTM32_SDReadBlock(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize);
+SD_Error miniSTM32_SDReadMultiBlocks(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize, uint32_t NumberOfBlocks);
+SD_Error miniSTM32_SDWriteBlock(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSize);
+SD_Error miniSTM32_SDWriteMultiBlocks(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSize, uint32_t NumberOfBlocks);
+SD_Error miniSTM32_SDErase(uint32_t startaddr, uint32_t endaddr);
+SD_Error miniSTM32_SDWaitReadOperation(void);
+SD_Error miniSTM32_SDWaitWriteOperation(void);
+SDTransferState miniSTM32_SDGetStatus(void);
 
 
 #ifdef __cplusplus

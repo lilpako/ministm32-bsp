@@ -1022,14 +1022,13 @@ static void SetSysClockTo72(void)
     RCC->CFGR |= (uint32_t)RCC_CFGR_HPRE_DIV1;
       
     /* PCLK2 = HCLK */
+	/*
+	 * According to the RM0008 recomendation (p.542), It is recommended to
+	 * set PCLK2 to 9MHz when you need SDIO SD card interface, but it is
+	 * doubtful.
+	 */
     RCC->CFGR |= (uint32_t)RCC_CFGR_PPRE2_DIV1;
 	/*
-	 */
-
-	/*
-	 * Brian : 
-	 * According to the RM0008 recomendation (p.542),
-	 * Set PCLK2 to 9MHz
     RCC->CFGR |= (uint32_t)RCC_CFGR_PPRE2_DIV8;
 	 */
     

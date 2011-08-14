@@ -2,7 +2,7 @@
 # Makefile                                                         #
 ####################################################################
 
-.PHONY: all clean xref flash
+.PHONY: all clean xref flash reset
 
 ####################################################################
 # Definitions                                                      #
@@ -222,3 +222,9 @@ xref:
 # Flash download via openocd
 flash:
 	openocd -f stm32flash.cfg
+
+# Reset via openocd
+reset:
+	openocd -f stm32reset.cfg
+
+# End of File #
