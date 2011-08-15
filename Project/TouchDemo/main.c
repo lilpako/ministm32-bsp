@@ -48,12 +48,12 @@ int main(void)
 	SysTick_Config(SystemCoreClock / 1000);
 
 	/* Initialize main board peripherals */
-	miniSTM32_BoardInit();
+	mSTM_BoardInit();
 	printf("miniSTM32 mainboard initialized\n");
 
 	/* Initialize LCD */
-	LCD_Init();
-	Backlight_Off();
+	mSTM_LCDInit();
+	mSTM_BLTOff();
 	printf("LCD initialized\n");
         
 	while (1) 
@@ -63,8 +63,8 @@ int main(void)
 			u16IRQFlag = 0;
 
 			if( u16Menu == MENU_BLT_ON ) {
-				miniSTM32_LEDOn();
-				Backlight_On();
+				mSTM_LEDOn();
+				mSTM_BLTOn();
 				printf("Backlight Turned On\n");
 			}
 			else if( u16Menu == MENU_TCH_CAL ) {
@@ -76,8 +76,8 @@ int main(void)
 				Touch_Demo();
 			}
 			else if( u16Menu == MENU_BLT_OFF) {
-				miniSTM32_LEDOff();
-				Backlight_Off();
+				mSTM_LEDOff();
+				mSTM_BLTOff();
 				printf("Backlight Turned Off\n");
 			}
 

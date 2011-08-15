@@ -47,11 +47,11 @@ int main(void)
 	SysTick_Config(SystemCoreClock / 1000);
 
 	/* Initialize peripherals */
-	miniSTM32_COMInit2(115200);
+	mSTM_COMInit2(115200);
 	printf("COM Port initialized\n");
 
 	/* Initialize the extension board */
-	miniSTM32_SIO_BoardInit();
+	mSTM_SIO_BoardInit();
 	printf("SIO board initialized\n");
 
 	/* First menu item */
@@ -71,7 +71,7 @@ int main(void)
 			printf(menuString[u16Menu]);
 
 			/* flash LED1 once */
-			miniSTM32_SIO_LEDOn(SIO_LED1);
+			mSTM_SIO_LEDOn(SIO_LED1);
 			/* after 300msec it will turn off */
 			u16LEDFlasher = 300;
 
@@ -79,8 +79,8 @@ int main(void)
 			 * when you change the menu 
 			 */
 			{
-				miniSTM32_SIO_LEDOff(SIO_LED2);
-				miniSTM32_SIO_PiezoControl( 0 );
+				mSTM_SIO_LEDOff(SIO_LED2);
+				mSTM_SIO_PiezoControl( 0 );
 			}
 		}
 		/* IRQ3: menu execution button pressed */
@@ -90,17 +90,17 @@ int main(void)
 			
 			if(u16Menu == menuLED) 
 			{
-				miniSTM32_SIO_LEDToggle(SIO_LED2);
+				mSTM_SIO_LEDToggle(SIO_LED2);
 
 				/* now read the LED status back */
-				if(miniSTM32_SIO_LEDGetStatus(SIO_LED2))
+				if(mSTM_SIO_LEDGetStatus(SIO_LED2))
 					printf(" ---LED ON\n");
 				else
 					printf(" ---LED OFF\n");
 			}
 			else if(u16Menu == menuPIEZO) 
 			{
-				miniSTM32_SIO_PiezoControl( u16Freq );
+				mSTM_SIO_PiezoControl( u16Freq );
 				printf(" ---%dHz\n", u16Freq);
 
 				/* increse the frequency automatically */
@@ -111,7 +111,7 @@ int main(void)
 			}
 			else if(u16Menu == menuPOT) 
 			{
-				u16Value = miniSTM32_SIO_POTGetValue();
+				u16Value = mSTM_SIO_POTGetValue();
 				printf(" ---%d\n", u16Value);
 			}
 		}
@@ -120,7 +120,7 @@ int main(void)
 		{
 			/* turn off the LED1 after some time */
 			if( u16LEDFlasher == 0)
-				miniSTM32_SIO_LEDOff(SIO_LED1);
+				mSTM_SIO_LEDOff(SIO_LED1);
 		}
 	}
 }

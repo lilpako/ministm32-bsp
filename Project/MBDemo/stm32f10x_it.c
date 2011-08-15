@@ -171,7 +171,7 @@ void EXTI15_10_IRQHandler(void)
 void SDIO_IRQHandler(void)
 {
   /* Process All SDIO Interrupt Sources */
-  SD_ProcessIRQSrc();
+  mSTM_SDProcessIRQSrc();
 }
 
 

@@ -14,9 +14,9 @@
 #include "stm32f10x.h"
 #include "fonts.h"
 
-void LCD_Init(void);
-void Backlight_On(void);
-void Backlight_Off(void);
+void mSTM_LCDInit(void);
+void mSTM_BLTOn(void);
+void mSTM_BLTOff(void);
 
 
 #if 0

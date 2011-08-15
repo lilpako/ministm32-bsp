@@ -42,8 +42,10 @@ typedef enum
 #define MAIN_BTN_EXTI_IRQn				EXTI15_10_IRQn  
 
 /*
- * SST25VF016B SPI Flash supported commands
+ * SST25VF016B SPI Flash 
  */
+
+/* FLASH typedefs */
 typedef enum{
 	EBSIZE_4KB,
 	EBSIZE_32KB,
@@ -51,40 +53,67 @@ typedef enum{
 	EBSIZE_CHIP
 } BlockSize_TypeDef;
 
+/* FLASH interface pins */  
+#define MAIN_FLASH_CS_PIN				GPIO_Pin_4                  /* PA.04 */
+#define MAIN_FLASH_CS_GPIO_PORT			GPIOA                       /* GPIOA */
+#define MAIN_FLASH_CS_GPIO_CLK			RCC_APB2Periph_GPIOA
+
+/* FLASH macros */  
+#define MAIN_FLASH_CS_LOW()				GPIO_ResetBits(MAIN_FLASH_CS_GPIO_PORT, \
+	MAIN_FLASH_CS_PIN)
+#define MAIN_FLASH_CS_HIGH()			GPIO_SetBits(MAIN_FLASH_CS_GPIO_PORT, \
+	MAIN_FLASH_CS_PIN) 
+
 /*
- * SD FLASH SDIO Interface
+ * Micro SD Card reader
  */ 
-#define SDIO_FIFO_ADDRESS                ((uint32_t)0x40018080)
-#define SDIO_INIT_CLK_DIV                ((uint8_t)0xB2)
-#define SDIO_TRANSFER_CLK_DIV            ((uint8_t)0x01)
+
+/* SDIO definitions */
+/* SDIOCLK = HCLK, SDIO_CK = HCLK/(2 + SDIO_CLK_DIV) */
+#define MAIN_SDIO_FIFO_ADDRESS		    ((uint32_t)0x40018080)
+#define MAIN_SDIO_INIT_CLK_DIV		    ((uint8_t)0xB2)	/* 400KHz */
+#define MAIN_SDIO_TRNS_CLK_DIV			((uint8_t)0x01)	/* 24MHz */
 
 /*
  * miniSTM32 Exported Functions
  */ 
 
 /* board */
-void miniSTM32_BoardInit(void);
+void mSTM_BoardInit(void);
 
 /* LED */
-void miniSTM32_LEDInit(void);
-void miniSTM32_LEDOn(void);
-void miniSTM32_LEDOff(void);
-void miniSTM32_LEDToggle(void);
+void mSTM_LEDInit(void);
+void mSTM_LEDOn(void);
+void mSTM_LEDOff(void);
+void mSTM_LEDToggle(void);
 
 /* pushbutton */
-void miniSTM32_PBInit(ButtonMode_TypeDef Button_Mode);
-uint32_t miniSTM32_PBGetState(void);
+void mSTM_PBInit(ButtonMode_TypeDef Button_Mode);
+uint32_t mSTM_PBGetState(void);
 
 /* COM port */
-void miniSTM32_COMInit(USART_InitTypeDef* USART_InitStruct);
-void miniSTM32_COMInit2(uint32_t Speed);
+void mSTM_COMInit(USART_InitTypeDef* USART_InitStruct);
+void mSTM_COMInit2(uint32_t Speed);
 
-/* serial flash */
-void miniSTM32_FlashInit(void);
-uint32_t miniSTM32_FlashReadID(void);
-void miniSTM32_FlashErase(BlockSize_TypeDef Size, uint32_t StartAddr);
-void miniSTM32_FlashWriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByte);
-void miniSTM32_FlashReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr, uint16_t NumByte);
+/* SPI module */
+void mSTM_SPIInit(void);
+void mSTM_SPISetBaudRate(uint16_t BaudRate);
+
+/* Flash */
+void mSTM_FlashPortInit(void);
+uint8_t mSTM_FlashSendByte(uint8_t byte);
+uint16_t mSTM_FlashSendHalfWord(uint16_t HalfWord);
+
+/* SDIO module */
+void mSTM_SDIOInit(uint8_t ClockDiv, uint32_t BusWide);
+
+/* micro sd card */
+void mSTM_SDPortDeInit(void);
+void mSTM_SDPortInit(void); 
+void mSTM_SDDMATxConfig(uint32_t *BufferSRC, uint32_t BufferSize);
+void mSTM_SDDMARxConfig(uint32_t *BufferDST, uint32_t BufferSize);
+uint32_t mSTM_SDDMAEndOfTransferStatus(void);
+
 
 #ifdef __cplusplus
 }

@@ -38,76 +38,19 @@
 #define MAIN_COM_USART_CLK				(RCC_APB2Periph_USART1 | RCC_APB2Periph_AFIO)
 
 /*
- * FLASH SPI Interface pins
- */  
-#define sFLASH_SPI                       SPI1
-#define sFLASH_SPI_CLK                   RCC_APB2Periph_SPI1
-#define sFLASH_SPI_SCK_PIN               GPIO_Pin_5                  /* PA.05 */
-#define sFLASH_SPI_SCK_GPIO_PORT         GPIOA                       /* GPIOA */
-#define sFLASH_SPI_SCK_GPIO_CLK          RCC_APB2Periph_GPIOA
-#define sFLASH_SPI_MISO_PIN              GPIO_Pin_6                  /* PA.06 */
-#define sFLASH_SPI_MISO_GPIO_PORT        GPIOA                       /* GPIOA */
-#define sFLASH_SPI_MISO_GPIO_CLK         RCC_APB2Periph_GPIOA
-#define sFLASH_SPI_MOSI_PIN              GPIO_Pin_7                  /* PA.07 */
-#define sFLASH_SPI_MOSI_GPIO_PORT        GPIOA                       /* GPIOA */
-#define sFLASH_SPI_MOSI_GPIO_CLK         RCC_APB2Periph_GPIOA
-#define sFLASH_CS_PIN                    GPIO_Pin_4                  /* PA.04 */
-#define sFLASH_CS_GPIO_PORT              GPIOA                       /* GPIOA */
-#define sFLASH_CS_GPIO_CLK               RCC_APB2Periph_GPIOA
-
-/*
- * SST25VF016B SPI Flash supported commands
+ * SPI 1 : serial flash and touch sensor
  */
-#define sFLASH_WIP_FLAG					0x01
-
-#define sFLASH_DUMMY_BYTE				0xA5
-#define sFLASH_BP_ALL					0x1C	/* all block  */
-#define sFLASH_BP_NONE					0x00	/* no block   */
-#define sFLASH_BP_32					0x04	/* upper 1/32 */
-#define sFLASH_BP_16					0x08	/* upper 1/16 */
-#define sFLASH_BP_8						0x0C	/* upper 1/8  */
-#define sFLASH_BP_4						0x10	/* upper 1/4  */
-#define sFLASH_BP_2						0x14	/* upper 1/2  */
-
-#define sFLASH_SST25VF016_ID			0xBF2541
-
-#define sFLASH_CMD_RD25M				0x03
-#define sFLASH_CMD_RD80M				0x0B
-#define sFLASH_CMD_ER04K				0x20
-#define sFLASH_CMD_ER32K				0x52
-#define sFLASH_CMD_ER64K				0xD8
-#define sFLASH_CMD_ERCHIP				0x60
-#define sFLASH_CMD_WRBYTE				0x02
-#define sFLASH_CMD_WRAAIW				0xAD
-#define sFLASH_CMD_RDSR					0x05
-#define sFLASH_CMD_EWSR					0x50
-#define sFLASH_CMD_WRSR					0x01
-#define sFLASH_CMD_WREN					0x06
-#define sFLASH_CMD_WRDI					0x04
-#define sFLASH_CMD_RDID					0x90
-#define sFLASH_CMD_JEDEC				0x9F
-#define sFLASH_CMD_EBSY					0x70
-#define sFLASH_CMD_DBSY					0x80
-
-#define sFLASH_CS_LOW()					GPIO_ResetBits(sFLASH_CS_GPIO_PORT, sFLASH_CS_PIN)
-#define sFLASH_CS_HIGH()				GPIO_SetBits(sFLASH_CS_GPIO_PORT, sFLASH_CS_PIN)   
-
-/* serial flash */
-uint8_t sFLASH_SendByte(uint8_t byte);
-uint16_t sFLASH_SendHalfWord(uint16_t HalfWord);
-void sFLASH_WriteEnable(void);
-void sFLASH_WriteDisable(void);
-void sFLASH_WaitForWriteEnd(void);
-void sFLASH_WriteByte(uint8_t Byte, uint32_t WriteAddr);
-uint8_t sFLASH_ReadRegister(void);
-void sFLASH_WriteRegister(uint8_t RegData);
-
-/* sdcard*/
-void SD_LowLevel_DeInit(void);
-void SD_LowLevel_Init(void); 
-void SD_LowLevel_DMA_TxConfig(uint32_t *BufferSRC, uint32_t BufferSize);
-void SD_LowLevel_DMA_RxConfig(uint32_t *BufferDST, uint32_t BufferSize);
-uint32_t SD_DMAEndOfTransferStatus(void);
+#define MAIN_SPI01						SPI1
+#define MAIN_SPI01_CLK					RCC_APB2Periph_SPI1
+#define MAIN_SPI01_SCK_PIN				GPIO_Pin_5                  /* PA.05 */
+#define MAIN_SPI01_SCK_GPIO_PORT		GPIOA                       /* GPIOA */
+#define MAIN_SPI01_SCK_GPIO_CLK			RCC_APB2Periph_GPIOA
+#define MAIN_SPI01_MISO_PIN				GPIO_Pin_6                  /* PA.06 */
+#define MAIN_SPI01_MISO_GPIO_PORT		GPIOA                       /* GPIOA */
+#define MAIN_SPI01_MISO_GPIO_CLK		RCC_APB2Periph_GPIOA
+#define MAIN_SPI01_MOSI_PIN				GPIO_Pin_7                  /* PA.07 */
+#define MAIN_SPI01_MOSI_GPIO_PORT		GPIOA                       /* GPIOA */
+#define MAIN_SPI01_MOSI_GPIO_CLK		RCC_APB2Periph_GPIOA
 
 
 /**
@@ -116,20 +59,23 @@ uint32_t SD_DMAEndOfTransferStatus(void);
  * @retval	None
  */
 
-void miniSTM32_BoardInit(void)
+void mSTM_BoardInit(void)
 {
 	/* Initialize LED */
-	miniSTM32_LEDInit();
+	mSTM_LEDInit();
 
 	/* Initialize push buttons */
-	miniSTM32_PBInit(BTN_MODE_EXTI);
+	mSTM_PBInit(BTN_MODE_EXTI);
 
 	/* Initialize COM port */
-	miniSTM32_COMInit2(115200);
+	mSTM_COMInit2(115200);
+
+	/* initialize SPI module */
+	mSTM_SPIInit();
 }
 
 
-void miniSTM32_LEDInit(void)
+void mSTM_LEDInit(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 
@@ -143,7 +89,7 @@ void miniSTM32_LEDInit(void)
 	GPIO_Init(MAIN_LED_GPIO_PORT, &GPIO_InitStructure);
 }
 
-void miniSTM32_PBInit(ButtonMode_TypeDef Button_Mode)
+void mSTM_PBInit(ButtonMode_TypeDef Button_Mode)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 	EXTI_InitTypeDef EXTI_InitStructure;
@@ -178,7 +124,7 @@ void miniSTM32_PBInit(ButtonMode_TypeDef Button_Mode)
 	}
 }
 
-void miniSTM32_COMInit2(uint32_t Speed)
+void mSTM_COMInit2(uint32_t Speed)
 {
 	USART_InitTypeDef USART_InitStructure;
 
@@ -189,11 +135,11 @@ void miniSTM32_COMInit2(uint32_t Speed)
 	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
 	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
 
-	miniSTM32_COMInit( &USART_InitStructure );
+	mSTM_COMInit( &USART_InitStructure );
 }
 
 
-void miniSTM32_COMInit(USART_InitTypeDef* USART_InitStruct)
+void mSTM_COMInit(USART_InitTypeDef* USART_InitStruct)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 
@@ -235,7 +181,7 @@ __io_putchar(int ch)
 	return ch;
 }
 
-void miniSTM32_LEDOn(void)
+void mSTM_LEDOn(void)
 {
   MAIN_LED_GPIO_PORT->BSRR = MAIN_LED_PIN;     
 }
@@ -243,7 +189,7 @@ void miniSTM32_LEDOn(void)
 /*
  * This function turns the LED Off.
  */
-void miniSTM32_LEDOff(void)
+void mSTM_LEDOff(void)
 {
   MAIN_LED_GPIO_PORT->BRR = MAIN_LED_PIN;    
 }
@@ -251,7 +197,7 @@ void miniSTM32_LEDOff(void)
 /*
  * This function toggles the LED.
  */
-void miniSTM32_LEDToggle(void)
+void mSTM_LEDToggle(void)
 {
   MAIN_LED_GPIO_PORT->ODR ^= MAIN_LED_PIN;
 }
@@ -260,56 +206,19 @@ void miniSTM32_LEDToggle(void)
 /*
  * This function returns the selected Button state.
  */
-uint32_t miniSTM32_PBGetState(void)
+uint32_t mSTM_PBGetState(void)
 {
   return GPIO_ReadInputDataBit(MAIN_BTN_GPIO_PORT, MAIN_BTN_PIN);
 }
 
 
-
-/*
- ******************************************************************************
- */ 
-
-/*
- * This function initializes the peripherals used by the SPI FLASH driver.
- */
-void miniSTM32_FlashInit(void)
+void mSTM_SPIInit()
 {
 	SPI_InitTypeDef  SPI_InitStructure;
-	GPIO_InitTypeDef GPIO_InitStructure;
 
-	/*!< sFLASH_SPI_CS_GPIO, sFLASH_SPI_MOSI_GPIO, sFLASH_SPI_MISO_GPIO 
-	and sFLASH_SPI_SCK_GPIO Periph clock enable */
-	RCC_APB2PeriphClockCmd(sFLASH_CS_GPIO_CLK | sFLASH_SPI_MOSI_GPIO_CLK | 
-		sFLASH_SPI_MISO_GPIO_CLK | sFLASH_SPI_SCK_GPIO_CLK, ENABLE);
-
-	/*!< sFLASH_SPI Periph clock enable */
-	RCC_APB2PeriphClockCmd(sFLASH_SPI_CLK, ENABLE);
-  
-	/*!< Configure sFLASH_SPI pins: SCK */
-	GPIO_InitStructure.GPIO_Pin = sFLASH_SPI_SCK_PIN;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-	GPIO_Init(sFLASH_SPI_SCK_GPIO_PORT, &GPIO_InitStructure);
-
-	/*!< Configure sFLASH_SPI pins: MOSI */
-	GPIO_InitStructure.GPIO_Pin = sFLASH_SPI_MOSI_PIN;
-	GPIO_Init(sFLASH_SPI_MOSI_GPIO_PORT, &GPIO_InitStructure);
-
-	/*!< Configure sFLASH_SPI pins: MISO */
-	GPIO_InitStructure.GPIO_Pin = sFLASH_SPI_MISO_PIN;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;  
-	GPIO_Init(sFLASH_SPI_MISO_GPIO_PORT, &GPIO_InitStructure);
-  
-	/*!< Configure sFLASH_CS_PIN pin: sFLASH Card CS pin */
-	GPIO_InitStructure.GPIO_Pin = sFLASH_CS_PIN;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_Init(sFLASH_CS_GPIO_PORT, &GPIO_InitStructure);
-
-    
-	/*!< Deselect the FLASH: Chip Select high */
-	sFLASH_CS_HIGH();
+	/* check SPE bit of SPI_CR1 */
+	/* return if SPI module is already turned on */
+	if(MAIN_SPI01->CR1 & 0x0040) return;
 
 	/* SPI configuration */
 	SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
@@ -325,17 +234,60 @@ void miniSTM32_FlashInit(void)
 	SPI_InitStructure.SPI_CPHA = SPI_CPHA_2Edge;
 	/* Separate CS control */
 	SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
-	/* SPI clock: PCLK2/4 = 18MHz */
+	/* SPI clock for sFLASH: PCLK2/4 = 18MHz */
 	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_4;
+	/* SPI clock for Touch Sensor: PCLK2/32 = 2.25MHz */
+	/*
+	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_32;
+	*/
 	SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
 	SPI_InitStructure.SPI_CRCPolynomial = 7;
-	SPI_Init(sFLASH_SPI, &SPI_InitStructure);
+	SPI_Init(MAIN_SPI01, &SPI_InitStructure);
 
-	/*!< Enable the sFLASH_SPI  */
-	SPI_Cmd(sFLASH_SPI, ENABLE);
+	/* Enable the MAIN_SPI01  */
+	SPI_Cmd(MAIN_SPI01, ENABLE);
+}
 
-	/* disable block protection */
-	sFLASH_WriteRegister( sFLASH_BP_NONE );
+void mSTM_SPI_SetBaudRate(uint16_t BaudRate)
+{
+	if(IS_SPI_BAUDRATE_PRESCALER(BaudRate))
+	{
+		MAIN_SPI01->CR1;
+	}
+}
+
+void mSTM_FlashPortInit(void)
+{
+	GPIO_InitTypeDef GPIO_InitStructure;
+
+	/* sFLASH_SPI_CS_GPIO, sFLASH_SPI_MOSI_GPIO, sFLASH_SPI_MISO_GPIO 
+	and sFLASH_SPI_SCK_GPIO Periph clock enable */
+	RCC_APB2PeriphClockCmd(MAIN_FLASH_CS_GPIO_CLK | MAIN_SPI01_MOSI_GPIO_CLK | 
+		MAIN_SPI01_MISO_GPIO_CLK | MAIN_SPI01_SCK_GPIO_CLK, ENABLE);
+
+	/* MAIN_SPI01 Periph clock enable */
+	RCC_APB2PeriphClockCmd(MAIN_SPI01_CLK, ENABLE);
+  
+	/* Configure MAIN_SPI01 pins: SCK */
+	GPIO_InitStructure.GPIO_Pin = MAIN_SPI01_SCK_PIN;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+	GPIO_Init(MAIN_SPI01_SCK_GPIO_PORT, &GPIO_InitStructure);
+
+	/* Configure MAIN_SPI01 pins: MOSI */
+	GPIO_InitStructure.GPIO_Pin = MAIN_SPI01_MOSI_PIN;
+	GPIO_Init(MAIN_SPI01_MOSI_GPIO_PORT, &GPIO_InitStructure);
+
+	/* Configure MAIN_SPI01 pins: MISO */
+	GPIO_InitStructure.GPIO_Pin = MAIN_SPI01_MISO_PIN;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;  
+	GPIO_Init(MAIN_SPI01_MISO_GPIO_PORT, &GPIO_InitStructure);
+  
+	/* Configure MAIN_FLASH_CS_PIN pin: sFLASH Card CS pin */
+	GPIO_InitStructure.GPIO_Pin = MAIN_FLASH_CS_PIN;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_Init(MAIN_FLASH_CS_GPIO_PORT, &GPIO_InitStructure);
+
 }
 
 
@@ -345,19 +297,19 @@ void miniSTM32_FlashInit(void)
  * @param  byte: byte to send.
  * @retval The value of the received byte.
  */
-uint8_t sFLASH_SendByte(uint8_t byte)
+uint8_t mSTM_FlashSendByte(uint8_t byte)
 {
 	/*!< Loop while DR register in not emplty */
-	while (SPI_I2S_GetFlagStatus(sFLASH_SPI, SPI_I2S_FLAG_TXE) == RESET);
+	while (SPI_I2S_GetFlagStatus(MAIN_SPI01, SPI_I2S_FLAG_TXE) == RESET);
 
 	/*!< Send byte through the SPI1 peripheral */
-	SPI_I2S_SendData(sFLASH_SPI, byte);
+	SPI_I2S_SendData(MAIN_SPI01, byte);
 
 	/*!< Wait to receive a byte */
-	while (SPI_I2S_GetFlagStatus(sFLASH_SPI, SPI_I2S_FLAG_RXNE) == RESET);
+	while (SPI_I2S_GetFlagStatus(MAIN_SPI01, SPI_I2S_FLAG_RXNE) == RESET);
 
 	/*!< Return the byte read from the SPI bus */
-	return SPI_I2S_ReceiveData(sFLASH_SPI);
+	return SPI_I2S_ReceiveData(MAIN_SPI01);
 }
 
 /*
@@ -366,331 +318,40 @@ uint8_t sFLASH_SendByte(uint8_t byte)
  * @param  HalfWord: Half Word to send.
  * @retval The value of the received Half Word.
  */
-uint16_t sFLASH_SendHalfWord(uint16_t HalfWord)
+uint16_t mSTM_FlashSendHalfWord(uint16_t HalfWord)
 {
-	/*!< Loop while DR register in not emplty */
-	while (SPI_I2S_GetFlagStatus(sFLASH_SPI, SPI_I2S_FLAG_TXE) == RESET);
+	/* Loop while DR register in not emplty */
+	while (SPI_I2S_GetFlagStatus(MAIN_SPI01, SPI_I2S_FLAG_TXE) == RESET);
 
-	/*!< Send Half Word through the sFLASH peripheral */
-	SPI_I2S_SendData(sFLASH_SPI, HalfWord);
+	/* Send Half Word through the sFLASH peripheral */
+	SPI_I2S_SendData(MAIN_SPI01, HalfWord);
 
-	/*!< Wait to receive a Half Word */
-	while (SPI_I2S_GetFlagStatus(sFLASH_SPI, SPI_I2S_FLAG_RXNE) == RESET);
+	/* Wait to receive a Half Word */
+	while (SPI_I2S_GetFlagStatus(MAIN_SPI01, SPI_I2S_FLAG_RXNE) == RESET);
 
-	/*!< Return the Half Word read from the SPI bus */
-	return SPI_I2S_ReceiveData(sFLASH_SPI);
+	/* Return the Half Word read from the SPI bus */
+	return SPI_I2S_ReceiveData(MAIN_SPI01);
 }
 
-/*
- * @brief  Enables the write access to the FLASH.
- * @param  None
- * @retval None
- */
-void sFLASH_WriteEnable(void)
+void mSTM_SDIOInit(uint8_t ClockDiv, uint32_t BusWide)
 {
-	/*!< Select the FLASH: Chip Select low */
-	sFLASH_CS_LOW();
+	SDIO_InitTypeDef SDIO_InitStructure;
 
-	/*!< Send "Write Enable" instruction */
-	sFLASH_SendByte(sFLASH_CMD_WREN);
-
-	/*!< Deselect the FLASH: Chip Select high */
-	sFLASH_CS_HIGH();
-}
-
-void sFLASH_WriteDisable(void)
-{
-	sFLASH_CS_LOW();
-	sFLASH_SendByte(sFLASH_CMD_WRDI);
-	sFLASH_CS_HIGH();
-}
-
-/*
- * @brief  Polls the status of the Write In Progress (WIP) flag in the FLASH's
- *         status register and loop until write opertaion has completed.
- * @param  None
- * @retval None
- */
-void sFLASH_WaitForWriteEnd(void)
-{
-	uint8_t flashstatus = 0;
-
-	/*!< Select the FLASH: Chip Select low */
-	sFLASH_CS_LOW();
-
-	/*!< Send "Read Status Register" instruction */
-	sFLASH_SendByte(sFLASH_CMD_RDSR);
-
-	/*!< Loop as long as the memory is busy with a write cycle */
-	do
-	{
-		/*!< Send a dummy byte to generate the clock needed by the FLASH
-		and put the value of the status register in FLASH_Status variable */
-		flashstatus = sFLASH_SendByte(sFLASH_DUMMY_BYTE);
-
-	}
-	while ((flashstatus & sFLASH_WIP_FLAG) == SET); /* Write in progress */
-
-	/*!< Deselect the FLASH: Chip Select high */
-	sFLASH_CS_HIGH();
-}
-
-
-void miniSTM32_FlashErase(BlockSize_TypeDef Size, uint32_t StartAddr)
-{
-	uint8_t u8CmdByte;
-
-	if(Size == EBSIZE_4KB)
-	{
-		u8CmdByte = sFLASH_CMD_ER04K;
-	}
-	else if(Size == EBSIZE_32KB)
-	{
-		u8CmdByte = sFLASH_CMD_ER32K;
-	}
-	else if(Size == EBSIZE_64KB)
-	{
-		u8CmdByte = sFLASH_CMD_ER64K;
-	}
-	else if(Size == EBSIZE_CHIP)
-	{
-		u8CmdByte = sFLASH_CMD_ERCHIP;
-	}
-	else
-	{
-		return;
-	}
-	/*!< Send write enable instruction */
-	sFLASH_WriteEnable();
-
-	/*!< Select the FLASH: Chip Select low */
-	sFLASH_CS_LOW();
-	/*!< Send Sector Erase instruction */
-	sFLASH_SendByte(u8CmdByte);
-
-	if( u8CmdByte != sFLASH_CMD_ERCHIP )
-	{
-		/*!< Send SectorAddr high nibble address byte */
-		sFLASH_SendByte((StartAddr & 0xFF0000) >> 16);
-		/*!< Send SectorAddr medium nibble address byte */
-		sFLASH_SendByte((StartAddr & 0xFF00) >> 8);
-		/*!< Send SectorAddr low nibble address byte */
-		sFLASH_SendByte(StartAddr & 0xFF);
-	}
-	/*!< Deselect the FLASH: Chip Select high */
-	sFLASH_CS_HIGH();
-
-	/*!< Wait the end of Flash writing */
-	sFLASH_WaitForWriteEnd();
-}
-
-
-void sFLASH_WriteByte(uint8_t Byte, uint32_t WriteAddr)
-{
-	sFLASH_WriteEnable();
-
-	/* chip select */
-	sFLASH_CS_LOW();
-	
-	/* command byte */
-	sFLASH_SendByte(sFLASH_CMD_WRBYTE);
-	
-	/* 3bytes of address */
-	sFLASH_SendByte((WriteAddr & 0xFF0000) >> 16);
-	sFLASH_SendByte((WriteAddr & 0xFF00) >> 8);
-	sFLASH_SendByte(WriteAddr & 0xFF);
-	
-	/* data byte */
-	sFLASH_SendByte(Byte);
-
-	/* chip deselect */
-	sFLASH_CS_HIGH();
-
-	/* wait the end of flash writing */
-	sFLASH_WaitForWriteEnd();
-}
-
-
-void miniSTM32_FlashWriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByte)
-{
-	uint16_t u16Index = 0;
-
-	sFLASH_WriteEnable();
-
-	/* chip select */
-	sFLASH_CS_LOW();
-
-	/* command byte */
-	sFLASH_SendByte(sFLASH_CMD_WRAAIW);
-
-	/* 3 bytes of address */
-	sFLASH_SendByte((WriteAddr & 0xFF0000) >> 16);
-	sFLASH_SendByte((WriteAddr & 0xFF00) >> 8);
-	sFLASH_SendByte(WriteAddr & 0xFF);
-
-	/* the first 2 data bytes */
-	sFLASH_SendByte(pBuffer[u16Index++]);
-	sFLASH_SendByte(pBuffer[u16Index++]);
-
-	/* chip deselect */
-	sFLASH_CS_HIGH();
-
-	sFLASH_WaitForWriteEnd();
-
-	while( u16Index < (NumByte-1) )
-	{
-		/* chip select */
-		sFLASH_CS_LOW();
-
-		/* command byte */
-		sFLASH_SendByte(sFLASH_CMD_WRAAIW);
-
-		/* first data byte */
-		sFLASH_SendByte(pBuffer[u16Index++]);
-
-		/* second data byte */
-		/* fill the last byte if the NumByte is odd */
-		if( u16Index == (NumByte -1) )
-		{
-			sFLASH_SendByte(0xFF);
-		}
-		else
-		{
-			sFLASH_SendByte(pBuffer[u16Index++]);
-		}
-
-		/* chip deselect */
-		sFLASH_CS_HIGH();
-
-		sFLASH_WaitForWriteEnd();
-	}
-
-	/* chip select */
-	sFLASH_CS_LOW();
-
-	/* command byte */
-	sFLASH_SendByte(sFLASH_CMD_WRDI);
-
-	/* chip deselect */
-	sFLASH_CS_HIGH();
-
-	sFLASH_WaitForWriteEnd();
+	SDIO_InitStructure.SDIO_ClockDiv = ClockDiv; 
+	SDIO_InitStructure.SDIO_ClockEdge = SDIO_ClockEdge_Rising;
+	SDIO_InitStructure.SDIO_ClockBypass = SDIO_ClockBypass_Disable;
+	SDIO_InitStructure.SDIO_ClockPowerSave = SDIO_ClockPowerSave_Disable;
+	SDIO_InitStructure.SDIO_BusWide = BusWide;
+	SDIO_InitStructure.SDIO_HardwareFlowControl = SDIO_HardwareFlowControl_Disable;
+	SDIO_Init(&SDIO_InitStructure);
 
 }
-
-
-/*
- * @brief  Reads a block of data from the FLASH.
- * @param  pBuffer: pointer to the buffer that receives the data read from the FLASH.
- * @param  ReadAddr: FLASH's internal address to read from.
- * @param  NumByteToRead: number of bytes to read from the FLASH.
- * @retval None
- */
-void miniSTM32_FlashReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr, uint16_t NumByte)
-{
-	/*!< Select the FLASH: Chip Select low */
-	sFLASH_CS_LOW();
-
-	/*!< Send "Read from Memory " instruction */
-#ifdef FLASH_HIGHSPEED_READ
-	sFLASH_SendByte(sFLASH_CMD_RD80M);
-#else
-	sFLASH_SendByte(sFLASH_CMD_RD25M);
-#endif // FLASH_HIGHSPEED_READ
-
-	/*!< Send ReadAddr high nibble address byte to read from */
-	sFLASH_SendByte((ReadAddr & 0xFF0000) >> 16);
-	/*!< Send ReadAddr medium nibble address byte to read from */
-	sFLASH_SendByte((ReadAddr& 0xFF00) >> 8);
-	/*!< Send ReadAddr low nibble address byte to read from */
-	sFLASH_SendByte(ReadAddr & 0xFF);
-
-#ifdef FLASH_HIGHSPEED_READ
-	/* additional dummy byte folling the 3byte address */
-	sFLASH_SendByte(sFLASH_DUMMY_BYTE);
-#endif // FLASH HIGHSPEED_READ
-
-	while (NumByte--) /*!< while there is data to be read */
-	{
-		/*!< Read a byte from the FLASH */
-		*pBuffer = sFLASH_SendByte(sFLASH_DUMMY_BYTE);
-		/*!< Point to the next location where the byte read will be saved */
-		pBuffer++;
-	}
-
-	/*!< Deselect the FLASH: Chip Select high */
-	sFLASH_CS_HIGH();
-}
-
-
-/*
- * @brief  Reads FLASH identification.
- * @param  None
- * @retval FLASH identification
- */
-uint32_t miniSTM32_FlashReadID(void)
-{
-	uint32_t u32Temp = 0, u32TempX;
-
-	/*!< Select the FLASH: Chip Select low */
-	sFLASH_CS_LOW();
-
-	/*!< Send "RDID " instruction */
-	sFLASH_SendByte(sFLASH_CMD_JEDEC);
-
-	/*!< Read a byte from the FLASH */
-	u32TempX = sFLASH_SendByte(sFLASH_DUMMY_BYTE);
-	u32Temp += (u32TempX << 16);
-
-	u32TempX = sFLASH_SendByte(sFLASH_DUMMY_BYTE);
-	u32Temp += (u32TempX << 8);
-
-	u32TempX = sFLASH_SendByte(sFLASH_DUMMY_BYTE);
-	u32Temp += u32TempX;
-
-	/*!< Deselect the FLASH: Chip Select high */
-	sFLASH_CS_HIGH();
-
-	return u32Temp;
-}
-
-uint8_t sFLASH_ReadRegister(void)
-{
-	uint8_t u8Data;
-
-	/*!< Select the FLASH: Chip Select low */
-	sFLASH_CS_LOW();
-
-	/*!< Send "RDID " instruction */
-	sFLASH_SendByte(sFLASH_CMD_RDSR);
-
-	u8Data = sFLASH_SendByte(sFLASH_DUMMY_BYTE);
-
-	sFLASH_CS_HIGH();
-
-	return u8Data;
-}
-
-void sFLASH_WriteRegister(uint8_t RegData)
-{
-	sFLASH_CS_LOW();
-	sFLASH_SendByte(sFLASH_CMD_EWSR);
-	sFLASH_CS_HIGH();
-
-	/* do we need delay here ? */
-
-	sFLASH_CS_LOW();
-	sFLASH_SendByte(sFLASH_CMD_WRSR);
-	sFLASH_SendByte(RegData);
-	sFLASH_CS_HIGH();
-}
-
 
 /**
   * This function deinitializes the SDIO interface.
   * 
   */
-void SD_LowLevel_DeInit(void)
+void mSTM_SDPortDeInit(void)
 {
   GPIO_InitTypeDef  GPIO_InitStructure;
   
@@ -720,7 +381,7 @@ void SD_LowLevel_DeInit(void)
   * This function initializes the SD Card and put it into StandBy State (Ready for 
   *         data transfer).
   */
-void SD_LowLevel_Init(void)
+void mSTM_SDPortInit(void)
 {
   GPIO_InitTypeDef  GPIO_InitStructure;
 
@@ -749,7 +410,7 @@ void SD_LowLevel_Init(void)
   *		BufferSRC: pointer to the source buffer
   *		BufferSize: buffer size
   */
-void SD_LowLevel_DMA_TxConfig(uint32_t *BufferSRC, uint32_t BufferSize)
+void mSTM_SDDMATxConfig(uint32_t *BufferSRC, uint32_t BufferSize)
 {
 
   DMA_InitTypeDef DMA_InitStructure;
@@ -760,7 +421,7 @@ void SD_LowLevel_DMA_TxConfig(uint32_t *BufferSRC, uint32_t BufferSize)
   DMA_Cmd(DMA2_Channel4, DISABLE);
 
   /*!< DMA2 Channel4 Config */
-  DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)SDIO_FIFO_ADDRESS;
+  DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)MAIN_SDIO_FIFO_ADDRESS;
   DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)BufferSRC;
   DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralDST;
   DMA_InitStructure.DMA_BufferSize = BufferSize / 4;
@@ -782,7 +443,7 @@ void SD_LowLevel_DMA_TxConfig(uint32_t *BufferSRC, uint32_t BufferSize)
   *		BufferDST: pointer to the destination buffer
   *		BufferSize: buffer size
   */
-void SD_LowLevel_DMA_RxConfig(uint32_t *BufferDST, uint32_t BufferSize)
+void mSTM_SDDMARxConfig(uint32_t *BufferDST, uint32_t BufferSize)
 {
   DMA_InitTypeDef DMA_InitStructure;
 
@@ -792,7 +453,7 @@ void SD_LowLevel_DMA_RxConfig(uint32_t *BufferDST, uint32_t BufferSize)
   DMA_Cmd(DMA2_Channel4, DISABLE);
 
   /*!< DMA2 Channel4 Config */
-  DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)SDIO_FIFO_ADDRESS;
+  DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)MAIN_SDIO_FIFO_ADDRESS;
   DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)BufferDST;
   DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC;
   DMA_InitStructure.DMA_BufferSize = BufferSize / 4;
@@ -812,7 +473,7 @@ void SD_LowLevel_DMA_RxConfig(uint32_t *BufferDST, uint32_t BufferSize)
 /**
   * This function returns the DMA End Of Transfer Status.
   */
-uint32_t SD_DMAEndOfTransferStatus(void)
+uint32_t mSTM_SDDMAEndOfTransferStatus(void)
 {
   return (uint32_t)DMA_GetFlagStatus(DMA2_FLAG_TC4);
 }

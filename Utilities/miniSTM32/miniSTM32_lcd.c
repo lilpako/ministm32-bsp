@@ -1,6 +1,6 @@
 /*
-  ******************************************************************************
-  */ 
+ ******************************************************************************
+ */ 
 
 #include "miniSTM32_lcd.h"
 #include "stm32f10x_fsmc.h"
@@ -344,7 +344,7 @@ void LCD_WR_Data_8(unsigned int val)
 // 	PLL == Phase Lock Loop
 //	Registers get selected with LCD-WR_REG and then the required data is written
 // 	to it with LCD-WR_Data.
-void LCD_Init(void)
+void mSTM_LCDInit(void)
 { 
 
 	/* 
@@ -480,7 +480,7 @@ void LCD_Init(void)
 	LCD_WR_REG(CMD_SET_DBC_CONF); // Dynamic Backlight Config thresholding
 	LCD_WR_Data(0x000d); // 0001101. == Enabled, Agressive mode
 
-	Backlight_On();
+	mSTM_BLTOn();
  
 }
 
@@ -1085,12 +1085,12 @@ void LCD_FSMCConfig(void)
 }
 
 
-void Backlight_On(void)
+void mSTM_BLTOn(void)
 {
 	GPIO_SetBits(GPIOD, GPIO_Pin_13);
 }
 
-void Backlight_Off(void)
+void mSTM_BLTOff(void)
 {
 	GPIO_ResetBits(GPIOD, GPIO_Pin_13);
 }

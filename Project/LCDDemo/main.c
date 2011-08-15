@@ -49,11 +49,11 @@ int main(void)
 	SysTick_Config(SystemCoreClock / 1000);
 
 	/* Initialize main board peripherals */
-	miniSTM32_BoardInit();
+	mSTM_BoardInit();
 	printf("miniSTM32 mainboard initialized\n");
 
 	/* Initialize LCD support */
-	LCD_Init();
+	mSTM_LCDInit();
 	printf("LCD initialized\n");
 
 	while (1) 
@@ -65,11 +65,11 @@ int main(void)
 			u16IRQFlag = 0;
 
 			if( u16Menu == MENU_LED_ON ) {
-				miniSTM32_LEDOn();
+				mSTM_LEDOn();
 				printf("LED1 Turned On\n");
 			}
 			else if( u16Menu == MENU_LED_OFF ) {
-				miniSTM32_LEDOff();
+				mSTM_LEDOff();
 				printf("LED1 Turned Off\n");
 			}
 			else if( u16Menu == MENU_LCD_TEST ) {

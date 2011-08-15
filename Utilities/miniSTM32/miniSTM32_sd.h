@@ -1,5 +1,5 @@
 /*******************************************************************************
- * @file	miniSTM32_sd.h
+ * @file	mSTM_sd.h
  * @author	Brian
  * @version	V0.2.0
  * @date	07-August-2011
@@ -70,7 +70,7 @@ typedef enum
   SD_STREAM_WRITE_OVERRUN            = (21), /* The card could not sustain data programming in stream mode */
   SD_CID_CSD_OVERWRITE               = (22), /* CID/CSD overwrite error */
   SD_WP_ERASE_SKIP                   = (23), /* only partial address space was erased */
-  SD_CARD_ECC_DISABLED               = (24), /*!< Command has been executed without using internal ECC */
+  SD_CARD_ECC_DISABLED               = (24), /* Command has been executed without using internal ECC */
   SD_ERASE_RESET                     = (25), /* Erase sequence was cleared before executing because an out of erase sequence command was received */
   SD_AKE_SEQ_ERROR                   = (26), /* Error in sequence of authentication. */
   SD_INVALID_VOLTRANGE               = (27),
@@ -103,16 +103,16 @@ typedef enum
 
 
 
-SD_Error miniSTM32_SDInit(void);
-
-SD_Error miniSTM32_SDReadBlock(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize);
-SD_Error miniSTM32_SDReadMultiBlocks(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize, uint32_t NumberOfBlocks);
-SD_Error miniSTM32_SDWriteBlock(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSize);
-SD_Error miniSTM32_SDWriteMultiBlocks(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSize, uint32_t NumberOfBlocks);
-SD_Error miniSTM32_SDErase(uint32_t startaddr, uint32_t endaddr);
-SD_Error miniSTM32_SDWaitReadOperation(void);
-SD_Error miniSTM32_SDWaitWriteOperation(void);
-SDTransferState miniSTM32_SDGetStatus(void);
+SD_Error mSTM_SDInit(void);
+SD_Error mSTM_SDReadBlock(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize);
+SD_Error mSTM_SDReadMultiBlocks(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize, uint32_t NumberOfBlocks);
+SD_Error mSTM_SDWriteBlock(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSize);
+SD_Error mSTM_SDWriteMultiBlocks(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSize, uint32_t NumberOfBlocks);
+SD_Error mSTM_SDErase(uint32_t startaddr, uint32_t endaddr);
+SD_Error mSTM_SDWaitReadOperation(void);
+SD_Error mSTM_SDWaitWriteOperation(void);
+SDTransferState mSTM_SDGetStatus(void);
+SD_Error mSTM_SDProcessIRQSrc(void);
 
 
 #ifdef __cplusplus
