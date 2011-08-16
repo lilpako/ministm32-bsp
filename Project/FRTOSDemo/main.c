@@ -112,7 +112,7 @@ remain on until a full five seconds pass without the button being pressed.
 /* STM32 Library includes. */
 #include "stm32f10x.h"
 #include "miniSTM32.h"
-#include "mSTM_sio.h"
+#include "miniSTM32_sio.h"
 
 /* Priorities at which the tasks are created. */
 #define mainQUEUE_RECEIVE_TASK_PRIORITY		( tskIDLE_PRIORITY + 2 )

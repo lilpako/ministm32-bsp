@@ -1,8 +1,8 @@
 ####################################################################
-# Makefile                                                         #
+# PHONY definitions                                                #
 ####################################################################
 
-.PHONY: all clean xref flash reset
+.PHONY: all clean xref flash reset gdb
 
 ####################################################################
 # Definitions                                                      #
@@ -12,34 +12,62 @@ PROJECTNAME = FRTOSDemo
 OBJ_DIR = build
 EXE_DIR = exe
 LST_DIR = lst
+SCRIPTDIR = ../../Utilities/Script
+#JTAGDEV = flyswatter
+JTAGDEV = luminary-icdi
 
 ####################################################################
-# Definitions of toolchain.                                        #
-# You might need to change paths/etc to match your system          #
-# This makefile assumes that the tools are in the users PATH       #
+# Tool Chain Definitions                                           #
+#																   #
+# You might need to change paths/etc to match your system.         #
+# On Windows, it also depends on the make utility you are using.   #
+# The following definitins are tested with GnuWin32 make v3.8.1.   #
 ####################################################################
 
-# CodeSourcery G++ Lite
+# CodeSourcery G++ Lite Tool setting
 
-# Uncomment the following lines for Windows environment
-# You may have to replace the backslashes with slashes
-#TOOLDIR = "C:\Program Files\CodeSourcery\Sourcery G++ Lite"
-#GCCVERSION = "4.5.2"
-#CC = $(TOOLDIR)\bin\arm-none-eabi-gcc
-#LD = $(TOOLDIR)\bin\arm-none-eabi-ld
-#AR = $(TOOLDIR)\bin\arm-none-eabi-ar
-#OBJCOPY = $(TOOLDIR)\bin\arm-none-eabi-objcopy
-#RM = $(TOOLDIR)\bin\cs-rm -rf
+# Windows
+ifdef SystemRoot
 
-# Uncomment the following lines for Linux
-# Don't forget to check your CS tool directory
+# Windows Vista or Windows 7
+ifdef PROGRAMDATA
+
+TOOLDIR = "C:/Program Files/CodeSourcery/Sourcery G++ Lite"
+GCCVERSION = "4.5.2"
+CC = $(TOOLDIR)/bin/arm-none-eabi-gcc
+LD = $(TOOLDIR)/bin/arm-none-eabi-ld
+AR = $(TOOLDIR)/bin/arm-none-eabi-ar
+GDB = $(TOOLDIR)/bin/arm-none-eabi-gdb
+OBJCOPY = $(TOOLDIR)/bin/arm-none-eabi-objcopy
+RM = $(TOOLDIR)/bin/cs-rm -rf
+
+# Windows XP
+else
+
+TOOLDIR = "C:\Program Files\CodeSourcery\Sourcery G++ Lite"
+GCCVERSION = "4.5.2"
+CC = $(TOOLDIR)\bin\arm-none-eabi-gcc
+LD = $(TOOLDIR)\bin\arm-none-eabi-ld
+AR = $(TOOLDIR)\bin\arm-none-eabi-ar
+GDB = $(TOOLDIR)\bin\arm-none-eabi-gdb
+OBJCOPY = $(TOOLDIR)\bin/arm-none-eabi-objcopy
+RM = $(TOOLDIR)\bin\cs-rm -rf
+
+endif
+
+# Linux
+else
+
 TOOLDIR = ${HOME}/CodeSourcery/arm-2011.03
 GCCVERSION = 4.5.2
 CC = $(TOOLDIR)/bin/arm-none-eabi-gcc
 LD = $(TOOLDIR)/bin/arm-none-eabi-ld
 AR = $(TOOLDIR)/bin/arm-none-eabi-ar
+GDB = $(TOOLDIR)/bin/arm-none-eabi-gdb
 OBJCOPY = $(TOOLDIR)/bin/arm-none-eabi-objcopy
 RM = rm -rf
+
+endif
 
 ####################################################################
 # Flags                                                            #
@@ -55,12 +83,14 @@ CFLAGS += -mlittle-endian
 CFLAGS += -g 
 # Optimization
 CFLAGS += -Os 
-CFLAGS += -ffunction-sections 
 # preprocessor
 CFLAGS += -MD 
-# stm32f10x.h
+# stm32f10x.h specific
 CFLAGS += -D STM32F10X_HD
 CFLAGS += -D USE_STDPERIPH_DRIVER 
+# garbage collection: this doesn't seem to work with CSLite
+CFLAGS += -ffunction-sections 
+CFLAGS += -Wl,--gc-sections
 
 # ARM specific
 ASMFLAGS += -mthumb 
@@ -76,7 +106,7 @@ LDFLAGS += -mlittle-endian
 # Passing options to linker
 LDFLAGS += -Xlinker 
 LDFLAGS += -Map=$(LST_DIR)/$(PROJECTNAME).map 
-LDFLAGS += -T./miniSTM32.ld
+LDFLAGS += -T$(SCRIPTDIR)/Linker/miniSTM32.ld
 LDFLAGS += -L$(TOOLDIR)/arm-none-eabi/lib/thumb2
 LDFLAGS += -L$(TOOLDIR)/lib/gcc/arm-none-eabi/$(GCCVERSION)/thumb2
 
@@ -88,15 +118,17 @@ INCLUDEPATHS += -I ../../Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x
 INCLUDEPATHS += -I ../../Libraries/STM32F10x_StdPeriph_Driver/inc
 INCLUDEPATHS += -I ../../Utilities/miniSTM32
 INCLUDEPATHS += -I ../../Utilities/Support
+# FreeRTOS
 INCLUDEPATHS += -I ../../FreeRTOS_Source/include
 INCLUDEPATHS += -I ../../FreeRTOS_Source/portable/GCC/ARM_CM3
 
+# CSCOPE search path
 XREFSPATHS = -s .
 XREFSPATHS += -s ../../Libraries
 XREFSPATHS += -s ../../Utilities
 
 ####################################################################
-# Files
+# Files                                                            #
 ####################################################################
 
 C_SRC = ./main.c
@@ -107,7 +139,7 @@ C_SRC += ./system_stm32f10x.c
 # CMSIS support
 C_SRC += ../../Libraries/CMSIS/CM3/CoreSupport/core_cm3.c
 
-# Pepheral support : choose files you need
+# Pepheral support
 C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/misc.c
 C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_adc.c
 #C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_bkp.c
@@ -134,13 +166,18 @@ C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_usart.c
 
 # Board support 
 C_SRC += ../../Utilities/miniSTM32/miniSTM32.c
+#C_SRC += ../../Utilities/miniSTM32/miniSTM32_sd.c
+#C_SRC += ../../Utilities/miniSTM32/miniSTM32_flash.c
+#C_SRC += ../../Utilities/miniSTM32/miniSTM32_lcd.c
+#C_SRC += ../../Utilities/miniSTM32/miniSTM32_tsc.c
 C_SRC += ../../Utilities/miniSTM32/miniSTM32_sio.c
 
-
-# Support functions
+# Support functions : NewLibrary
 C_SRC += ../../Utilities/Support/syscalls.c
 C_SRC += ../../Utilities/Support/term_io.c
 C_SRC += ../../Utilities/Support/comm.c
+# Support functions : FAT
+#C_SRC += ../../Utilities/Support/ff.c
 
 # FreeRTOS 
 C_SRC += ../../FreeRTOS_Source/list.c
@@ -173,10 +210,10 @@ vpath %.s $(S_PATHS)
 all:      debug
 
 debug:    CFLAGS += -DDEBUG -g3 -O0
-debug:    $(OBJ_DIR) $(LST_DIR) $(EXE_DIR)/$(PROJECTNAME).out $(EXE_DIR)/$(PROJECTNAME).bin
+debug:    $(OBJ_DIR) $(LST_DIR) $(EXE_DIR)/$(PROJECTNAME).out $(EXE_DIR)/flash.bin
 
 release:  CFLAGS += -DNDEBUG -O3 
-release:  $(OBJ_DIR) $(LST_DIR) $(EXE_DIR)/$(PROJECTNAME).out $(EXE_DIR)/$(PROJECTNAME).bin
+release:  $(OBJ_DIR) $(LST_DIR) $(EXE_DIR)/$(PROJECTNAME).out $(EXE_DIR)/flash.bin
 
 # Create directories
 $(OBJ_DIR):
@@ -207,9 +244,9 @@ $(EXE_DIR)/$(PROJECTNAME).out: $(OBJ_DIR) $(EXE_DIR) $(LST_DIR) $(C_OBJS) $(S_OB
 	$(CC) $(LDFLAGS) $(C_OBJS) $(S_OBJS) $(LIBS) -o $(EXE_DIR)/$(PROJECTNAME).out
 
 # Create binary file
-$(EXE_DIR)/$(PROJECTNAME).bin: $(EXE_DIR)/$(PROJECTNAME).out
+$(EXE_DIR)/flash.bin: $(EXE_DIR)/$(PROJECTNAME).out
 	@echo "Creating binary file"
-	$(OBJCOPY) -O binary $(EXE_DIR)/$(PROJECTNAME).out $(EXE_DIR)/$(PROJECTNAME).bin
+	$(OBJCOPY) -O binary $(EXE_DIR)/$(PROJECTNAME).out $(EXE_DIR)/flash.bin
 
 clean: 
 	$(RM) $(OBJ_DIR) $(LST_DIR) $(EXE_DIR)
@@ -220,11 +257,29 @@ xref:
 	cscope -R -b $(INCLUDEPATHS) $(XREFSPATHS)
 
 # Flash download via openocd
-flash:
-	openocd -f stm32flash.cfg
+flash: 
+	openocd -s $(SCRIPTDIR)/OpenOCD -f $(JTAGDEV).cfg -f stm32flash.cfg
 
 # Reset via openocd
 reset:
-	openocd -f stm32reset.cfg
+	openocd -s $(SCRIPTDIR)/OpenOCD -f $(JTAGDEV).cfg -f stm32reset.cfg
+
+# Start debug 
+# Be sure to execute "monitor shutdown" before exit gdb
+
+ifdef SystemRoot
+
+gdb:
+	start "openocd"	openocd -s $(SCRIPTDIR)/OpenOCD -f $(JTAGDEV).cfg -f stm32debug.cfg 
+	$(GDB) $(EXE_DIR)/$(PROJECTNAME).out -command=$(SCRIPTDIR)/gdb/gdb.startup
+
+else
+
+gdb:
+	xterm -e openocd -s $(SCRIPTDIR)/OpenOCD -f $(JTAGDEV).cfg -f stm32debug.cfg &
+	$(GDB) $(EXE_DIR)/$(PROJECTNAME).out -command=$(SCRIPTDIR)/gdb/gdb.startup
+
+endif
+
 
 # End of File #

@@ -1,19 +1,14 @@
-/**
-  ******************************************************************************
-  * TouchDemo/main.c 
-  * author: Brian
-  * version: V0.1.1
-  * date: 21 July 2011
-  * To Do List:
-  *			Documentation!
-  ******************************************************************************
-  * This file demonstrate the function of LCD board
-  ******************************************************************************
-  */ 
+/*******************************************************************************
+ * TouchDemo/main.c 
+ * author: Brian
+ * version: V0.1.1
+ * date: 21 July 2011
+ */ 
 
 #include "stm32f10x.h"			/* CMSIS */
 #include "miniSTM32.h"			/* mainboard BSP */
 #include "miniSTM32_lcd.h"		/* LCD support */
+#include "miniSTM32_tsc.h"		/* touch screen controller */
 #include <stdio.h>
 
 /* demo menu list */
@@ -31,11 +26,6 @@ extern void MsecDelay( uint16_t u16Delay );
 
 extern unsigned int  HDP;
 extern unsigned int  VDP;
-
-#define VERYSHORT_DELAY	100
-#define SHORT_DELAY		200
-#define MEDIUM_DELAY	500
-#define LONG_DELAY		1000
 
 void Touch_Calibration(void);
 void Touch_Demo(void);
@@ -55,6 +45,9 @@ int main(void)
 	mSTM_LCDInit();
 	mSTM_BLTOff();
 	printf("LCD initialized\n");
+
+	/* Initialize touch screen controller */
+	mSTM_TSCInit();
         
 	while (1) 
 	{
@@ -72,7 +65,7 @@ int main(void)
 				Touch_Calibration();
 			}
 			else if( u16Menu == MENU_TCH_DEMO ) {
-				printf("Touch Sensor Demo\n");
+				printf("Touch Controller Demo\n");
 				Touch_Demo();
 			}
 			else if( u16Menu == MENU_BLT_OFF) {
@@ -84,6 +77,10 @@ int main(void)
 			if( ++u16Menu == MENU_END )
 				u16Menu = 0;
 
+		}
+		else if( u16IRQFlag == MAIN_TSC_INT_EXTI_LINE ) {
+			u16IRQFlag = 0;
+			printf("Screen touch detected\n");
 		}
 
 		/* usual household routines here */

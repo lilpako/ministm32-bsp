@@ -21,6 +21,7 @@ void DebugMon_Handler(void);
 void PendSV_Handler(void);
 void SysTick_Handler(void);
 
+void EXTI9_5_IRQHandler(void);		/* touch controller interrupt handler */
 void EXTI15_10_IRQHandler(void);	/* pushbutton interrupt handler */
 
 #endif /* __STM32F10x_IT_H */

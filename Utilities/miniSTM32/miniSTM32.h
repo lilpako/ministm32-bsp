@@ -18,7 +18,6 @@
 
 #include "stm32f10x.h"
 
-
 /*
  * Push button
  */
@@ -74,6 +73,29 @@ typedef enum{
 #define MAIN_SDIO_INIT_CLK_DIV		    ((uint8_t)0xB2)	/* 400KHz */
 #define MAIN_SDIO_TRNS_CLK_DIV			((uint8_t)0x01)	/* 24MHz */
 
+
+/*
+ * Touch Sensor Controller interrupt and chip select
+ */
+#define MAIN_TSC_INT_PIN				GPIO_Pin_6
+#define MAIN_TSC_INT_GPIO_PORT			GPIOB
+#define MAIN_TSC_INT_GPIO_CLK			RCC_APB2Periph_GPIOB
+#define MAIN_TSC_INT_EXTI_SRC			GPIO_PinSource6
+#define MAIN_TSC_INT_EXTI_PORT			GPIO_PortSourceGPIOB
+#define MAIN_TSC_INT_EXTI_LINE			EXTI_Line6
+#define MAIN_TSC_INT_EXTI_MODE			EXTI_Mode_Interrupt
+#define MAIN_TSC_INT_EXTI_TRIG			EXTI_Trigger_Falling
+#define MAIN_TSC_INT_EXTI_IRQn			EXTI9_5_IRQn
+
+#define MAIN_TSC_CS_PIN					GPIO_Pin_7
+#define MAIN_TSC_CS_GPIO_PORT			GPIOB
+#define MAIN_TSC_CS_GPIO_CLK			RCC_APB2Periph_GPIOB
+
+#define MAIN_TSC_CS_LOW()				GPIO_ResetBits(MAIN_TSC_CS_GPIO_PORT, \
+	MAIN_TSC_CS_PIN)
+#define MAIN_TSC_CS_HIGH()				GPIO_SetBits(MAIN_TSC_CS_GPIO_PORT, \
+	MAIN_TSC_CS_PIN) 
+
 /*
  * miniSTM32 Exported Functions
  */ 
@@ -114,6 +136,8 @@ void mSTM_SDDMATxConfig(uint32_t *BufferSRC, uint32_t BufferSize);
 void mSTM_SDDMARxConfig(uint32_t *BufferDST, uint32_t BufferSize);
 uint32_t mSTM_SDDMAEndOfTransferStatus(void);
 
+/* touch sensor */
+void mSTM_TSCPortInit(void);
 
 #ifdef __cplusplus
 }

@@ -146,6 +146,27 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
+ * @brief  This function handles EXTI 5 - 9 lines.
+ * @param  None
+ * @retval None
+ */
+void EXTI9_5_IRQHandler(void)
+{
+	/* touch screen controller interrupt */
+	if(EXTI_GetITStatus(MAIN_TSC_INT_EXTI_LINE)) {
+
+		/* wait for debounce period */
+		if(u16Debouncer == 0) {
+
+			u16IRQFlag = MAIN_TSC_INT_EXTI_LINE;
+			u16Debouncer = DEBOUNCE_DELAY;
+		}
+		EXTI_ClearITPendingBit(MAIN_TSC_INT_EXTI_LINE);
+	}
+}
+
+
+/**
  * @brief  This function handles EXTI 10 - 15 lines.
  * @param  None
  * @retval None

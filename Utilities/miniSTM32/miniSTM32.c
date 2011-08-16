@@ -38,7 +38,7 @@
 #define MAIN_COM_USART_CLK				(RCC_APB2Periph_USART1 | RCC_APB2Periph_AFIO)
 
 /*
- * SPI 1 : serial flash and touch sensor
+ * SPI 1 for serial flash and touch sensor
  */
 #define MAIN_SPI01						SPI1
 #define MAIN_SPI01_CLK					RCC_APB2Periph_SPI1
@@ -51,6 +51,7 @@
 #define MAIN_SPI01_MOSI_PIN				GPIO_Pin_7                  /* PA.07 */
 #define MAIN_SPI01_MOSI_GPIO_PORT		GPIOA                       /* GPIOA */
 #define MAIN_SPI01_MOSI_GPIO_CLK		RCC_APB2Periph_GPIOA
+
 
 
 /**
@@ -73,7 +74,6 @@ void mSTM_BoardInit(void)
 	/* initialize SPI module */
 	mSTM_SPIInit();
 }
-
 
 void mSTM_LEDInit(void)
 {
@@ -479,6 +479,50 @@ uint32_t mSTM_SDDMAEndOfTransferStatus(void)
 }
 
 
+void mSTM_TSCPortInit(void)
+{
+	GPIO_InitTypeDef GPIO_InitStructure;
+	EXTI_InitTypeDef EXTI_InitStructure;
+	NVIC_InitTypeDef NVIC_InitStructure;
+
+	/* Enable the GPIO Clock */
+	RCC_APB2PeriphClockCmd(MAIN_TSC_INT_GPIO_CLK | MAIN_TSC_CS_GPIO_CLK, ENABLE);
+
+	/* Configure the TSC_CS pin */
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_InitStructure.GPIO_Pin = MAIN_TSC_CS_PIN;
+	GPIO_Init(MAIN_TSC_CS_GPIO_PORT, &GPIO_InitStructure);
+
+	/* Deselect the controller */
+	MAIN_TSC_CS_HIGH();
+
+	/* Configure the TSC_INT pin */
+	/*
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	*/
+	/* As recommended by the data sheet, put 40K internel pull-down */
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;
+	GPIO_InitStructure.GPIO_Pin = MAIN_TSC_INT_PIN;
+	GPIO_Init(MAIN_TSC_INT_GPIO_PORT, &GPIO_InitStructure);
+
+	/* Connect the TSC_INT pin to EXTI line */
+	GPIO_EXTILineConfig(MAIN_TSC_INT_EXTI_PORT, MAIN_TSC_INT_EXTI_SRC);
+
+	/* Configure TSC_INT EXTI line */
+	EXTI_InitStructure.EXTI_Line = MAIN_TSC_INT_EXTI_LINE;
+	EXTI_InitStructure.EXTI_Mode = MAIN_TSC_INT_EXTI_MODE;
+	EXTI_InitStructure.EXTI_Trigger = MAIN_TSC_INT_EXTI_TRIG;  
+	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+	EXTI_Init(&EXTI_InitStructure);
+
+	/* Enable and set Button EXTI Interrupt to the lowest priority */
+	NVIC_InitStructure.NVIC_IRQChannel = MAIN_TSC_INT_EXTI_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0F;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+
+	NVIC_Init(&NVIC_InitStructure); 
+}
 
 /* END OF FILE */
 
