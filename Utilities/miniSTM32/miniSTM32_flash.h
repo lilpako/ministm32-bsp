@@ -14,11 +14,11 @@
  extern "C" {
 #endif 
 
-void mSTM_FlashInit(void);
-uint32_t mSTM_FlashReadID(void);
-void mSTM_FlashErase(BlockSize_TypeDef Size, uint32_t StartAddr);
-void mSTM_FlashWriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByte);
-void mSTM_FlashReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr, uint16_t NumByte);
+void FlashInit(void);
+uint32_t FlashReadID(void);
+void FlashErase(BlockSize_TypeDef Size, uint32_t StartAddr);
+void FlashWriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByte);
+void FlashReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr, uint16_t NumByte);
 
 #ifdef __cplusplus
 }

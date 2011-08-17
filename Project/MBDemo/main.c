@@ -115,7 +115,7 @@ int main(void)
 	printf("miniSTM32 mainboard initialized\n");
 
 	/* Initialize SPI FLASH driver */
-	mSTM_FlashInit();
+	FlashInit();
 	printf("serial FLASH  initialized\n");
 
 #ifdef SD_TEST_RAW
@@ -143,24 +143,24 @@ int main(void)
 				printf("LED1 Turned Off\n");
 			}
 			else if( u16Menu == MENU_FLASH_READID ) {
-				u32FlashID = mSTM_FlashReadID();
+				u32FlashID = FlashReadID();
 				printf("JEDEC Flash ID: %X\n", u32FlashID);
 			}
 			else if( u16Menu == MENU_FLASH_WRITE ) {
-				mSTM_FlashErase(EBSIZE_4KB, FLASH_ADDRESS);
-				mSTM_FlashWriteBuffer(Tx_Buffer, FLASH_ADDRESS, sizeof(Tx_Buffer));
+				FlashErase(EBSIZE_4KB, FLASH_ADDRESS);
+				FlashWriteBuffer(Tx_Buffer, FLASH_ADDRESS, sizeof(Tx_Buffer));
 				printf("FLASH Write Data: %s\n", Tx_Buffer);
 			}
 			else if( u16Menu == MENU_FLASH_READ ) {
-				mSTM_FlashReadBuffer(Rx_Buffer, FLASH_ADDRESS, sizeof(Rx_Buffer) - 1);
+				FlashReadBuffer(Rx_Buffer, FLASH_ADDRESS, sizeof(Rx_Buffer) - 1);
 				printf("FLASH Read Back: %s\n", Rx_Buffer);
 			}
 			else if( u16Menu == MENU_FLASH_ERASE ) {
-				mSTM_FlashErase(EBSIZE_4KB, FLASH_ADDRESS);
+				FlashErase(EBSIZE_4KB, FLASH_ADDRESS);
 				printf("FLASH Erase Block: Data Erased\n");
 			}
 			else if( u16Menu == MENU_FLASH_ERASECHECK ) {
-				mSTM_FlashReadBuffer(Rx_Buffer, FLASH_ADDRESS, sizeof(Rx_Buffer) - 1);
+				FlashReadBuffer(Rx_Buffer, FLASH_ADDRESS, sizeof(Rx_Buffer) - 1);
 				printf("FLASH Read Data Again: %s\n", Rx_Buffer);
 			}
 

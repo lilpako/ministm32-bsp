@@ -62,20 +62,25 @@ void mSTM_FlashWriteRegister(uint8_t RegData);
  */
 void mSTM_FlashWriteEnable(void)
 {
-	/*!< Select the FLASH: Chip Select low */
+	/* select the chip */
 	MAIN_FLASH_CS_LOW();
 
-	/*!< Send "Write Enable" instruction */
+	/* send WREN command */
 	mSTM_FlashSendByte(SFLASH_CMD_WREN);
 
-	/*!< Deselect the FLASH: Chip Select high */
+	/* deselect the chip */
 	MAIN_FLASH_CS_HIGH();
 }
 
 void mSTM_FlashWriteDisable(void)
 {
+	/* select the chip */
 	MAIN_FLASH_CS_LOW();
+
+	/* send WRDI command */
 	mSTM_FlashSendByte(SFLASH_CMD_WRDI);
+
+	/* deselect the chip */
 	MAIN_FLASH_CS_HIGH();
 }
 
@@ -173,7 +178,7 @@ void mSTM_FlashWriteRegister(uint8_t RegData)
 /*
  * This function initializes the peripherals used by the SPI FLASH driver.
  */
-void mSTM_FlashInit(void)
+void FlashInit(void)
 {
 	mSTM_FlashPortInit();
     
@@ -191,7 +196,7 @@ void mSTM_FlashInit(void)
  * @param  None
  * @retval FLASH identification
  */
-uint32_t mSTM_FlashReadID(void)
+uint32_t FlashReadID(void)
 {
 	uint32_t u32Temp = 0, u32TempX;
 
@@ -218,7 +223,7 @@ uint32_t mSTM_FlashReadID(void)
 }
 
 
-void mSTM_FlashErase(BlockSize_TypeDef Size, uint32_t StartAddr)
+void FlashErase(BlockSize_TypeDef Size, uint32_t StartAddr)
 {
 	uint8_t u8CmdByte;
 
@@ -267,7 +272,7 @@ void mSTM_FlashErase(BlockSize_TypeDef Size, uint32_t StartAddr)
 }
 
 
-void mSTM_FlashWriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByte)
+void FlashWriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByte)
 {
 	uint16_t u16Index = 0;
 
@@ -342,7 +347,7 @@ void mSTM_FlashWriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByt
  * @param  NumByteToRead: number of bytes to read from the FLASH.
  * @retval None
  */
-void mSTM_FlashReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr, uint16_t NumByte)
+void FlashReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr, uint16_t NumByte)
 {
 	/*!< Select the FLASH: Chip Select low */
 	MAIN_FLASH_CS_LOW();
