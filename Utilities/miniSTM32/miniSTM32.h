@@ -67,11 +67,11 @@ typedef enum{
  * Micro SD Card reader
  */ 
 
+#if 0
 /* SDIO definitions */
 /* SDIOCLK = HCLK, SDIO_CK = HCLK/(2 + SDIO_CLK_DIV) */
 #define MAIN_SDIO_FIFO_ADDRESS		    ((uint32_t)0x40018080)
-#define MAIN_SDIO_INIT_CLK_DIV		    ((uint8_t)0xB2)	/* 400KHz */
-#define MAIN_SDIO_TRNS_CLK_DIV			((uint8_t)0x01)	/* 24MHz */
+#endif
 
 
 /*
@@ -126,15 +126,12 @@ void mSTM_FlashPortInit(void);
 uint8_t mSTM_FlashSendByte(uint8_t byte);
 uint16_t mSTM_FlashSendHalfWord(uint16_t HalfWord);
 
-/* SDIO module */
-void mSTM_SDIOInit(uint8_t ClockDiv, uint32_t BusWide);
-
+#if 0
 /* micro sd card */
-void mSTM_SDPortDeInit(void);
-void mSTM_SDPortInit(void); 
 void mSTM_SDDMATxConfig(uint32_t *BufferSRC, uint32_t BufferSize);
 void mSTM_SDDMARxConfig(uint32_t *BufferDST, uint32_t BufferSize);
 uint32_t mSTM_SDDMAEndOfTransferStatus(void);
+#endif
 
 /* touch sensor */
 void mSTM_TSCPortInit(void);

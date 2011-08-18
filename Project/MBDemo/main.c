@@ -17,20 +17,18 @@
  * If you want raw read/write test, uncomment the following line
  * otherwise FAT test will be performed.
  *
-#define SD_TEST_RAW			1
+#define SD_RAW_ACCESS				1
  */
 
-#include "stm32f10x.h"			/* CMSIS */
-#include "miniSTM32.h"			/* mainboard BSP */
-#include "miniSTM32_sd.h"		/* SDIO - SD support */
-#include "miniSTM32_flash.h"
+#include "stm32f10x.h"				/* CMSIS */
+#include "miniSTM32.h"				/* mainboard BSP */
+#include "miniSTM32_flash.h"		/* serial flash */
 #include <stdio.h>
 
-/*
-#define SD_TEST_RAW
-*/
-#if !defined(SD_TEST_RAW)
-#include "ff.h"					/* FatFs support */
+#ifdef SD_RAW_ACCESS
+#include "miniSTM32_sdc.h"			/* SD Card subsystem */
+#else
+#include "ff.h"						/* FatFs */
 #endif
 
 /* demo menu list */
@@ -42,13 +40,13 @@ enum{
 	MENU_FLASH_READ,
 	MENU_FLASH_ERASE,
 	MENU_FLASH_ERASECHECK,
-#ifdef SD_TEST_RAW
+#ifdef SD_RAW_ACCESS
 	MENU_SD_ERASE,
 	MENU_SD_BLOCK,
 	MENU_SD_MULTIBLOCK,
 #else
 	MENU_FAT_TEST,
-#endif // SD_TEST_RAW
+#endif // SD_RAW_ACCESS
 	MENU_END
 };
 
@@ -59,18 +57,20 @@ extern volatile uint16_t u16IRQFlag;
 #define READ_BUFFER_SIZE		30
 #define FLASH_ADDRESS			0x10000
 
-/* sd demo typedef */
+/* sd demo return typedef */
 typedef enum {
 	FAILED = 0, 
 	PASSED = !FAILED
 } TestStatus;
 
-/* sd demo parameters */
+#ifdef SD_RAW_ACCESS
+
+/* sd raw access demo parameters */
 #define BLOCK_SIZE				512 /* Block Size in Bytes */
-#define NUMBER_OF_BLOCKS		32  /* For Multi Blocks operation (Read/Write) */
+#define NUMBER_OF_BLOCKS		32  /* For Multi Blocks operation */
 #define MULTI_BUFFER_SIZE		(BLOCK_SIZE * NUMBER_OF_BLOCKS)
 
-/* sd demo variables */
+/* sd raw access demo variables */
 uint8_t Buffer_Block_Tx[BLOCK_SIZE];
 uint8_t Buffer_Block_Rx[BLOCK_SIZE];
 uint8_t Buffer_MultiBlock_Tx[MULTI_BUFFER_SIZE];
@@ -80,16 +80,20 @@ volatile TestStatus TransferStatus1 = FAILED;
 volatile TestStatus TransferStatus2 = FAILED;
 SD_Error Status = SD_OK;
 
-/* sd demo function prototypes */
+/* sd raw access demo function prototypes */
 void SD_EraseTest(void);
 void SD_SingleBlockTest(void);
 void SD_MultiBlockTest(void);
-void Fill_Buffer(uint8_t *pBuffer, uint32_t BufferLength, uint32_t Offset);
-TestStatus Buffercmp(uint8_t* pBuffer1, uint8_t* pBuffer2, uint32_t BufferLength);
-TestStatus eBuffercmp(uint8_t* pBuffer, uint32_t BufferLength);
+void Fill_Buffer(uint8_t *pBuffer, uint32_t BufferLen, uint32_t Offset);
+TestStatus Buffercmp(uint8_t* pBuffer1, uint8_t* pBuffer2, uint32_t BufferLen);
+TestStatus eBuffercmp(uint8_t* pBuffer, uint32_t BufferLen);
+
+#else
 
 /* FAT demo function prototypes */
 TestStatus FAT_Test(void);
+
+#endif // SD_RAW_ACCESS
 
 /**
  * @brief	Main program
@@ -118,7 +122,7 @@ int main(void)
 	FlashInit();
 	printf("serial FLASH  initialized\n");
 
-#ifdef SD_TEST_RAW
+#ifdef SD_RAW_ACCESS
 	/* Initialize SD subsystem : for FAT test it is automatic */
 	if(mSTM_SDInit() == SD_OK)
 	{
@@ -164,7 +168,7 @@ int main(void)
 				printf("FLASH Read Data Again: %s\n", Rx_Buffer);
 			}
 
-#ifdef SD_TEST_RAW
+#ifdef SD_RAW_ACCESS
 			else if( u16Menu == MENU_SD_ERASE ) {
 				SD_EraseTest();
 			}
@@ -181,7 +185,7 @@ int main(void)
 				else
 					printf("FAT Test Failed\n");;
 			}
-#endif // SD_TEST_RAW
+#endif // SD_RAW_ACCESS
 
 			if( ++u16Menu == MENU_END )
 				u16Menu = 0;
@@ -195,7 +199,7 @@ int main(void)
 }
 
 
-#ifdef SD_TEST_RAW
+#ifdef SD_RAW_ACCESS
 /**
  * @brief	Test the SD card erase operations.
  * @param	None
@@ -208,7 +212,8 @@ void SD_EraseTest(void)
 
 	if (Status == SD_OK)
 	{
-		Status = mSTM_SDReadMultiBlocks(Buffer_MultiBlock_Rx, 0x00, BLOCK_SIZE, NUMBER_OF_BLOCKS);
+		Status = mSTM_SDReadMultiBlocks(Buffer_MultiBlock_Rx, 0x00, \
+			BLOCK_SIZE, NUMBER_OF_BLOCKS);
 
 		/* Check if the Transfer is finished */
 		Status = mSTM_SDWaitReadOperation();
@@ -263,7 +268,8 @@ void SD_SingleBlockTest(void)
 	/* Check the correctness of written data */
 	if (Status == SD_OK)
 	{
-		TransferStatus1 = Buffercmp(Buffer_Block_Tx, Buffer_Block_Rx, BLOCK_SIZE);
+		TransferStatus1 = Buffercmp(Buffer_Block_Tx, Buffer_Block_Rx, \
+			BLOCK_SIZE);
 	}
 	
 	if(TransferStatus1 == PASSED)
@@ -287,7 +293,8 @@ void SD_MultiBlockTest(void)
 	Fill_Buffer(Buffer_MultiBlock_Tx, MULTI_BUFFER_SIZE, 0x0);
 	
 	/* Write multiple block of many bytes on address 0 */
-	Status = mSTM_SDWriteMultiBlocks(Buffer_MultiBlock_Tx, 0x00, BLOCK_SIZE, NUMBER_OF_BLOCKS);
+	Status = mSTM_SDWriteMultiBlocks(Buffer_MultiBlock_Tx, 0x00, \
+		BLOCK_SIZE, NUMBER_OF_BLOCKS);
 
 	/* Check if the Transfer is finished */
 	Status = mSTM_SDWaitWriteOperation();
@@ -296,7 +303,8 @@ void SD_MultiBlockTest(void)
 	if (Status == SD_OK)
 	{
 		/* Read block of many bytes from address 0 */
-		Status = mSTM_SDReadMultiBlocks(Buffer_MultiBlock_Rx, 0x00, BLOCK_SIZE, NUMBER_OF_BLOCKS);
+		Status = mSTM_SDReadMultiBlocks(Buffer_MultiBlock_Rx, 0x00, \
+			BLOCK_SIZE, NUMBER_OF_BLOCKS);
 		/* Check if the Transfer is finished */
 		Status = mSTM_SDWaitReadOperation();
 		while(mSTM_SDGetStatus() != SD_TRANSFER_OK);
@@ -305,7 +313,8 @@ void SD_MultiBlockTest(void)
 	/* Check the correctness of written data */
 	if (Status == SD_OK)
 	{
-		TransferStatus2 = Buffercmp(Buffer_MultiBlock_Tx, Buffer_MultiBlock_Rx, MULTI_BUFFER_SIZE);
+		TransferStatus2 = Buffercmp(Buffer_MultiBlock_Tx, \
+			Buffer_MultiBlock_Rx, MULTI_BUFFER_SIZE);
 	}
 	
 	if(TransferStatus2 == PASSED)
@@ -325,9 +334,9 @@ void SD_MultiBlockTest(void)
  * @retval	PASSED: pBuffer1 identical to pBuffer2
  *			FAILED: pBuffer1 differs from pBuffer2
  */
-TestStatus Buffercmp(uint8_t* pBuffer1, uint8_t* pBuffer2, uint32_t BufferLength)
+TestStatus Buffercmp(uint8_t* pBuffer1, uint8_t* pBuffer2, uint32_t BufferLen)
 {
-	while (BufferLength--)
+	while (BufferLen--)
 	{
 		if (*pBuffer1 != *pBuffer2)
 		{
@@ -348,12 +357,12 @@ TestStatus Buffercmp(uint8_t* pBuffer1, uint8_t* pBuffer2, uint32_t BufferLength
  * @param	Offset: first value to fill on the Buffer
  * @retval	None
  */
-void Fill_Buffer(uint8_t *pBuffer, uint32_t BufferLength, uint32_t Offset)
+void Fill_Buffer(uint8_t *pBuffer, uint32_t BufferLen, uint32_t Offset)
 {
 	uint16_t index = 0;
 	
 	/* Put in global buffer same values */
-	for (index = 0; index < BufferLength; index++)
+	for (index = 0; index < BufferLen; index++)
 	{
 		pBuffer[index] = index + Offset;
 	}
@@ -364,11 +373,11 @@ void Fill_Buffer(uint8_t *pBuffer, uint32_t BufferLength, uint32_t Offset)
  * @param	pBuffer: buffer to be compared.
  * @param	BufferLength: buffer's length
  * @retval	PASSED: pBuffer values are zero
- *			FAILED: At least one value from pBuffer buffer is different from zero.
+ *			FAILED: At least one value from pBuffer is different from zero.
  */
-TestStatus eBuffercmp(uint8_t* pBuffer, uint32_t BufferLength)
+TestStatus eBuffercmp(uint8_t* pBuffer, uint32_t BufferLen)
 {
-	while (BufferLength--)
+	while (BufferLen--)
 	{
 		/* In some SD Cards the erased state is 0xFF, in others it's 0x00 */
 		if ((*pBuffer != 0xFF) && (*pBuffer != 0x00))
@@ -382,7 +391,7 @@ TestStatus eBuffercmp(uint8_t* pBuffer, uint32_t BufferLength)
 	return PASSED;
 }
 
-#else // SD_TEST_RAW
+#else // SD_RAW_ACCESS
 
 /**
  * @brief	Test read/write FAT volume
@@ -458,7 +467,7 @@ TestStatus FAT_Test (void)
 	return PASSED;
 }
 
-#endif // SD_TEST_RAW
+#endif // SD_RAW_ACCESS
 
 #ifdef  USE_FULL_ASSERT
 
@@ -471,7 +480,7 @@ TestStatus FAT_Test (void)
  */
 void assert_failed(uint8_t* file, uint32_t line)
 { 
-	/* User can add his own implementation to report the file name and line number,
+	/* User can add his own implementation to report the location of error,
 	ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
 
 	/* Infinite loop */

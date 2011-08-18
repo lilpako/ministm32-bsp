@@ -333,78 +333,7 @@ uint16_t mSTM_FlashSendHalfWord(uint16_t HalfWord)
 	return SPI_I2S_ReceiveData(MAIN_SPI01);
 }
 
-void mSTM_SDIOInit(uint8_t ClockDiv, uint32_t BusWide)
-{
-	SDIO_InitTypeDef SDIO_InitStructure;
-
-	SDIO_InitStructure.SDIO_ClockDiv = ClockDiv; 
-	SDIO_InitStructure.SDIO_ClockEdge = SDIO_ClockEdge_Rising;
-	SDIO_InitStructure.SDIO_ClockBypass = SDIO_ClockBypass_Disable;
-	SDIO_InitStructure.SDIO_ClockPowerSave = SDIO_ClockPowerSave_Disable;
-	SDIO_InitStructure.SDIO_BusWide = BusWide;
-	SDIO_InitStructure.SDIO_HardwareFlowControl = SDIO_HardwareFlowControl_Disable;
-	SDIO_Init(&SDIO_InitStructure);
-
-}
-
-/**
-  * This function deinitializes the SDIO interface.
-  * 
-  */
-void mSTM_SDPortDeInit(void)
-{
-  GPIO_InitTypeDef  GPIO_InitStructure;
-  
-  /*!< Disable SDIO Clock */
-  SDIO_ClockCmd(DISABLE);
-  
-  /*!< Set Power State to OFF */
-  SDIO_SetPowerState(SDIO_PowerState_OFF);
-
-  /*!< DeInitializes the SDIO peripheral */
-  SDIO_DeInit();
-  
-  /*!< Disable the SDIO AHB Clock */
-  RCC_AHBPeriphClockCmd(RCC_AHBPeriph_SDIO, DISABLE);
-
-  /*!< Configure PC.08, PC.09, PC.10, PC.11, PC.12 pin: D0, D1, D2, D3, CLK pin */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9 | GPIO_Pin_10 | GPIO_Pin_11 | GPIO_Pin_12;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-  GPIO_Init(GPIOC, &GPIO_InitStructure);
-
-  /*!< Configure PD.02 CMD line */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
-  GPIO_Init(GPIOD, &GPIO_InitStructure);
-}
-
-/**
-  * This function initializes the SD Card and put it into StandBy State (Ready for 
-  *         data transfer).
-  */
-void mSTM_SDPortInit(void)
-{
-  GPIO_InitTypeDef  GPIO_InitStructure;
-
-  /*!< GPIOC and GPIOD Periph clock enable */
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD, ENABLE);
-
-  /*!< Configure PC.08, PC.09, PC.10, PC.11, PC.12 pin: D0, D1, D2, D3, CLK pin */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9 | GPIO_Pin_10 | GPIO_Pin_11 | GPIO_Pin_12;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-  GPIO_Init(GPIOC, &GPIO_InitStructure);
-
-  /*!< Configure PD.02 CMD line */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
-  GPIO_Init(GPIOD, &GPIO_InitStructure);
-
-  /*!< Enable the SDIO AHB Clock */
-  RCC_AHBPeriphClockCmd(RCC_AHBPeriph_SDIO, ENABLE);
-
-  /*!< Enable the DMA2 Clock */
-  RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA2, ENABLE);
-}
-
+#if 0
 /**
   * This function configures the DMA2 Channel4 for SDIO Tx request.
   *		BufferSRC: pointer to the source buffer
@@ -478,6 +407,7 @@ uint32_t mSTM_SDDMAEndOfTransferStatus(void)
   return (uint32_t)DMA_GetFlagStatus(DMA2_FLAG_TC4);
 }
 
+#endif
 
 void mSTM_TSCPortInit(void)
 {
