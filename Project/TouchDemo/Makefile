@@ -30,7 +30,8 @@ JTAGDEV = luminary-icdi
 ifdef SystemRoot
 
 # Windows Vista or Windows 7
-ifdef PROGRAMDATA
+# ALLUSERSAPPDATA,DEFAULTUSERPROFILE,SYSTEMPROFILE,USERSID
+ifdef USERSID
 
 TOOLDIR = "C:/Program Files/CodeSourcery/Sourcery G++ Lite"
 GCCVERSION = "4.5.2"
@@ -50,7 +51,7 @@ CC = $(TOOLDIR)\bin\arm-none-eabi-gcc
 LD = $(TOOLDIR)\bin\arm-none-eabi-ld
 AR = $(TOOLDIR)\bin\arm-none-eabi-ar
 GDB = $(TOOLDIR)\bin\arm-none-eabi-gdb
-OBJCOPY = $(TOOLDIR)\bin/arm-none-eabi-objcopy
+OBJCOPY = $(TOOLDIR)\bin\arm-none-eabi-objcopy
 RM = $(TOOLDIR)\bin\cs-rm -rf
 
 endif
