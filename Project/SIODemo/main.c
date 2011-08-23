@@ -47,7 +47,7 @@ int main(void)
 	SysTick_Config(SystemCoreClock / 1000);
 
 	/* Initialize peripherals */
-	mSTM_COMInit2(115200);
+	mSTM_COMInit(115200);
 	printf("COM Port initialized\n");
 
 	/* Initialize the extension board */

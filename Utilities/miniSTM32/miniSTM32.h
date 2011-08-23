@@ -27,9 +27,6 @@ typedef enum
 	BTN_MODE_EXTI = 1
 } ButtonMode_TypeDef;
 
-/*
- * Push button
- */
 #define MAIN_BTN_PIN					GPIO_Pin_15
 #define MAIN_BTN_GPIO_PORT				GPIOB
 #define MAIN_BTN_GPIO_CLK				(RCC_APB2Periph_GPIOB|RCC_APB2Periph_AFIO)
@@ -39,6 +36,17 @@ typedef enum
 #define MAIN_BTN_EXTI_MODE				EXTI_Mode_Interrupt
 #define MAIN_BTN_EXTI_TRIG				EXTI_Trigger_Falling
 #define MAIN_BTN_EXTI_IRQn				EXTI15_10_IRQn  
+
+typedef enum
+{
+	SPI_MODE_FLASH = 0,
+	SPI_MODE_TOUCH = 1
+} SPIMode_TypeDef;
+
+/* Touch controller SPI baudrate : PCLK2/4 = 18MHz */
+#define MAIN_TOUCH_SPI_BAUD				SPI_BaudRatePrescaler_32;
+/* FLASH SPI baudrate : PCLK2/32 = 2.25MHz */
+#define MAIN_FLASH_SPI_BAUD				SPI_BaudRatePrescaler_4;
 
 /*
  * SST25VF016B SPI Flash 
@@ -63,16 +71,6 @@ typedef enum{
 #define MAIN_FLASH_CS_HIGH()			GPIO_SetBits(MAIN_FLASH_CS_GPIO_PORT, \
 	MAIN_FLASH_CS_PIN) 
 
-/*
- * Micro SD Card reader
- */ 
-
-#if 0
-/* SDIO definitions */
-/* SDIOCLK = HCLK, SDIO_CK = HCLK/(2 + SDIO_CLK_DIV) */
-#define MAIN_SDIO_FIFO_ADDRESS		    ((uint32_t)0x40018080)
-#endif
-
 
 /*
  * Touch Sensor Controller interrupt and chip select
@@ -96,6 +94,7 @@ typedef enum{
 #define MAIN_TSC_CS_HIGH()				GPIO_SetBits(MAIN_TSC_CS_GPIO_PORT, \
 	MAIN_TSC_CS_PIN) 
 
+
 /*
  * miniSTM32 Exported Functions
  */ 
@@ -114,24 +113,16 @@ void mSTM_PBInit(ButtonMode_TypeDef Button_Mode);
 uint32_t mSTM_PBGetState(void);
 
 /* COM port */
-void mSTM_COMInit(USART_InitTypeDef* USART_InitStruct);
-void mSTM_COMInit2(uint32_t Speed);
+void mSTM_COMInit(uint32_t Speed);
 
 /* SPI module */
-void mSTM_SPIInit(void);
-void mSTM_SPISetBaudRate(uint16_t BaudRate);
+void mSTM_SPIInit(SPIMode_TypeDef SPI_Mode);
+void mSTM_SPISetMode(SPIMode_TypeDef SPI_Mode);
+uint8_t mSTM_SPISendByte(uint8_t Byte);
+uint16_t mSTM_SPISendHalfWord(uint16_t HalfWord);
 
 /* Flash */
 void mSTM_FlashPortInit(void);
-uint8_t mSTM_FlashSendByte(uint8_t byte);
-uint16_t mSTM_FlashSendHalfWord(uint16_t HalfWord);
-
-#if 0
-/* micro sd card */
-void mSTM_SDDMATxConfig(uint32_t *BufferSRC, uint32_t BufferSize);
-void mSTM_SDDMARxConfig(uint32_t *BufferDST, uint32_t BufferSize);
-uint32_t mSTM_SDDMAEndOfTransferStatus(void);
-#endif
 
 /* touch sensor */
 void mSTM_TSCPortInit(void);

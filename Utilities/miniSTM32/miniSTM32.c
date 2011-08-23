@@ -12,7 +12,7 @@
   
 #include "miniSTM32.h"
 #include "stm32f10x_dma.h"
-#include "stm32f10x_sdio.h"
+//#include "stm32f10x_sdio.h"
 #include "stm32f10x_spi.h"
 #include "stm32f10x_usart.h"
 
@@ -53,9 +53,8 @@
 #define MAIN_SPI01_MOSI_GPIO_CLK		RCC_APB2Periph_GPIOA
 
 
-
 /**
- * @brief	Initialize main board
+ * @brief	Initialize essential parts of the main board.
  * @param	None
  * @retval	None
  */
@@ -69,10 +68,7 @@ void mSTM_BoardInit(void)
 	mSTM_PBInit(BTN_MODE_EXTI);
 
 	/* Initialize COM port */
-	mSTM_COMInit2(115200);
-
-	/* initialize SPI module */
-	mSTM_SPIInit();
+	mSTM_COMInit(115200);
 }
 
 void mSTM_LEDInit(void)
@@ -124,10 +120,32 @@ void mSTM_PBInit(ButtonMode_TypeDef Button_Mode)
 	}
 }
 
-void mSTM_COMInit2(uint32_t Speed)
+/*
+ * @brief	Initialize the main board COM port
+ * @param	Speed: baud rate
+ * @retval	None
+ */
+void mSTM_COMInit(uint32_t Speed)
 {
+	GPIO_InitTypeDef GPIO_InitStructure;
 	USART_InitTypeDef USART_InitStructure;
 
+	/* Enable GPIO clock */
+	RCC_APB2PeriphClockCmd(MAIN_COM_TX_GPIO_CLK | MAIN_COM_RX_GPIO_CLK | 
+		MAIN_COM_USART_CLK, ENABLE);
+
+	/* Configure COM Tx as alternate function push-pull */
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+	GPIO_InitStructure.GPIO_Pin = MAIN_COM_TX_PIN;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(MAIN_COM_TX_GPIO_PORT, &GPIO_InitStructure);
+
+	/* Configure COM Rx as input floating */
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_InitStructure.GPIO_Pin = MAIN_COM_RX_PIN;
+	GPIO_Init(MAIN_COM_RX_GPIO_PORT, &GPIO_InitStructure);
+
+	/* Configure USART module */
 	USART_InitStructure.USART_BaudRate = Speed;
 	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
 	USART_InitStructure.USART_StopBits = USART_StopBits_1;
@@ -135,38 +153,17 @@ void mSTM_COMInit2(uint32_t Speed)
 	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
 	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
 
-	mSTM_COMInit( &USART_InitStructure );
-}
+	/* Initialize USART module */
+	USART_Init(MAIN_COM_USART, &USART_InitStructure);
 
-
-void mSTM_COMInit(USART_InitTypeDef* USART_InitStruct)
-{
-	GPIO_InitTypeDef GPIO_InitStructure;
-
-	/* Enable GPIO clock */
-	RCC_APB2PeriphClockCmd(MAIN_COM_TX_GPIO_CLK | MAIN_COM_RX_GPIO_CLK | 
-		MAIN_COM_USART_CLK, ENABLE);
-
-	/* Configure USART Tx as alternate function push-pull */
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-	GPIO_InitStructure.GPIO_Pin = MAIN_COM_TX_PIN;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(MAIN_COM_TX_GPIO_PORT, &GPIO_InitStructure);
-
-	/* Configure USART Rx as input floating */
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-	GPIO_InitStructure.GPIO_Pin = MAIN_COM_RX_PIN;
-	GPIO_Init(MAIN_COM_RX_GPIO_PORT, &GPIO_InitStructure);
-
-	/* USART configuration */
-	USART_Init(MAIN_COM_USART, USART_InitStruct);
-    
 	/* Enable USART */
 	USART_Cmd(MAIN_COM_USART, ENABLE);
 }
 
 /*
- * Retargets the C library printf function to the USART.
+ * @brief	Retargets the C library printf function to the USART.
+ * @param	ch : character to be printed
+ * @retval	ch : character printed
  */
 __io_putchar(int ch)
 {
@@ -212,103 +209,111 @@ uint32_t mSTM_PBGetState(void)
 }
 
 
-void mSTM_SPIInit()
+void mSTM_SPIInit(SPIMode_TypeDef SPI_Mode)
 {
-	SPI_InitTypeDef  SPI_InitStructure;
+	GPIO_InitTypeDef GPIO_InitStructure;
 
-	/* check SPE bit of SPI_CR1 */
-	/* return if SPI module is already turned on */
-	if(MAIN_SPI01->CR1 & 0x0040) return;
+	/* check if MAIN_SPI01 is enabled already */
+	if((MAIN_SPI01->CR1 & 0x0040) == 0)
+	{
+		/* enable MAIN_SPI01 related clocks */
+		RCC_APB2PeriphClockCmd(MAIN_SPI01_CLK | MAIN_SPI01_SCK_GPIO_CLK | 
+			MAIN_SPI01_MISO_GPIO_CLK | MAIN_SPI01_MOSI_GPIO_CLK, ENABLE);
+  
+		/* Configure MAIN_SPI01 pins: SCK */
+		GPIO_InitStructure.GPIO_Pin = MAIN_SPI01_SCK_PIN;
+		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+		GPIO_Init(MAIN_SPI01_SCK_GPIO_PORT, &GPIO_InitStructure);
 
-	/* SPI configuration */
-	SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
-	SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
-	SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
-	/* SPI Mode 0: CPOL=0, CPHA=0 */
-	/*
-	SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
-	SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;
-	*/
-	/* SPI Mode 3: CPOL=1, CPHA=1 */
-	SPI_InitStructure.SPI_CPOL = SPI_CPOL_High;
-	SPI_InitStructure.SPI_CPHA = SPI_CPHA_2Edge;
-	/* Separate CS control */
-	SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
-	/* SPI clock for sFLASH: PCLK2/4 = 18MHz */
-	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_4;
-	/* SPI clock for Touch Sensor: PCLK2/32 = 2.25MHz */
-	/*
-	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_32;
-	*/
-	SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
-	SPI_InitStructure.SPI_CRCPolynomial = 7;
-	SPI_Init(MAIN_SPI01, &SPI_InitStructure);
+		/* Configure MAIN_SPI01 pins: MOSI */
+		GPIO_InitStructure.GPIO_Pin = MAIN_SPI01_MOSI_PIN;
+		GPIO_Init(MAIN_SPI01_MOSI_GPIO_PORT, &GPIO_InitStructure);
+
+		/* Configure MAIN_SPI01 pins: MISO */
+		GPIO_InitStructure.GPIO_Pin = MAIN_SPI01_MISO_PIN;
+		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;  
+		GPIO_Init(MAIN_SPI01_MISO_GPIO_PORT, &GPIO_InitStructure);
+	}
+
+	mSTM_SPISetMode( SPI_Mode );
 
 	/* Enable the MAIN_SPI01  */
 	SPI_Cmd(MAIN_SPI01, ENABLE);
 }
 
-void mSTM_SPI_SetBaudRate(uint16_t BaudRate)
+
+void mSTM_SPISetMode(SPIMode_TypeDef SPI_Mode)
 {
-	if(IS_SPI_BAUDRATE_PRESCALER(BaudRate))
+	SPI_InitTypeDef  SPI_InitStructure;
+
+	/* SPI configuration */
+	SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
+	SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
+	SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
+
+	/* SPI Mode 0: CPOL=0, CPHA=0 */
+	/*
+	SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
+	SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;
+	*/
+
+	/* SPI Mode 3: CPOL=1, CPHA=1 */
+	SPI_InitStructure.SPI_CPOL = SPI_CPOL_High;
+	SPI_InitStructure.SPI_CPHA = SPI_CPHA_2Edge;
+
+	/* Separate CS control */
+	SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
+
+	/* SPI baud rate */
+	if( SPI_Mode == SPI_MODE_FLASH )
 	{
-		MAIN_SPI01->CR1;
+		SPI_InitStructure.SPI_BaudRatePrescaler = MAIN_FLASH_SPI_BAUD;
 	}
+	else if( SPI_Mode == SPI_MODE_TOUCH )
+	{
+		SPI_InitStructure.SPI_BaudRatePrescaler = MAIN_TOUCH_SPI_BAUD;
+	}
+
+	SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
+	SPI_InitStructure.SPI_CRCPolynomial = 7;
+	SPI_Init(MAIN_SPI01, &SPI_InitStructure);
+
 }
 
 void mSTM_FlashPortInit(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 
-	/* sFLASH_SPI_CS_GPIO, sFLASH_SPI_MOSI_GPIO, sFLASH_SPI_MISO_GPIO 
-	and sFLASH_SPI_SCK_GPIO Periph clock enable */
-	RCC_APB2PeriphClockCmd(MAIN_FLASH_CS_GPIO_CLK | MAIN_SPI01_MOSI_GPIO_CLK | 
-		MAIN_SPI01_MISO_GPIO_CLK | MAIN_SPI01_SCK_GPIO_CLK, ENABLE);
+	/* MAIN_SPI01 related GPIO clock clock enable */
+	RCC_APB2PeriphClockCmd(MAIN_FLASH_CS_GPIO_CLK, ENABLE);
 
-	/* MAIN_SPI01 Periph clock enable */
-	RCC_APB2PeriphClockCmd(MAIN_SPI01_CLK, ENABLE);
-  
-	/* Configure MAIN_SPI01 pins: SCK */
-	GPIO_InitStructure.GPIO_Pin = MAIN_SPI01_SCK_PIN;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-	GPIO_Init(MAIN_SPI01_SCK_GPIO_PORT, &GPIO_InitStructure);
-
-	/* Configure MAIN_SPI01 pins: MOSI */
-	GPIO_InitStructure.GPIO_Pin = MAIN_SPI01_MOSI_PIN;
-	GPIO_Init(MAIN_SPI01_MOSI_GPIO_PORT, &GPIO_InitStructure);
-
-	/* Configure MAIN_SPI01 pins: MISO */
-	GPIO_InitStructure.GPIO_Pin = MAIN_SPI01_MISO_PIN;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;  
-	GPIO_Init(MAIN_SPI01_MISO_GPIO_PORT, &GPIO_InitStructure);
-  
 	/* Configure MAIN_FLASH_CS_PIN pin: sFLASH Card CS pin */
 	GPIO_InitStructure.GPIO_Pin = MAIN_FLASH_CS_PIN;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_Init(MAIN_FLASH_CS_GPIO_PORT, &GPIO_InitStructure);
-
 }
 
 
 /*
  * @brief  Sends a byte through the SPI interface and return the byte received
  *         from the SPI bus.
- * @param  byte: byte to send.
+ * @param  Byte: byte to send.
  * @retval The value of the received byte.
  */
-uint8_t mSTM_FlashSendByte(uint8_t byte)
+uint8_t mSTM_SPISendByte(uint8_t Byte)
 {
-	/*!< Loop while DR register in not emplty */
+	/* Loop while DR register in not emplty */
 	while (SPI_I2S_GetFlagStatus(MAIN_SPI01, SPI_I2S_FLAG_TXE) == RESET);
 
-	/*!< Send byte through the SPI1 peripheral */
-	SPI_I2S_SendData(MAIN_SPI01, byte);
+	/* Send byte through the SPI1 peripheral */
+	SPI_I2S_SendData(MAIN_SPI01, Byte);
 
-	/*!< Wait to receive a byte */
+	/* Wait to receive a byte */
 	while (SPI_I2S_GetFlagStatus(MAIN_SPI01, SPI_I2S_FLAG_RXNE) == RESET);
 
-	/*!< Return the byte read from the SPI bus */
+	/* Return the byte read from the SPI bus */
 	return SPI_I2S_ReceiveData(MAIN_SPI01);
 }
 
@@ -318,7 +323,7 @@ uint8_t mSTM_FlashSendByte(uint8_t byte)
  * @param  HalfWord: Half Word to send.
  * @retval The value of the received Half Word.
  */
-uint16_t mSTM_FlashSendHalfWord(uint16_t HalfWord)
+uint16_t mSTM_SPISendHalfWord(uint16_t HalfWord)
 {
 	/* Loop while DR register in not emplty */
 	while (SPI_I2S_GetFlagStatus(MAIN_SPI01, SPI_I2S_FLAG_TXE) == RESET);
@@ -333,81 +338,6 @@ uint16_t mSTM_FlashSendHalfWord(uint16_t HalfWord)
 	return SPI_I2S_ReceiveData(MAIN_SPI01);
 }
 
-#if 0
-/**
-  * This function configures the DMA2 Channel4 for SDIO Tx request.
-  *		BufferSRC: pointer to the source buffer
-  *		BufferSize: buffer size
-  */
-void mSTM_SDDMATxConfig(uint32_t *BufferSRC, uint32_t BufferSize)
-{
-
-  DMA_InitTypeDef DMA_InitStructure;
-
-  DMA_ClearFlag(DMA2_FLAG_TC4 | DMA2_FLAG_TE4 | DMA2_FLAG_HT4 | DMA2_FLAG_GL4);
-
-  /*!< DMA2 Channel4 disable */
-  DMA_Cmd(DMA2_Channel4, DISABLE);
-
-  /*!< DMA2 Channel4 Config */
-  DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)MAIN_SDIO_FIFO_ADDRESS;
-  DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)BufferSRC;
-  DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralDST;
-  DMA_InitStructure.DMA_BufferSize = BufferSize / 4;
-  DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
-  DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
-  DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Word;
-  DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Word;
-  DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
-  DMA_InitStructure.DMA_Priority = DMA_Priority_High;
-  DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
-  DMA_Init(DMA2_Channel4, &DMA_InitStructure);
-
-  /*!< DMA2 Channel4 enable */
-  DMA_Cmd(DMA2_Channel4, ENABLE);  
-}
-
-/**
-  * This function configures the DMA2 Channel4 for SDIO Rx request.
-  *		BufferDST: pointer to the destination buffer
-  *		BufferSize: buffer size
-  */
-void mSTM_SDDMARxConfig(uint32_t *BufferDST, uint32_t BufferSize)
-{
-  DMA_InitTypeDef DMA_InitStructure;
-
-  DMA_ClearFlag(DMA2_FLAG_TC4 | DMA2_FLAG_TE4 | DMA2_FLAG_HT4 | DMA2_FLAG_GL4);
-
-  /*!< DMA2 Channel4 disable */
-  DMA_Cmd(DMA2_Channel4, DISABLE);
-
-  /*!< DMA2 Channel4 Config */
-  DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)MAIN_SDIO_FIFO_ADDRESS;
-  DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)BufferDST;
-  DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC;
-  DMA_InitStructure.DMA_BufferSize = BufferSize / 4;
-  DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
-  DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
-  DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Word;
-  DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Word;
-  DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
-  DMA_InitStructure.DMA_Priority = DMA_Priority_High;
-  DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
-  DMA_Init(DMA2_Channel4, &DMA_InitStructure);
-
-  /*!< DMA2 Channel4 enable */
-  DMA_Cmd(DMA2_Channel4, ENABLE); 
-}
-
-/**
-  * This function returns the DMA End Of Transfer Status.
-  */
-uint32_t mSTM_SDDMAEndOfTransferStatus(void)
-{
-  return (uint32_t)DMA_GetFlagStatus(DMA2_FLAG_TC4);
-}
-
-#endif
 
 void mSTM_TSCPortInit(void)
 {

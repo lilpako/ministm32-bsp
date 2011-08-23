@@ -66,7 +66,7 @@ void mSTM_FlashWriteEnable(void)
 	MAIN_FLASH_CS_LOW();
 
 	/* send WREN command */
-	mSTM_FlashSendByte(SFLASH_CMD_WREN);
+	mSTM_SPISendByte(SFLASH_CMD_WREN);
 
 	/* deselect the chip */
 	MAIN_FLASH_CS_HIGH();
@@ -78,7 +78,7 @@ void mSTM_FlashWriteDisable(void)
 	MAIN_FLASH_CS_LOW();
 
 	/* send WRDI command */
-	mSTM_FlashSendByte(SFLASH_CMD_WRDI);
+	mSTM_SPISendByte(SFLASH_CMD_WRDI);
 
 	/* deselect the chip */
 	MAIN_FLASH_CS_HIGH();
@@ -98,14 +98,14 @@ void mSTM_FlashWaitForWriteEnd(void)
 	MAIN_FLASH_CS_LOW();
 
 	/*!< Send "Read Status Register" instruction */
-	mSTM_FlashSendByte(SFLASH_CMD_RDSR);
+	mSTM_SPISendByte(SFLASH_CMD_RDSR);
 
 	/*!< Loop as long as the memory is busy with a write cycle */
 	do
 	{
 		/*!< Send a dummy byte to generate the clock needed by the FLASH
 		and put the value of the status register in FLASH_Status variable */
-		flashstatus = mSTM_FlashSendByte(SFLASH_DUMMY_BYTE);
+		flashstatus = mSTM_SPISendByte(SFLASH_DUMMY_BYTE);
 
 	}
 	while ((flashstatus & SFLASH_WIP_FLAG) == SET); /* Write in progress */
@@ -124,15 +124,15 @@ void mSTM_FlashWriteByte(uint8_t Byte, uint32_t WriteAddr)
 	MAIN_FLASH_CS_LOW();
 	
 	/* command byte */
-	mSTM_FlashSendByte(SFLASH_CMD_WRBYTE);
+	mSTM_SPISendByte(SFLASH_CMD_WRBYTE);
 	
 	/* 3bytes of address */
-	mSTM_FlashSendByte((WriteAddr & 0xFF0000) >> 16);
-	mSTM_FlashSendByte((WriteAddr & 0xFF00) >> 8);
-	mSTM_FlashSendByte(WriteAddr & 0xFF);
+	mSTM_SPISendByte((WriteAddr & 0xFF0000) >> 16);
+	mSTM_SPISendByte((WriteAddr & 0xFF00) >> 8);
+	mSTM_SPISendByte(WriteAddr & 0xFF);
 	
 	/* data byte */
-	mSTM_FlashSendByte(Byte);
+	mSTM_SPISendByte(Byte);
 
 	/* chip deselect */
 	MAIN_FLASH_CS_HIGH();
@@ -151,9 +151,9 @@ uint8_t mSTM_FlashReadRegister(void)
 	MAIN_FLASH_CS_LOW();
 
 	/*!< Send "RDID " instruction */
-	mSTM_FlashSendByte(SFLASH_CMD_RDSR);
+	mSTM_SPISendByte(SFLASH_CMD_RDSR);
 
-	u8Data = mSTM_FlashSendByte(SFLASH_DUMMY_BYTE);
+	u8Data = mSTM_SPISendByte(SFLASH_DUMMY_BYTE);
 
 	MAIN_FLASH_CS_HIGH();
 
@@ -163,14 +163,14 @@ uint8_t mSTM_FlashReadRegister(void)
 void mSTM_FlashWriteRegister(uint8_t RegData)
 {
 	MAIN_FLASH_CS_LOW();
-	mSTM_FlashSendByte(SFLASH_CMD_EWSR);
+	mSTM_SPISendByte(SFLASH_CMD_EWSR);
 	MAIN_FLASH_CS_HIGH();
 
 	/* do we need delay here ? */
 
 	MAIN_FLASH_CS_LOW();
-	mSTM_FlashSendByte(SFLASH_CMD_WRSR);
-	mSTM_FlashSendByte(RegData);
+	mSTM_SPISendByte(SFLASH_CMD_WRSR);
+	mSTM_SPISendByte(RegData);
 	MAIN_FLASH_CS_HIGH();
 }
 
@@ -185,7 +185,7 @@ void FlashInit(void)
 	/* Deselect the FLASH: Chip Select high */
 	MAIN_FLASH_CS_HIGH();
 
-	mSTM_SPIInit();
+	mSTM_SPIInit(SPI_MODE_FLASH);
 
 	/* disable block protection */
 	mSTM_FlashWriteRegister( SFLASH_BP_NONE );
@@ -204,16 +204,16 @@ uint32_t FlashReadID(void)
 	MAIN_FLASH_CS_LOW();
 
 	/* Send "RDID " instruction */
-	mSTM_FlashSendByte(SFLASH_CMD_JEDEC);
+	mSTM_SPISendByte(SFLASH_CMD_JEDEC);
 
 	/* Read a byte from the FLASH */
-	u32TempX = mSTM_FlashSendByte(SFLASH_DUMMY_BYTE);
+	u32TempX = mSTM_SPISendByte(SFLASH_DUMMY_BYTE);
 	u32Temp += (u32TempX << 16);
 
-	u32TempX = mSTM_FlashSendByte(SFLASH_DUMMY_BYTE);
+	u32TempX = mSTM_SPISendByte(SFLASH_DUMMY_BYTE);
 	u32Temp += (u32TempX << 8);
 
-	u32TempX = mSTM_FlashSendByte(SFLASH_DUMMY_BYTE);
+	u32TempX = mSTM_SPISendByte(SFLASH_DUMMY_BYTE);
 	u32Temp += u32TempX;
 
 	/* Deselect the FLASH: Chip Select high */
@@ -253,16 +253,16 @@ void FlashErase(BlockSize_TypeDef Size, uint32_t StartAddr)
 	/*!< Select the FLASH: Chip Select low */
 	MAIN_FLASH_CS_LOW();
 	/*!< Send Sector Erase instruction */
-	mSTM_FlashSendByte(u8CmdByte);
+	mSTM_SPISendByte(u8CmdByte);
 
 	if( u8CmdByte != SFLASH_CMD_ERCHIP )
 	{
 		/*!< Send SectorAddr high nibble address byte */
-		mSTM_FlashSendByte((StartAddr & 0xFF0000) >> 16);
+		mSTM_SPISendByte((StartAddr & 0xFF0000) >> 16);
 		/*!< Send SectorAddr medium nibble address byte */
-		mSTM_FlashSendByte((StartAddr & 0xFF00) >> 8);
+		mSTM_SPISendByte((StartAddr & 0xFF00) >> 8);
 		/*!< Send SectorAddr low nibble address byte */
-		mSTM_FlashSendByte(StartAddr & 0xFF);
+		mSTM_SPISendByte(StartAddr & 0xFF);
 	}
 	/*!< Deselect the FLASH: Chip Select high */
 	MAIN_FLASH_CS_HIGH();
@@ -282,16 +282,16 @@ void FlashWriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByte)
 	MAIN_FLASH_CS_LOW();
 
 	/* command byte */
-	mSTM_FlashSendByte(SFLASH_CMD_WRAAIW);
+	mSTM_SPISendByte(SFLASH_CMD_WRAAIW);
 
 	/* 3 bytes of address */
-	mSTM_FlashSendByte((WriteAddr & 0xFF0000) >> 16);
-	mSTM_FlashSendByte((WriteAddr & 0xFF00) >> 8);
-	mSTM_FlashSendByte(WriteAddr & 0xFF);
+	mSTM_SPISendByte((WriteAddr & 0xFF0000) >> 16);
+	mSTM_SPISendByte((WriteAddr & 0xFF00) >> 8);
+	mSTM_SPISendByte(WriteAddr & 0xFF);
 
 	/* the first 2 data bytes */
-	mSTM_FlashSendByte(pBuffer[u16Index++]);
-	mSTM_FlashSendByte(pBuffer[u16Index++]);
+	mSTM_SPISendByte(pBuffer[u16Index++]);
+	mSTM_SPISendByte(pBuffer[u16Index++]);
 
 	/* chip deselect */
 	MAIN_FLASH_CS_HIGH();
@@ -304,20 +304,20 @@ void FlashWriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByte)
 		MAIN_FLASH_CS_LOW();
 
 		/* command byte */
-		mSTM_FlashSendByte(SFLASH_CMD_WRAAIW);
+		mSTM_SPISendByte(SFLASH_CMD_WRAAIW);
 
 		/* first data byte */
-		mSTM_FlashSendByte(pBuffer[u16Index++]);
+		mSTM_SPISendByte(pBuffer[u16Index++]);
 
 		/* second data byte */
 		/* fill the last byte if the NumByte is odd */
 		if( u16Index == (NumByte -1) )
 		{
-			mSTM_FlashSendByte(0xFF);
+			mSTM_SPISendByte(0xFF);
 		}
 		else
 		{
-			mSTM_FlashSendByte(pBuffer[u16Index++]);
+			mSTM_SPISendByte(pBuffer[u16Index++]);
 		}
 
 		/* chip deselect */
@@ -330,7 +330,7 @@ void FlashWriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByte)
 	MAIN_FLASH_CS_LOW();
 
 	/* command byte */
-	mSTM_FlashSendByte(SFLASH_CMD_WRDI);
+	mSTM_SPISendByte(SFLASH_CMD_WRDI);
 
 	/* chip deselect */
 	MAIN_FLASH_CS_HIGH();
@@ -354,27 +354,27 @@ void FlashReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr, uint16_t NumByte)
 
 	/*!< Send "Read from Memory " instruction */
 #ifdef FLASH_HIGHSPEED_READ
-	mSTM_FlashSendByte(SFLASH_CMD_RD80M);
+	mSTM_SPISendByte(SFLASH_CMD_RD80M);
 #else
-	mSTM_FlashSendByte(SFLASH_CMD_RD25M);
+	mSTM_SPISendByte(SFLASH_CMD_RD25M);
 #endif // FLASH_HIGHSPEED_READ
 
 	/*!< Send ReadAddr high nibble address byte to read from */
-	mSTM_FlashSendByte((ReadAddr & 0xFF0000) >> 16);
+	mSTM_SPISendByte((ReadAddr & 0xFF0000) >> 16);
 	/*!< Send ReadAddr medium nibble address byte to read from */
-	mSTM_FlashSendByte((ReadAddr& 0xFF00) >> 8);
+	mSTM_SPISendByte((ReadAddr& 0xFF00) >> 8);
 	/*!< Send ReadAddr low nibble address byte to read from */
-	mSTM_FlashSendByte(ReadAddr & 0xFF);
+	mSTM_SPISendByte(ReadAddr & 0xFF);
 
 #ifdef FLASH_HIGHSPEED_READ
 	/* additional dummy byte folling the 3byte address */
-	mSTM_FlashSendByte(SFLASH_DUMMY_BYTE);
+	mSTM_SPISendByte(SFLASH_DUMMY_BYTE);
 #endif // FLASH HIGHSPEED_READ
 
 	while (NumByte--) /*!< while there is data to be read */
 	{
 		/*!< Read a byte from the FLASH */
-		*pBuffer = mSTM_FlashSendByte(SFLASH_DUMMY_BYTE);
+		*pBuffer = mSTM_SPISendByte(SFLASH_DUMMY_BYTE);
 		/*!< Point to the next location where the byte read will be saved */
 		pBuffer++;
 	}
