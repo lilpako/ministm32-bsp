@@ -351,6 +351,7 @@ void mSTM_TSCPortInit(void)
 	/* Configure the TSC_CS pin */
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_InitStructure.GPIO_Pin = MAIN_TSC_CS_PIN;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(MAIN_TSC_CS_GPIO_PORT, &GPIO_InitStructure);
 
 	/* Deselect the controller */

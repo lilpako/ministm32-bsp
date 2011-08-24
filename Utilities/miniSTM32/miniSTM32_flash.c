@@ -175,16 +175,20 @@ void mSTM_FlashWriteRegister(uint8_t RegData)
 }
 
 
-/*
- * This function initializes the peripherals used by the SPI FLASH driver.
+/**
+ * @brief	This function initializes the peripherals for the SPI FLASH.
+ * @param	None
+ * @retval	None
  */
 void FlashInit(void)
 {
+	/* initialize cs pin */
 	mSTM_FlashPortInit();
     
-	/* Deselect the FLASH: Chip Select high */
+	/* deselect the chip */
 	MAIN_FLASH_CS_HIGH();
 
+	/* intialize the SPI module */
 	mSTM_SPIInit(SPI_MODE_FLASH);
 
 	/* disable block protection */

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CodeLite_Workspace Name="miniSTM32" Database="./miniSTM32.tags">
+  <Project Name="FRTOSDemo" Path="FRTOSDemo.project" Active="Yes"/>
+  <Project Name="LCDDemo" Path="LCDDemo.project"/>
+  <Project Name="MBDemo" Path="MBDemo.project"/>
+  <Project Name="SIODemo" Path="SIODemo.project"/>
+  <Project Name="TouchDemo" Path="TouchDemo.project"/>
+  <BuildMatrix>
+    <WorkspaceConfiguration Name="Debug" Selected="yes">
+      <Project Name="FRTOSDemo" ConfigName="Debug"/>
+      <Project Name="LCDDemo" ConfigName="Debug"/>
+      <Project Name="MBDemo" ConfigName="Debug"/>
+      <Project Name="SIODemo" ConfigName="Debug"/>
+      <Project Name="TouchDemo" ConfigName="Debug"/>
+    </WorkspaceConfiguration>
+    <WorkspaceConfiguration Name="Release" Selected="yes">
+      <Project Name="FRTOSDemo" ConfigName="Release"/>
+      <Project Name="LCDDemo" ConfigName="Release"/>
+      <Project Name="MBDemo" ConfigName="Release"/>
+      <Project Name="SIODemo" ConfigName="Release"/>
+      <Project Name="TouchDemo" ConfigName="Release"/>
+    </WorkspaceConfiguration>
+  </BuildMatrix>
+</CodeLite_Workspace>

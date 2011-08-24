@@ -33,6 +33,7 @@ void Touch_Demo(void);
 int main(void)
 {
 	uint16_t u16Menu = 0;
+	uint16_t u16Value = 0;
 
 	/* Initialize SysTick - 1msec */
 	SysTick_Config(SystemCoreClock / 1000);
@@ -47,7 +48,8 @@ int main(void)
 	printf("LCD initialized\n");
 
 	/* Initialize touch screen controller */
-	mSTM_TSCInit();
+	TSCInit();
+	printf("Touch controller initialized\n\n");
         
 	while (1) 
 	{
@@ -55,6 +57,7 @@ int main(void)
 
 			u16IRQFlag = 0;
 
+/*
 			if( u16Menu == MENU_BLT_ON ) {
 				mSTM_LEDOn();
 				mSTM_BLTOn();
@@ -77,12 +80,18 @@ int main(void)
 			if( ++u16Menu == MENU_END )
 				u16Menu = 0;
 
+*/
+
+			u16Value = mSTM_TSCRead_X();
+			printf("mSTM_TSCRead_X : %d\n", u16Value);
+			u16Value = mSTM_TSCRead_Y();
+			printf("mSTM_TSCRead_Y : %d\n\n", u16Value);
 		}
+
 		else if( u16IRQFlag == MAIN_TSC_INT_EXTI_LINE ) {
 			u16IRQFlag = 0;
 			printf("Screen touch detected\n");
 		}
-
 		/* usual household routines here */
 		{
 		}

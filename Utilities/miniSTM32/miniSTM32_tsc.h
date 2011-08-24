@@ -14,8 +14,12 @@
  extern "C" {
 #endif 
 
+void TSCInit(void);
+void TSCRead(void);
+void TSCCalibrate(void);
 
-void mSTM_TSCInit(void);
+uint16_t mSTM_TSCRead_X(void);
+uint16_t mSTM_TSCRead_Y(void);
 
 
 #ifdef __cplusplus
