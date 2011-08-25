@@ -30,7 +30,7 @@ void MsecDelay(uint16_t u16Delay)
 
 	u16TmpValue = u16SysTick;
 
-	while( (u16TmpValue + u16Delay) < u16SysTick );
+	while( (u16TmpValue + u16Delay) > u16SysTick );
 }
 
 /******************************************************************************/

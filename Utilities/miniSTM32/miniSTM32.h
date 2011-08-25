@@ -43,10 +43,10 @@ typedef enum
 	SPI_MODE_TOUCH = 1
 } SPIMode_TypeDef;
 
-/* Touch controller SPI baudrate : PCLK2/4 = 18MHz */
-#define MAIN_TOUCH_SPI_BAUD				SPI_BaudRatePrescaler_32;
-/* FLASH SPI baudrate : PCLK2/32 = 2.25MHz */
+/* FLASH SPI baudrate : PCLK2/4 = 18MHz */
 #define MAIN_FLASH_SPI_BAUD				SPI_BaudRatePrescaler_4;
+/* Touch Controler SPI baudrate : PCLK2/43 = 1.125MHz */
+#define MAIN_TOUCH_SPI_BAUD				SPI_BaudRatePrescaler_64;
 
 /*
  * SST25VF016B SPI Flash 

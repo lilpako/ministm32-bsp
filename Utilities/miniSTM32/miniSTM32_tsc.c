@@ -10,14 +10,25 @@
   
 #include "miniSTM32.h"
 
-/* 8bit, always on, differential measurement */
-#define TSC_CMD_MEASURE_X		0x9B	
-#define TSC_CMD_MEASURE_Y		0xDB
 #define TSC_CMD_DUMMY			0x5A
+/* 8bit, always on, differential measurement */
+//#define TSC_CMD_MEASURE_X		0x9B	
+//#define TSC_CMD_MEASURE_Y		0xDB
+/* 8bit, power down, differential measurement */
+//#define TSC_CMD_MEASURE_X		0x98	
+//#define TSC_CMD_MEASURE_Y		0xD8
+/* 12bit, power down, differential measurement */
+//#define TSC_CMD_MEASURE_X		0x90	
+//#define TSC_CMD_MEASURE_Y		0xD0
+/* 12bit, always on, differential measurement */
+#define TSC_CMD_MEASURE_X		0x93	
+#define TSC_CMD_MEASURE_Y		0xD3
 
 volatile uint16_t TSC_Value_X;
 volatile uint16_t TSC_Value_Y;
 
+uint16_t mSTM_TSCRead_X(void);
+uint16_t mSTM_TSCRead_Y(void);
 
 void TSCInit(void)
 {
@@ -31,36 +42,75 @@ void TSCInit(void)
 	mSTM_SPIInit(SPI_MODE_TOUCH);
 }
 
-uint16_t TSCRead(void)
+void TSCRead(void)
 {
+	TSC_Value_X = mSTM_TSCRead_X();
+
+	TSC_Value_Y = mSTM_TSCRead_Y();
+	TSC_Value_Y = mSTM_TSCRead_Y();
+
+/*
+	uint16_t u16First, u16Second;
+
+	MAIN_TSC_CS_LOW();
+
+	mSTM_SPISendByte(TSC_CMD_MEASURE_X);
+
+	u16First = (uint16_t)mSTM_SPISendByte(TSC_CMD_DUMMY);
+	u16First = u16First<<4;
+	u16Second = (uint16_t)mSTM_SPISendByte(TSC_CMD_MEASURE_Y);
+	u16Second = u16Second>>4;
+
+	TSC_Value_X = u16First + u16Second;
+
+	u16First = (uint16_t)mSTM_SPISendByte(TSC_CMD_DUMMY);
+	u16First = u16First<<4;
+	u16Second = (uint16_t)mSTM_SPISendByte(TSC_CMD_DUMMY);
+	u16Second = u16Second>>4;
+
+	TSC_Value_Y = u16First + u16Second;
+
+	MAIN_TSC_CS_HIGH();
+
+*/
 }
 
 uint16_t TSCCalibrate(void)
 {
 }
 
-void mSTM_TSCRead_X(void)
+uint16_t mSTM_TSCRead_X(void)
 {
-	uint16_t u16Value;
+	uint16_t u16First, u16Second;
 
 	MAIN_TSC_CS_LOW();
 	mSTM_SPISendByte(TSC_CMD_MEASURE_X);
-	u16Value = (uint16_t)mSTM_SPISendByte(TSC_CMD_DUMMY);
+	u16First = (uint16_t)mSTM_SPISendByte(TSC_CMD_DUMMY);
+	u16Second = (uint16_t)mSTM_SPISendByte(TSC_CMD_DUMMY);
 	MAIN_TSC_CS_HIGH();
 
-	return u16Value;
+	u16First = u16First<<4;
+	u16Second = u16Second>>4;
+	u16First = u16First + u16Second;
+
+	return u16First;
 }
 
-void mSTM_TSCRead_Y(void)
+uint16_t mSTM_TSCRead_Y(void)
 {
-	uint16_t u16Value;
+	uint16_t u16First, u16Second;
 
 	MAIN_TSC_CS_LOW();
 	mSTM_SPISendByte(TSC_CMD_MEASURE_Y);
-	u16Value = (uint16_t)mSTM_SPISendByte(TSC_CMD_DUMMY);
+	u16First = (uint16_t)mSTM_SPISendByte(TSC_CMD_DUMMY);
+	u16Second = (uint16_t)mSTM_SPISendByte(TSC_CMD_DUMMY);
 	MAIN_TSC_CS_HIGH();
 
-	return u16Value;
+	u16First = u16First<<4;
+	u16Second = u16Second>>4;
+	u16First = u16First + u16Second;
+
+	return u16First;
 }
 /* END OF FILE */
 

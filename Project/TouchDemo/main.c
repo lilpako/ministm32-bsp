@@ -27,6 +27,9 @@ extern void MsecDelay( uint16_t u16Delay );
 extern unsigned int  HDP;
 extern unsigned int  VDP;
 
+extern volatile uint16_t TSC_Value_X;
+extern volatile uint16_t TSC_Value_Y;
+
 void Touch_Calibration(void);
 void Touch_Demo(void);
 
@@ -34,6 +37,8 @@ int main(void)
 {
 	uint16_t u16Menu = 0;
 	uint16_t u16Value = 0;
+	uint16_t u16ValueX = 0;
+	uint16_t u16ValueY = 0;
 
 	/* Initialize SysTick - 1msec */
 	SysTick_Config(SystemCoreClock / 1000);
@@ -82,18 +87,33 @@ int main(void)
 
 */
 
-			u16Value = mSTM_TSCRead_X();
-			printf("mSTM_TSCRead_X : %d\n", u16Value);
-			u16Value = mSTM_TSCRead_Y();
-			printf("mSTM_TSCRead_Y : %d\n\n", u16Value);
+			u16ValueX = mSTM_TSCRead_X();
+			MsecDelay(2);
+			u16ValueY = mSTM_TSCRead_Y();
+
+			printf("mSTM_TSCRead_X : %d\n", u16ValueX);
+			printf("mSTM_TSCRead_Y : %d\n\n", u16ValueY);
+
+
+/*
+
+			TSCRead();
+			printf("mSTM_TSCRead_X : %d\n", TSC_Value_X);
+			printf("mSTM_TSCRead_Y : %d\n", TSC_Value_Y);
+
+*/
 		}
 
 		else if( u16IRQFlag == MAIN_TSC_INT_EXTI_LINE ) {
 			u16IRQFlag = 0;
 			printf("Screen touch detected\n");
 		}
+		else
+		{
+		}
 		/* usual household routines here */
 		{
+			TouchRoutine();
 		}
 	}
 }
