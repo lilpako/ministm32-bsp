@@ -109,6 +109,8 @@ void mSTM_PBInit(ButtonMode_TypeDef Button_Mode)
 		EXTI_InitStructure.EXTI_Trigger = MAIN_BTN_EXTI_TRIG;  
 		EXTI_InitStructure.EXTI_LineCmd = ENABLE;
 		EXTI_Init(&EXTI_InitStructure);
+		/* clear pending bit before enabling interrupt */
+		EXTI_ClearITPendingBit(MAIN_BTN_EXTI_LINE);
 
 		/* Enable and set Button EXTI Interrupt to the lowest priority */
 		NVIC_InitStructure.NVIC_IRQChannel = MAIN_BTN_EXTI_IRQn;
@@ -375,6 +377,9 @@ void mSTM_TSCPortInit(void)
 	EXTI_InitStructure.EXTI_Trigger = MAIN_TSC_INT_EXTI_TRIG;  
 	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
 	EXTI_Init(&EXTI_InitStructure);
+
+	/* clear pending bit before enabling interrupt */
+	EXTI_ClearITPendingBit(MAIN_TSC_INT_EXTI_LINE);
 
 	/* Enable and set Button EXTI Interrupt to the lowest priority */
 	NVIC_InitStructure.NVIC_IRQChannel = MAIN_TSC_INT_EXTI_IRQn;

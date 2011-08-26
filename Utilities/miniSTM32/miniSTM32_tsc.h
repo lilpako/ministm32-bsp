@@ -14,10 +14,20 @@
  extern "C" {
 #endif 
 
-void TSCInit(void);
-void TSCRead(void);
-void TSCCalibrate(void);
+typedef enum{
+	TOUCH_IDLE = 0,
+	TOUCH_DETECTED,
+	TOUCH_X_MEASURED,
+	TOUCH_Y_MEASURED,
+	TOUCH_CALIBRATED
+} TouchStatus;
 
+void TSCInit(void);
+/*
+void TSCRead(void);
+*/
+void TSCCalibrate(void);
+void TouchRoutine(void);
 
 
 #ifdef __cplusplus

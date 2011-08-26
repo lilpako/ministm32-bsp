@@ -94,6 +94,10 @@ typedef enum{
 #define MAIN_TSC_CS_HIGH()				GPIO_SetBits(MAIN_TSC_CS_GPIO_PORT, \
 	MAIN_TSC_CS_PIN) 
 
+/* set EXTI interrupt mask */
+#define EXTI_SetMask(x)					(EXTI->IMR = EXTI->IMR & (~x))
+/* clear EXTI interrupt mask */
+#define EXTI_ClearMask(x)				(EXTI->IMR = EXTI->IMR | (x))
 
 /*
  * miniSTM32 Exported Functions

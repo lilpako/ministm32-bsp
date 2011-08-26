@@ -9,6 +9,7 @@
  */ 
   
 #include "miniSTM32.h"
+#include "miniSTM32_tsc.h"
 
 #define TSC_CMD_DUMMY			0x5A
 /* 8bit, always on, differential measurement */
@@ -23,12 +24,17 @@
 /* 12bit, always on, differential measurement */
 #define TSC_CMD_MEASURE_X		0x93	
 #define TSC_CMD_MEASURE_Y		0xD3
+#define TSC_RAW_X_MAX			1950
+#define TSC_RAW_Y_MIN			2
 
+volatile TouchStatus TStatus = TOUCH_IDLE;
 volatile uint16_t TSC_Value_X;
 volatile uint16_t TSC_Value_Y;
 
 uint16_t mSTM_TSCRead_X(void);
 uint16_t mSTM_TSCRead_Y(void);
+
+extern void MsecDelay( uint16_t u16Delay );
 
 void TSCInit(void)
 {
@@ -40,6 +46,36 @@ void TSCInit(void)
 
 	/* initialize the SPI module */
 	mSTM_SPIInit(SPI_MODE_TOUCH);
+}
+
+void TouchRoutine(void)
+{
+	if(TStatus == TOUCH_DETECTED)
+	{
+		// measure x
+		TSC_Value_X = mSTM_TSCRead_X();
+		MsecDelay(1);
+		TStatus = TOUCH_X_MEASURED;
+	}
+	else if(TStatus == TOUCH_X_MEASURED)
+	{
+		// measure y
+		TSC_Value_Y = mSTM_TSCRead_Y();
+
+		// filter out garbage values
+		if((TSC_Value_X > TSC_RAW_X_MAX) ||
+			(TSC_Value_Y < TSC_RAW_Y_MIN)) {
+			TStatus = TOUCH_IDLE;
+		}
+		else{
+			TStatus = TOUCH_Y_MEASURED;
+		}
+	}
+	else if(TStatus == TOUCH_Y_MEASURED)
+	{
+		// calibrate
+		TStatus = TOUCH_CALIBRATED;
+	}
 }
 
 void TSCRead(void)
@@ -75,7 +111,7 @@ void TSCRead(void)
 */
 }
 
-uint16_t TSCCalibrate(void)
+void TSCCalibrate(void)
 {
 }
 

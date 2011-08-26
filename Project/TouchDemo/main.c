@@ -29,6 +29,7 @@ extern unsigned int  VDP;
 
 extern volatile uint16_t TSC_Value_X;
 extern volatile uint16_t TSC_Value_Y;
+extern volatile TouchStatus TStatus;
 
 void Touch_Calibration(void);
 void Touch_Demo(void);
@@ -60,6 +61,7 @@ int main(void)
 	{
 		if( u16IRQFlag == MAIN_BTN_EXTI_LINE ) {
 
+			printf("Button pressed\n");
 			u16IRQFlag = 0;
 
 /*
@@ -87,6 +89,7 @@ int main(void)
 
 */
 
+/*
 			u16ValueX = mSTM_TSCRead_X();
 			MsecDelay(2);
 			u16ValueY = mSTM_TSCRead_Y();
@@ -95,7 +98,6 @@ int main(void)
 			printf("mSTM_TSCRead_Y : %d\n\n", u16ValueY);
 
 
-/*
 
 			TSCRead();
 			printf("mSTM_TSCRead_X : %d\n", TSC_Value_X);
@@ -104,12 +106,18 @@ int main(void)
 */
 		}
 
+/*
 		else if( u16IRQFlag == MAIN_TSC_INT_EXTI_LINE ) {
 			u16IRQFlag = 0;
 			printf("Screen touch detected\n");
 		}
-		else
+*/
+		else if(TStatus == TOUCH_CALIBRATED)
 		{
+			printf("Touch detected(%d): %d, %d\n",u16Value, TSC_Value_X, TSC_Value_Y);	
+			u16Value++;
+			TStatus = TOUCH_IDLE;
+
 		}
 		/* usual household routines here */
 		{
