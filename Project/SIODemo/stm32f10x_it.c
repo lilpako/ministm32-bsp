@@ -11,11 +11,12 @@
 #include "stm32f10x_it.h"
 #include "miniSTM32_sio.h"
 
-#define DEBOUNCE_DELAY		300			/* 300msec key debouncer */
+#define DEBOUNCE_DELAY		300				/* 300msec key debouncer */
 
-volatile uint16_t IRQFlag = 0;			/* IRQ number : set by IRQ handler */
-volatile uint16_t LEDOffTimer = 0;		/* LED auto turn-off timer */
-volatile uint16_t u16Debouncer = 0;		/* key debouncer timer */
+extern volatile uint16_t uLEDOffTimer;		/* LED auto turn-off timer */
+
+volatile uint16_t uIRQFlag = 0;				/* IRQ number : set by IRQ handler */
+volatile uint16_t uKeyDebouncer = 0;		/* key debouncer timer */
 
 
 /******************************************************************************/
@@ -119,12 +120,12 @@ void SysTick_Handler(void)
 {
 
 	/* Debounce timer */
-	if(u16Debouncer)
-		u16Debouncer--;
+	if(uKeyDebouncer)
+		uKeyDebouncer--;
 
 	/* LED Flasher timer */
-	if(LEDOffTimer)
-		LEDOffTimer--;
+	if(uLEDOffTimer)
+		uLEDOffTimer--;
 }
 
 /******************************************************************************/
@@ -140,11 +141,11 @@ void SysTick_Handler(void)
 void EXTI2_IRQHandler(void)
 {
 	/* only accept key input after debuncing dead zone */
-	if(u16Debouncer == 0){
+	if(uKeyDebouncer == 0){
 		/* set IRQ flag for later use */
-		IRQFlag = 2;
+		uIRQFlag = 2;
 		/* start new debounce count */
-		u16Debouncer = DEBOUNCE_DELAY;
+		uKeyDebouncer = DEBOUNCE_DELAY;
 	}
 	
 	/* clear the IT bit */
@@ -159,11 +160,11 @@ void EXTI2_IRQHandler(void)
 void EXTI3_IRQHandler(void)
 {
 	/* only accept key input after debuncing dead zone */
-	if(u16Debouncer == 0){
+	if(uKeyDebouncer == 0){
 		/* set IRQ flag for later use */
-		IRQFlag = 3;
+		uIRQFlag = 3;
 		/* start new debounce count */
-		u16Debouncer = DEBOUNCE_DELAY;
+		uKeyDebouncer = DEBOUNCE_DELAY;
 	}
 
 	/* clear the IT bit */

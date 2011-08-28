@@ -33,14 +33,16 @@
 #define MED(x,y,z)				(x>y ?	(x>z ? (y>z ? y : z): x) : \
 										(y>z ? (x>z ? x : z): y))
 
-volatile TouchStatus TStatus = TOUCH_IDLE;
-volatile uint16_t TSC_Value_X;
-volatile uint16_t TSC_Value_Y;
+#define TSC_DELAY(x)			{uTSC_Delay = x; while(uTSC_Delay);}
+
+volatile TouchStatus TSC_Status = TOUCH_IDLE;
+volatile uint16_t uTSC_ValueX = 0;
+volatile uint16_t uTSC_ValueY = 0;
+volatile uint16_t uTSC_Delay = 0;
 
 uint16_t TSC_ReadX(void);
 uint16_t TSC_ReadY(void);
 
-extern void MsecDelay( uint16_t u16Delay );
 
 void TSCInit(void)
 {
@@ -59,46 +61,46 @@ void TouchRoutine(void)
 	uint16_t u16Val1, u16Val2, u16Val3, u16Val4, u16Val5, u16Val6;
 
 	/* measuring actual x, y values : takes about 20msec */
-	if(TStatus == TOUCH_DETECTED)
+	if(TSC_Status == TOUCH_DETECTED)
 	{
 		/* pass initial transient */
-		MsecDelay(10);
+		TSC_DELAY(10);
 		/* read x values */
 		u16Val1 = TSC_ReadX();
 		/* with some interval */
-		MsecDelay(2);
+		TSC_DELAY(2);
 		/* then read y values */
 		u16Val4 = TSC_ReadY();
 		/* alternatively 3 times*/
-		MsecDelay(2);
+		TSC_DELAY(2);
 		u16Val2 = TSC_ReadX();
-		MsecDelay(2);
+		TSC_DELAY(2);
 		u16Val5 = TSC_ReadY();
-		MsecDelay(2);
+		TSC_DELAY(2);
 		u16Val3 = TSC_ReadX();
-		MsecDelay(2);
+		TSC_DELAY(2);
 		u16Val6 = TSC_ReadY();
 
 		/* take median value */
-		TSC_Value_X = MED(u16Val1, u16Val2, u16Val3);
-		TSC_Value_Y = MED(u16Val4, u16Val5, u16Val6);
+		uTSC_ValueX = MED(u16Val1, u16Val2, u16Val3);
+		uTSC_ValueY = MED(u16Val4, u16Val5, u16Val6);
 
 		/* filter out garbage values */
-		if((TSC_Value_X > TSC_RAW_X_MAX) || (TSC_Value_X < TSC_RAW_X_MIN) ||
-			(TSC_Value_Y > TSC_RAW_Y_MAX) || (TSC_Value_Y < TSC_RAW_Y_MIN)) {
+		if((uTSC_ValueX > TSC_RAW_X_MAX) || (uTSC_ValueX < TSC_RAW_X_MIN) ||
+			(uTSC_ValueY > TSC_RAW_Y_MAX) || (uTSC_ValueY < TSC_RAW_Y_MIN)) {
 
 			/* discard garbage and start again */
-			TStatus = TOUCH_IDLE;
+			TSC_Status = TOUCH_IDLE;
 		}
 		else{
 			/* proceed to the next step */
-			TStatus = TOUCH_MEASURED;
+			TSC_Status = TOUCH_MEASURED;
 		}
 	}
 	/* calibrate the value */
-	else if(TStatus == TOUCH_MEASURED)
+	else if(TSC_Status == TOUCH_MEASURED)
 	{
-		TStatus = TOUCH_CALIBRATED;
+		TSC_Status = TOUCH_CALIBRATED;
 	}
 }
 

@@ -16,8 +16,8 @@
 
 #define DEBOUNCE_DELAY		300				/* 300msec key debouncer */
 
-volatile uint16_t IRQFlag = 0;
-volatile uint16_t u16KeyDebouncer = 0;		/* key debouncer timer */
+volatile uint16_t uIRQFlag = 0;
+volatile uint16_t uKeyDebouncer = 0;		/* key debouncer timer */
 
 
 /* Private typedef -----------------------------------------------------------*/
@@ -128,8 +128,8 @@ void SysTick_Handler(void)
 {
 
 	/* Debounce timer */
-	if(u16KeyDebouncer)
-		u16KeyDebouncer--;
+	if(uKeyDebouncer)
+		uKeyDebouncer--;
 }
 
 /******************************************************************************/
@@ -149,9 +149,9 @@ void EXTI15_10_IRQHandler(void)
 {
 	if(EXTI_GetITStatus(MAIN_BTN_EXTI_LINE)) {
 
-		if(u16KeyDebouncer == 0){
-			IRQFlag = MAIN_BTN_EXTI_LINE;
-			u16KeyDebouncer = DEBOUNCE_DELAY;
+		if(uKeyDebouncer == 0){
+			uIRQFlag = MAIN_BTN_EXTI_LINE;
+			uKeyDebouncer = DEBOUNCE_DELAY;
 		}
 	
 		EXTI_ClearITPendingBit(MAIN_BTN_EXTI_LINE);

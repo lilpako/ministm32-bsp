@@ -23,6 +23,8 @@ void SysTick_Handler(void);
 
 void EXTI15_10_IRQHandler(void);	/* pushbutton interrupt handler */
 
+void MSecTimer(uint16_t uCount);
+
 #endif /* __STM32F10x_IT_H */
 
 /* End of File */

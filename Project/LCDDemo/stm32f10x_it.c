@@ -11,24 +11,18 @@
 #include "stm32f10x_it.h"
 #include "miniSTM32.h"
 
-#define DEBOUNCE_DELAY		300				/* 300msec key debouncer */
+#define KEY_DEBOUNCE_DELAY		300				/* 300msec key debouncer */
 
-volatile uint16_t u16IRQFlag = 0;			/* IRQ number */
-volatile uint16_t u16LCDDelay = 0;			/* 1msec reference counter */
-volatile uint16_t u16KeyDebouncer = 0;		/* key debouncer timer */
+extern volatile uint16_t uLCD_Delay;			/* 1msec reference counter */
 
-void MsecDelay(uint16_t u16Delay);
+volatile uint16_t uIRQFlag = 0;					/* IRQ number */
+volatile uint16_t uMSecDelay = 0;				/* general purpose timer */
+volatile uint16_t uKeyDebouncer = 0;			/* key debouncer timer */
 
-/**
- * @brief	This function gives delay based on the SysTick.
- * @param	u16Delay: delay count as millisecond
- * @retval	None
- */
-void MsecDelay(uint16_t u16Delay)
+void MSecTimer(uint16_t uCount)
 {
-	u16LCDDelay = u16Delay;
-
-	while( u16LCDDelay );
+	uMSecDelay = uCount;
+	while(uMSecDelay);
 }
 
 /******************************************************************************/
@@ -131,12 +125,15 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
 	/* System 1msec tick */
-	if(u16LCDDelay)
-		u16LCDDelay--;
+	if(uMSecDelay)
+		uMSecDelay--;
+
+	if(uLCD_Delay)
+		uLCD_Delay--;
 
 	/* Debounce timer */
-	if(u16KeyDebouncer)
-		u16KeyDebouncer--;
+	if(uKeyDebouncer)
+		uKeyDebouncer--;
 }
 
 /******************************************************************************/
@@ -154,11 +151,11 @@ void EXTI15_10_IRQHandler(void)
 	if(EXTI_GetITStatus(MAIN_BTN_EXTI_LINE)) {
 
 		/* wait for debounce period */
-		if(u16KeyDebouncer == 0){
+		if(uKeyDebouncer == 0){
 			/* set IRQ flag for later use */
-			u16IRQFlag = MAIN_BTN_EXTI_LINE;
+			uIRQFlag = MAIN_BTN_EXTI_LINE;
 			/* start new debounce count */
-			u16KeyDebouncer = DEBOUNCE_DELAY;
+			uKeyDebouncer = KEY_DEBOUNCE_DELAY;
 		}
 	
 		/* clear the IT bit */

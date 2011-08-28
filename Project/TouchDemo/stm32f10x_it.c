@@ -15,26 +15,13 @@
 #define KEY_DEBOUNCE_DELAY		300				/* 300msec key debouncer */
 #define TSC_DEBOUNCE_DELAY		100				/* 300msec key debouncer */
 
-volatile uint16_t u16IRQFlag = 0;			/* IRQ number */
-volatile uint16_t u16TSCDelay = 0;			/* 1msec reference counter */
-volatile uint16_t u16KeyDebouncer = 0;		/* key debouncer timer */
-volatile uint16_t u16TSCDebouncer = 0;
+extern volatile uint16_t uTSC_Delay;			/* 1msec reference counter */
+extern volatile uint16_t uLCD_Delay;			/* 1msec reference counter */
+extern volatile TouchStatus TSC_Status;			/* touch sensor status */
 
-extern volatile TouchStatus TStatus;
-
-void MsecDelay(uint16_t u16Delay);
-
-/**
- * @brief	This function gives delay based on the SysTick.
- * @param	u16Delay: delay count as millisecond
- * @retval	None
- */
-void MsecDelay(uint16_t u16Delay)
-{
-	u16TSCDelay = u16Delay;
-
-	while( u16TSCDelay );
-}
+volatile uint16_t uIRQFlag = 0;					/* IRQ number */
+volatile uint16_t uKeyDebouncer = 0;			/* pushbutton debouncer */
+volatile uint16_t uTSCDebouncer = 0;			/* touch screen debouncer */
 
 /******************************************************************************/
 /*            Cortex-M3 Processor Exceptions Handlers                         */
@@ -135,16 +122,19 @@ void PendSV_Handler(void)
  */
 void SysTick_Handler(void)
 {
-	/* System 1msec tick */
-	if(u16TSCDelay)
-		u16TSCDelay--;
+	/* System 1msec ticks */
+	if(uTSC_Delay)
+		uTSC_Delay--;
+
+	if(uLCD_Delay)
+		uLCD_Delay--;
 
 	/* Debounce timers */
-	if(u16KeyDebouncer)
-		u16KeyDebouncer--;
+	if(uKeyDebouncer)
+		uKeyDebouncer--;
 
-	if(u16TSCDebouncer)
-		u16TSCDebouncer--;
+	if(uTSCDebouncer)
+		uTSCDebouncer--;
 }
 
 /******************************************************************************/
@@ -159,19 +149,18 @@ void SysTick_Handler(void)
 void EXTI9_5_IRQHandler(void)
 {
 
-
 	/* touch screen controller interrupt */
 	if(EXTI_GetITStatus(MAIN_TSC_INT_EXTI_LINE)) {
+		/* wait for debounce period */
+		if(uTSCDebouncer == 0) {
 
-//		EXTI_SetMask(MAIN_TSC_INT_EXTI_LINE);
+			/* set touch detected flag */
+			if(TSC_Status == TOUCH_IDLE) TSC_Status = TOUCH_DETECTED;
 
-		if(u16TSCDebouncer == 0) {
-
-
-			if(TStatus == TOUCH_IDLE) TStatus = TOUCH_DETECTED;
-
-			u16IRQFlag = MAIN_TSC_INT_EXTI_LINE;
-			u16TSCDebouncer = TSC_DEBOUNCE_DELAY;
+			/* set IRQ flag for later use */
+			uIRQFlag = MAIN_TSC_INT_EXTI_LINE;
+			/* start new debounce count */
+			uTSCDebouncer = TSC_DEBOUNCE_DELAY;
 
 		}
 
@@ -191,15 +180,12 @@ void EXTI15_10_IRQHandler(void)
 	/* main board push button is depressed */
 	if(EXTI_GetITStatus(MAIN_BTN_EXTI_LINE)) {
 
-		/* set mask */
-//		EXTI_SetMask(MAIN_BTN_EXTI_LINE);
-
 		/* wait for debounce period */
-		if(u16KeyDebouncer == 0){
+		if(uKeyDebouncer == 0){
 			/* set IRQ flag for later use */
-			u16IRQFlag = MAIN_BTN_EXTI_LINE;
+			uIRQFlag = MAIN_BTN_EXTI_LINE;
 			/* start new debounce count */
-			u16KeyDebouncer = KEY_DEBOUNCE_DELAY;
+			uKeyDebouncer = KEY_DEBOUNCE_DELAY;
 		}
 
 		/* clear the IT bit */

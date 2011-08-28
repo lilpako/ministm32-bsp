@@ -20,10 +20,8 @@ enum{
 };
 
 /* interrupt ID from IRQ routine */
-extern volatile uint16_t u16IRQFlag;
+extern volatile uint16_t uIRQFlag;
 
-/* milisecond delay routine */
-extern void MsecDelay( uint16_t u16Delay );
 
 extern unsigned int  HDP;
 extern unsigned int  VDP;
@@ -59,10 +57,10 @@ int main(void)
 	while (1) 
 	{
 		/* main menu controlled by pushbutton interrupt */
-		if( u16IRQFlag == MAIN_BTN_EXTI_LINE ) {
+		if( uIRQFlag == MAIN_BTN_EXTI_LINE ) {
 
 			/* clear button interrupt flag */
-			u16IRQFlag = 0;
+			uIRQFlag = 0;
 
 			if( u16Menu == MENU_LED_ON ) {
 				MBD_LEDOn();
@@ -112,10 +110,10 @@ void TestLCD(void)
 	LCD_Clear(0);
 	LCD_DrawBackground(255,255,0); //yellow
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 	Delay(0x989680);
 	 */
-	MsecDelay(MEDIUM_DELAY);
+	MSecTimer(MEDIUM_DELAY);
 
 	LCD_Test_BlackToWhite();
 
@@ -128,58 +126,58 @@ void TestLCD(void)
 	// 
 	LCD_DrawRectangle(10,10,50,136, 0,0,255); // blue
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 	Delay(0x50000);
 	 */
-	MsecDelay(SHORT_DELAY);
+	MSecTimer(SHORT_DELAY);
 	LCD_DrawRectangle(430,130,470,256, 255,180,0); // orange
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 	Delay(0x50000);
 	 */
-	MsecDelay(SHORT_DELAY);
+	MSecTimer(SHORT_DELAY);
 
 	LCD_DrawRectangle(60,20,100,146, 0,255,0); // green
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 	Delay(0x50000);
 	 */
-	MsecDelay(SHORT_DELAY);
+	MSecTimer(SHORT_DELAY);
 
 	LCD_DrawRectangle(110,30,150,156, 255,0,0);	// red
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 	Delay(0x50000);
 	 */
-	MsecDelay(SHORT_DELAY);
+	MSecTimer(SHORT_DELAY);
 
  	LCD_DrawRectangle(160,40,200,166, 255,255,0);	// yellow
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 	Delay(0x50000);
 	 */
-	MsecDelay(SHORT_DELAY);
+	MSecTimer(SHORT_DELAY);
  	
 	LCD_DrawRectangle(210,50,250,176, 255,0,255);	// magenta
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 	Delay(0x50000);
 	 */
-	MsecDelay(SHORT_DELAY);
+	MSecTimer(SHORT_DELAY);
  	
 	LCD_DrawRectangle(260,60,300,186, 0,255,255);	// cyan
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 	Delay(0x50000);
 	 */
-	MsecDelay(SHORT_DELAY);
+	MSecTimer(SHORT_DELAY);
 
  	LCD_DrawRectangle(310,70,350,196, 255,255,255);	// white
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 	Delay(0x50000);
 	 */
-	MsecDelay(SHORT_DELAY);
+	MSecTimer(SHORT_DELAY);
 
 
 	// Make a loop to draw some arbitrary rectangles in arbitrary RGB 
@@ -204,10 +202,10 @@ void TestLCD(void)
 	   if (blue > 255) blue = 140;
 	   
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 	   Delay(0x80000);
 	 */
-		MsecDelay(SHORT_DELAY);
+		MSecTimer(SHORT_DELAY);
 
 	}
 	
@@ -218,10 +216,10 @@ void TestLCD(void)
 	
 
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 	Delay(0x989680);
 	*/		
-	MsecDelay(MEDIUM_DELAY);
+	MSecTimer(MEDIUM_DELAY);
 	LCD_DrawBackground(0,0,0); //black
 
 	x1 = 40;
@@ -259,16 +257,16 @@ void TestLCD(void)
 	  {
 	  	GPIO_SetBits(GPIOB, GPIO_Pin_5 );
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 		Delay(0x2dc620); // about 500 ms
 	 */
-		MsecDelay(VERYSHORT_DELAY);
+		MSecTimer(VERYSHORT_DELAY);
 	  	GPIO_ResetBits(GPIOB, GPIO_Pin_5 );
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 	 	Delay(0x2dc620); // about 500 ms
 	 */
-		MsecDelay(VERYSHORT_DELAY);
+		MSecTimer(VERYSHORT_DELAY);
 	  }
 	
 	  GPIO_WriteBit(GPIOD, GPIO_Pin_13,Bit_RESET);	//LCD Backlight OFF
@@ -281,96 +279,98 @@ void TestLCD(void)
 	 
 		LCD_DrawBackground(0,0,0); //black
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 		Delay(0x989680);
 	 */
-	MsecDelay(MEDIUM_DELAY);
+	MSecTimer(MEDIUM_DELAY);
 		LCD_DrawBackground(255,0,0); //red
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 		Delay(0x989680);
 	 */
-	MsecDelay(MEDIUM_DELAY);
+	MSecTimer(MEDIUM_DELAY);
 		LCD_DrawBackground(0,255,0); //green
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 		Delay(0x989680);
 	 */
-	MsecDelay(MEDIUM_DELAY);
+	MSecTimer(MEDIUM_DELAY);
 		LCD_DrawBackground(0,0,255); //blue
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 		Delay(0x989680);
 	 */
-	MsecDelay(MEDIUM_DELAY);
+	MSecTimer(MEDIUM_DELAY);
  		LCD_DrawBackground(0,255,255); //cyan
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 		Delay(0x989680);
 	 */
-	MsecDelay(MEDIUM_DELAY);
+	MSecTimer(MEDIUM_DELAY);
 		LCD_DrawBackground(255,0,255); //magenta
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 		Delay(0x989680);
 	 */
-	MsecDelay(MEDIUM_DELAY);
+	MSecTimer(MEDIUM_DELAY);
 		LCD_DrawBackground(255,255,0); //yellow
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 		Delay(0x989680);
 	 */
-	MsecDelay(MEDIUM_DELAY);
+	MSecTimer(MEDIUM_DELAY);
 		LCD_DrawBackground(255,255,255); //white
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 		Delay(0x989680);
 	 */
-	MsecDelay(MEDIUM_DELAY);
+	MSecTimer(MEDIUM_DELAY);
 	
 	// Loop to just draw low order bits
 	for (k = 0; k < 32; k++)
 	{
 	   LCD_DrawBackground(0, 0, k); // increment blue to max
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 	   Delay(0x50000);
 	 */
-		MsecDelay(SHORT_DELAY);
+		MSecTimer(SHORT_DELAY);
 	} 
 
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 	Delay(0x989680);
 	 */
-	MsecDelay(MEDIUM_DELAY);
+	MSecTimer(MEDIUM_DELAY);
 	
 
 	for (k = 0; k < 32; k++)
 	{
 	   LCD_DrawBackground(0, k, 0); // increment green to max
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 	   Delay(0x50000);
 	 */
-		MsecDelay(SHORT_DELAY);
+		MSecTimer(SHORT_DELAY);
 	} 
 
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 	Delay(0x989680);
 	 */
-	MsecDelay(MEDIUM_DELAY);
+	MSecTimer(MEDIUM_DELAY);
 	
 	for (k = 0; k < 32; k++)
 	{
 	   LCD_DrawBackground(k, 0, 0); // increment red	to max
 	/*
-	 * Brian : replace with MsecDelay()
+	 * Brian : replace with MSecTimer()
 	   Delay(0x50000);
 	 */
-		MsecDelay(SHORT_DELAY);
+//		MSecTimer(VERYSHORT_DELAY);
 	} 
+
+	LCD_BacklightOff();
 	
   	// End test code
 }

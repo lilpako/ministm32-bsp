@@ -12,8 +12,9 @@
 #include "miniSTM32_sio.h"
 #include <stdio.h>
 
-extern volatile uint16_t IRQFlag;			/* IRQ number for your reference */
-extern volatile uint16_t LEDOffTimer;		/* LED auto turn-off duration */
+extern volatile uint16_t uIRQFlag;			/* IRQ number for your reference */
+
+volatile uint16_t uLEDOffTimer = 0;			/* LED auto turn-off duration */
 
 /* demo menu list */
 enum menuItem{
@@ -60,10 +61,10 @@ int main(void)
 	while (1) 
 	{
 		/* IRQ2: menu selection button pressed */
-		if( IRQFlag == 2 ) 
+		if( uIRQFlag == 2 ) 
 		{
 			/* reset the flag to indicate that it is acknowleged */
-			IRQFlag = 0;
+			uIRQFlag = 0;
 			
 			u16Menu++;
 			if(u16Menu == menuLast)
@@ -74,7 +75,7 @@ int main(void)
 			/* flash LED1 once */
 			SIO_LEDOn(SIO_LED1);
 			/* after 300msec it will turn off */
-			LEDOffTimer = 300;
+			uLEDOffTimer = 300;
 
 			/* it would be nice to turn off LED and Piezo
 			 * when you change the menu 
@@ -85,10 +86,10 @@ int main(void)
 			}
 		}
 		/* IRQ3: menu execution button pressed */
-		else if( IRQFlag == 3 ) 
+		else if( uIRQFlag == 3 ) 
 		{
 			/* reset the flag to indicate that it is acknowleged */
-			IRQFlag = 0;
+			uIRQFlag = 0;
 			
 			if(u16Menu == menuLED) 
 			{
@@ -121,7 +122,7 @@ int main(void)
 		/* usual household routines */
 		{
 			/* turn off the LED1 after some time */
-			if( LEDOffTimer == 0)
+			if( uLEDOffTimer == 0)
 				SIO_LEDOff(SIO_LED1);
 		}
 	}

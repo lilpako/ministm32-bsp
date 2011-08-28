@@ -13,6 +13,7 @@
 #include "miniSTM32.h"
 #include "stm32f10x_dma.h"
 #include "stm32f10x_spi.h"
+#include "stm32f10x_fsmc.h"
 #include "stm32f10x_usart.h"
 
 /*
@@ -339,6 +340,92 @@ uint16_t MCU_SPI1SendHalfWord(uint16_t HalfWord)
 	return SPI_I2S_ReceiveData(MAIN_SPI01);
 }
 
+void MCU_LCDPortInit(void)
+{
+	GPIO_InitTypeDef GPIO_InitStructure;
+
+	/* Enable FSMC, GPIOD, GPIOE, GPIOF, GPIOG and AFIO clocks */
+	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_FSMC, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD | 
+						RCC_APB2Periph_GPIOE | 
+						RCC_APB2Periph_AFIO, ENABLE);
+
+	/* FSMC output - port D */
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 |	/* PD0  - FSMC D02 */
+								GPIO_Pin_1 |	/* PD1  - FSMC D03 */
+								GPIO_Pin_4 |	/* PD4  - FSMC nOE */
+								GPIO_Pin_5 |	/* PD5  - FSMC nWE */
+								GPIO_Pin_7 |	/* PD7  - FSMC nE1 */
+                                GPIO_Pin_8 |	/* PD8  - FSMC D13 */
+								GPIO_Pin_9 |	/* PD9  - FSMC D14 */
+								GPIO_Pin_10 |	/* PD10 - FSMC D15 */
+								GPIO_Pin_11 |	/* PD11 - FSMC A16 */
+								GPIO_Pin_14 |	/* PD14 - FSMC D00 */
+                                GPIO_Pin_15;	/* PD15 - FSMC D01 */
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+	GPIO_Init(GPIOD, &GPIO_InitStructure);
+
+	/* FSMC output - port E */
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7 |	/* PE7  - FSMC D04 */
+								GPIO_Pin_8 |	/* PE8  - FSMC D05 */
+								GPIO_Pin_9 |	/* PE9  - FSMC D06 */
+								GPIO_Pin_10 |	/* PE10 - FSMC D07 */
+								GPIO_Pin_11 |	/* PE11 - FSMC D08 */
+                                GPIO_Pin_12 |	/* PE12 - FSMC D09 */
+								GPIO_Pin_13 |	/* PE13 - FSMC D10 */
+								GPIO_Pin_14 |	/* PE14 - FSMC D11 */
+                                GPIO_Pin_15;	/* PE15 - FSMC D12 */
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+	GPIO_Init(GPIOE, &GPIO_InitStructure);
+
+	/* Backlight(GPIO output) - port D */
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;	/* PD13 - BACKLIGHT */
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_Init(GPIOD, &GPIO_InitStructure);
+
+	/* LCD reset(GPIO output) - port E */
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;	/* PE1  - LCD RESET */
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_Init(GPIOE, &GPIO_InitStructure);
+}
+
+void MCU_FSMCInit(void)
+{
+	FSMC_NORSRAMInitTypeDef  FSMC_NORSRAMInitStructure;
+	FSMC_NORSRAMTimingInitTypeDef  p;
+
+	p.FSMC_AddressSetupTime = 0;			/* 0 - 0xF  */
+	p.FSMC_AddressHoldTime = 1;				/* 1 - 0xF  */
+	p.FSMC_DataSetupTime = 1;				/* 1 - 0xFF */
+	p.FSMC_BusTurnAroundDuration = 0;		/* 0 - 0xF  */
+	p.FSMC_CLKDivision = 1;					/* 1 - 0xF  */
+	p.FSMC_DataLatency = 0;					/* 0 - 0xF  */
+	p.FSMC_AccessMode = FSMC_AccessMode_B;	/* NOR      */
+
+	FSMC_NORSRAMInitStructure.FSMC_Bank = FSMC_Bank1_NORSRAM1;
+	FSMC_NORSRAMInitStructure.FSMC_DataAddressMux = FSMC_DataAddressMux_Disable;
+	FSMC_NORSRAMInitStructure.FSMC_MemoryType = FSMC_MemoryType_NOR;
+	FSMC_NORSRAMInitStructure.FSMC_MemoryDataWidth = FSMC_MemoryDataWidth_16b;
+	FSMC_NORSRAMInitStructure.FSMC_BurstAccessMode = FSMC_BurstAccessMode_Disable;
+	FSMC_NORSRAMInitStructure.FSMC_AsynchronousWait = FSMC_AsynchronousWait_Disable;
+	FSMC_NORSRAMInitStructure.FSMC_WaitSignalPolarity = FSMC_WaitSignalPolarity_Low;
+	FSMC_NORSRAMInitStructure.FSMC_WrapMode = FSMC_WrapMode_Disable;
+	FSMC_NORSRAMInitStructure.FSMC_WaitSignalActive = FSMC_WaitSignalActive_BeforeWaitState;
+	FSMC_NORSRAMInitStructure.FSMC_WriteOperation = FSMC_WriteOperation_Enable;
+	FSMC_NORSRAMInitStructure.FSMC_WaitSignal = FSMC_WaitSignal_Disable;
+	FSMC_NORSRAMInitStructure.FSMC_ExtendedMode = FSMC_ExtendedMode_Disable;
+	FSMC_NORSRAMInitStructure.FSMC_WriteBurst = FSMC_WriteBurst_Disable;
+	FSMC_NORSRAMInitStructure.FSMC_ReadWriteTimingStruct = &p;
+	FSMC_NORSRAMInitStructure.FSMC_WriteTimingStruct = &p;
+	FSMC_NORSRAMInit(&FSMC_NORSRAMInitStructure);  
+	
+	/* BANK 1 (of NOR/SRAM Bank) is enabled */
+	FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM1, ENABLE);
+}
 
 void MCU_TSCPortInit(void)
 {

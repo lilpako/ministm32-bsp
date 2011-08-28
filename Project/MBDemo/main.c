@@ -51,7 +51,7 @@ enum{
 };
 
 /* interrupt ID from IRQ routines */
-extern volatile uint16_t IRQFlag;
+extern volatile uint16_t uIRQFlag;
 
 /* sflash demo parameters */
 #define READ_BUFFER_SIZE		30
@@ -133,10 +133,10 @@ int main(void)
 	while (1) 
 	{
 		/* main menu controlled by pushbutton interrupt */
-		if( IRQFlag == MAIN_BTN_EXTI_LINE ) {
+		if( uIRQFlag == MAIN_BTN_EXTI_LINE ) {
 
 			/* clear button interrupt flag */
-			IRQFlag = 0;
+			uIRQFlag = 0;
 
 			if( u16Menu == MENU_LED_ON ) {
 				MBD_LEDOn();

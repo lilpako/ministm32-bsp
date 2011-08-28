@@ -10,13 +10,17 @@
  extern "C" {
 #endif 
 
-/* Includes ------------------------------------------------------------------*/
 #include "stm32f10x.h"
-#include "fonts.h"
+
+/* LCD controller definition */
+#define LCDC_SSD1963		
+
 
 void LCD_Init(void);
 void LCD_BacklightOn(void);
 void LCD_BacklightOff(void);
+
+
 
 
 #if 0

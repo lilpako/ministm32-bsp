@@ -129,6 +129,10 @@ void MCU_SPI1SetMode(SPIMode_TypeDef SPI_Mode);
 uint8_t MCU_SPI1SendByte(uint8_t Byte);
 uint16_t MCU_SPI1SendHalfWord(uint16_t HalfWord);
 
+/* MCU: LCD controller interface */
+void MCU_LCDPortInit(void);
+void MCU_FSMCInit(void);
+
 /* MCU: touch screen controller interface */
 void MCU_TSCPortInit(void);
 

@@ -21,15 +21,14 @@ enum{
 };
 
 /* interrupt ID from IRQ routines */
-extern volatile uint16_t u16IRQFlag;
-extern void MsecDelay( uint16_t u16Delay );
+extern volatile uint16_t uIRQFlag;
 
 extern unsigned int  HDP;
 extern unsigned int  VDP;
 
-extern volatile uint16_t TSC_Value_X;
-extern volatile uint16_t TSC_Value_Y;
-extern volatile TouchStatus TStatus;
+extern volatile uint16_t uTSC_ValueX;
+extern volatile uint16_t uTSC_ValueY;
+extern volatile TouchStatus TSC_Status;
 
 void Touch_Calibration(void);
 void Touch_Demo(void);
@@ -56,18 +55,18 @@ int main(void)
         
 	while (1) 
 	{
-		if( u16IRQFlag == MAIN_BTN_EXTI_LINE ) {
+		if( uIRQFlag == MAIN_BTN_EXTI_LINE ) {
 
 			printf("Button pressed\n");
-			u16IRQFlag = 0;
-			TStatus = TOUCH_DETECTED;
+			uIRQFlag = 0;
+			TSC_Status = TOUCH_DETECTED;
 
 		}
 
-		else if(TStatus == TOUCH_CALIBRATED)
+		else if(TSC_Status == TOUCH_CALIBRATED)
 		{
-			printf("Touch detected: %d, %d\n", TSC_Value_X, TSC_Value_Y);	
-			TStatus = TOUCH_IDLE;
+			printf("Touch detected: %d, %d\n", uTSC_ValueX, uTSC_ValueY);	
+			TSC_Status = TOUCH_IDLE;
 
 		}
 		/* usual household routines here */

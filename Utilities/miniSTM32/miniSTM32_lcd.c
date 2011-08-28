@@ -2,16 +2,17 @@
  ******************************************************************************
  */ 
 
+#include "miniSTM32.h"
 #include "miniSTM32_lcd.h"
-#include "stm32f10x_fsmc.h"
-#include "fonts.c"
 
 /* FSMC use NOR(BANK1) interface with A16 as RS */
 #define Bank1_LCD_Ctrl    ((uint32_t)0x60000000) // display controller Register ADDR
 #define Bank1_LCD_Data    ((uint32_t)0x60020000) // display controller Data ADDR
 
-// SSD 1963 Command Table, see manual p.20
 
+#ifdef LCDC_SSD1963
+
+// SSD 1963 Command Table, see manual p.20
 #define CMD_NOP 				0x0000
 #define CMD_SOFT_RESET			0x0001
 #define CMD_GET_PWR_MODE 		0x000A
@@ -120,6 +121,10 @@
 
 #define CMD_RESERVED_5			0x00FF
 
+#endif // LCDC_SSD1963
+
+/* LCD delay routine : 1 msec interval */
+#define LCD_DELAY(x)		{uLCD_Delay = x; while( uLCD_Delay);}
 
 typedef struct _POINT
 {
@@ -137,11 +142,12 @@ typedef struct _RECT
 
 unsigned long color1 = 0;
 
-extern void MsecDelay(uint16_t u16Delay);
+volatile uint16_t uLCD_Delay;
+
 
 void LCD_Reset(void);
-void LCD_CtrlLinesConfig(void);
-void LCD_FSMCConfig(void);
+//void LCD_CtrlLinesConfig(void);
+//void LCD_FSMCConfig(void);
 
 //void MUC_Init();
 void LCD_WR_REG(unsigned int command);
@@ -278,12 +284,11 @@ extern unsigned char zf2[];
 extern unsigned char zf3[];	
 
 unsigned int LCD_RD_data(void);
-extern void LCD_Reset(void);
 extern void Delay(__IO uint32_t nCount);
 
 
 /*
- * Brian : replaced by MsecDelay()
+ * Brian : replaced by LCD_DELAY()
 void delay_time(unsigned int i);
  */
 void SetScrollArea(unsigned int top, unsigned int scroll, unsigned int bottom);
@@ -352,9 +357,13 @@ void LCD_Init(void)
 	 */
 
 	/* port setting */
-	LCD_CtrlLinesConfig();
+//	LCD_CtrlLinesConfig();
+	MCU_LCDPortInit();
+
 	/* FSMC setting */
-	LCD_FSMCConfig();
+//	LCD_FSMCConfig();
+	MCU_FSMCInit();
+
 	/* initial reset */
 	LCD_Reset();
 
@@ -368,25 +377,25 @@ void LCD_Init(void)
 	LCD_WR_Data(0x0001);  // Use PLL output as system clock
 
 	/*
-	 * Brian : use MsecDelay()
+	 * Brian : use LCD_DELAY()
 	delay_time(1); // this is 100 us, allows the PLL to stabilize
 	 */
-	MsecDelay(1);
+	LCD_DELAY(1);
 
 	LCD_WR_REG(CMD_SET_PLL);
 	LCD_WR_Data(0x0003); // SSD1963 is switched to PLL output after PLL has stabilized.
 	/*
-	 * Brian : use MsecDelay()
+	 * Brian : use LCD_DELAY()
 	delay_time(5); // this is 500 us, allows the PLL to stabilize
 	 */
-	MsecDelay(1);
+	LCD_DELAY(1);
 
 	LCD_WR_REG(CMD_SOFT_RESET); // software reset, see SSD1963 manual p.20 Command Table.
 	/*
-	 * Brian : use MsecDelay()
+	 * Brian : use LCD_DELAY()
 	delay_time(5); // this is 500 us,
 	 */
-	MsecDelay(1);
+	LCD_DELAY(1);
 	LCD_WR_REG(CMD_SET_PIXCLK_FREQ);	//PLL setting for PCLK, depends on LCD resolution
 
 	// For the 7.0" LCD
@@ -457,10 +466,10 @@ void LCD_Init(void)
 
 
 	/*
-	 * Brian : use MsecDelay();
+	 * Brian : use LCD_DELAY();
 	delay_time(5); // 5 ms
 	 */
-	MsecDelay(5);
+	LCD_DELAY(5);
 
 	LCD_Clear(0);
 	LCD_WR_REG(CMD_SET_DISPLAY_ON); //display on
@@ -963,12 +972,13 @@ void SetTearingCfg(unsigned char state, unsigned char mode)
 void LCD_Reset(void)
 {
 	GPIO_ResetBits(GPIOE, GPIO_Pin_1);
-	MsecDelay(1);
+	LCD_DELAY(1);
 	GPIO_SetBits(GPIOE, GPIO_Pin_1);
-	MsecDelay(1);
+	LCD_DELAY(1);
 }
 
 
+#if 0
 void LCD_CtrlLinesConfig(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
@@ -1048,8 +1058,10 @@ void LCD_CtrlLinesConfig(void)
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
 }
+#endif
 
 
+#if 0
 void LCD_FSMCConfig(void)
 {
 	FSMC_NORSRAMInitTypeDef  FSMC_NORSRAMInitStructure;
@@ -1083,6 +1095,7 @@ void LCD_FSMCConfig(void)
 	/* BANK 1 (of NOR/SRAM Bank) is enabled */
 	FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM1, ENABLE);
 }
+#endif
 
 
 void LCD_BacklightOn(void)
