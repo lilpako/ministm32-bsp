@@ -29,8 +29,8 @@ extern unsigned int  HDP;
 extern unsigned int  VDP;
 
 /* delay parameters */
-#define VERYSHORT_DELAY	100
-#define SHORT_DELAY		200
+#define VERYSHORT_DELAY	50
+#define SHORT_DELAY		100
 #define MEDIUM_DELAY	500
 #define LONG_DELAY		1000
 
@@ -49,11 +49,11 @@ int main(void)
 	SysTick_Config(SystemCoreClock / 1000);
 
 	/* Initialize main board peripherals */
-	mSTM_BoardInit();
+	MBD_Init();
 	printf("miniSTM32 mainboard initialized\n");
 
 	/* Initialize LCD support */
-	mSTM_LCDInit();
+	LCD_Init();
 	printf("LCD initialized\n");
 
 	while (1) 
@@ -65,11 +65,11 @@ int main(void)
 			u16IRQFlag = 0;
 
 			if( u16Menu == MENU_LED_ON ) {
-				mSTM_LEDOn();
+				MBD_LEDOn();
 				printf("LED1 Turned On\n");
 			}
 			else if( u16Menu == MENU_LED_OFF ) {
-				mSTM_LEDOff();
+				MBD_LEDOff();
 				printf("LED1 Turned Off\n");
 			}
 			else if( u16Menu == MENU_LCD_TEST ) {

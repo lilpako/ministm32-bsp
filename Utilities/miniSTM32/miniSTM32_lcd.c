@@ -137,8 +137,8 @@ typedef struct _RECT
 
 unsigned long color1 = 0;
 
-extern volatile uint16_t u16SysTick;
 extern void MsecDelay(uint16_t u16Delay);
+
 void LCD_Reset(void);
 void LCD_CtrlLinesConfig(void);
 void LCD_FSMCConfig(void);
@@ -344,7 +344,7 @@ void LCD_WR_Data_8(unsigned int val)
 // 	PLL == Phase Lock Loop
 //	Registers get selected with LCD-WR_REG and then the required data is written
 // 	to it with LCD-WR_Data.
-void mSTM_LCDInit(void)
+void LCD_Init(void)
 { 
 
 	/* 
@@ -480,7 +480,7 @@ void mSTM_LCDInit(void)
 	LCD_WR_REG(CMD_SET_DBC_CONF); // Dynamic Backlight Config thresholding
 	LCD_WR_Data(0x000d); // 0001101. == Enabled, Agressive mode
 
-	mSTM_BLTOn();
+	LCD_BacklightOn();
  
 }
 
@@ -1085,12 +1085,12 @@ void LCD_FSMCConfig(void)
 }
 
 
-void mSTM_BLTOn(void)
+void LCD_BacklightOn(void)
 {
 	GPIO_SetBits(GPIOD, GPIO_Pin_13);
 }
 
-void mSTM_BLTOff(void)
+void LCD_BacklightOff(void)
 {
 	GPIO_ResetBits(GPIOD, GPIO_Pin_13);
 }

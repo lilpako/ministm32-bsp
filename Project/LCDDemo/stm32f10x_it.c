@@ -11,11 +11,11 @@
 #include "stm32f10x_it.h"
 #include "miniSTM32.h"
 
-#define DEBOUNCE_DELAY		300			/* 300msec key debouncer */
+#define DEBOUNCE_DELAY		300				/* 300msec key debouncer */
 
-volatile uint16_t u16IRQFlag = 0;		/* IRQ number */
-volatile uint16_t u16SysTick = 0;		/* 1msec reference counter */
-volatile uint16_t u16Debouncer = 0;		/* key debouncer timer */
+volatile uint16_t u16IRQFlag = 0;			/* IRQ number */
+volatile uint16_t u16LCDDelay = 0;			/* 1msec reference counter */
+volatile uint16_t u16KeyDebouncer = 0;		/* key debouncer timer */
 
 void MsecDelay(uint16_t u16Delay);
 
@@ -26,11 +26,9 @@ void MsecDelay(uint16_t u16Delay);
  */
 void MsecDelay(uint16_t u16Delay)
 {
-	uint16_t u16TmpValue;
+	u16LCDDelay = u16Delay;
 
-	u16TmpValue = u16SysTick;
-
-	while( (u16TmpValue + u16Delay) > u16SysTick );
+	while( u16LCDDelay );
 }
 
 /******************************************************************************/
@@ -133,12 +131,12 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
 	/* System 1msec tick */
-	if(u16SysTick < 0xFFFF)
-		u16SysTick++;
+	if(u16LCDDelay)
+		u16LCDDelay--;
 
 	/* Debounce timer */
-	if(u16Debouncer)
-		u16Debouncer--;
+	if(u16KeyDebouncer)
+		u16KeyDebouncer--;
 }
 
 /******************************************************************************/
@@ -156,11 +154,11 @@ void EXTI15_10_IRQHandler(void)
 	if(EXTI_GetITStatus(MAIN_BTN_EXTI_LINE)) {
 
 		/* wait for debounce period */
-		if(u16Debouncer == 0){
+		if(u16KeyDebouncer == 0){
 			/* set IRQ flag for later use */
 			u16IRQFlag = MAIN_BTN_EXTI_LINE;
 			/* start new debounce count */
-			u16Debouncer = DEBOUNCE_DELAY;
+			u16KeyDebouncer = DEBOUNCE_DELAY;
 		}
 	
 		/* clear the IT bit */

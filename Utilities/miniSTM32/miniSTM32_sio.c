@@ -20,7 +20,7 @@
  * @param	None
  * @retval	None
  */
-void mSTM_SIO_BoardInit(void)
+void SIO_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 	EXTI_InitTypeDef EXTI_InitStructure;
@@ -181,7 +181,7 @@ void mSTM_SIO_BoardInit(void)
  *
  */
 
-void mSTM_SIO_LEDOn(SIO_LED_TypeDef Led)
+void SIO_LEDOn(SIO_LED_TypeDef Led)
 {
 	if(Led == SIO_LED1) {
 		GPIOE->BSRR = SIO_LED1_GPIO_PIN;
@@ -191,7 +191,7 @@ void mSTM_SIO_LEDOn(SIO_LED_TypeDef Led)
 	}
 }
 
-void mSTM_SIO_LEDOff(SIO_LED_TypeDef Led)
+void SIO_LEDOff(SIO_LED_TypeDef Led)
 {
 	if(Led == SIO_LED1) {
 		GPIOE->BRR = SIO_LED1_GPIO_PIN;
@@ -206,7 +206,7 @@ void mSTM_SIO_LEDOff(SIO_LED_TypeDef Led)
  *
  * Led: either SIO_LED1 or SIO_LED2
  */
-void mSTM_SIO_LEDToggle(SIO_LED_TypeDef Led)
+void SIO_LEDToggle(SIO_LED_TypeDef Led)
 {
 	if(Led == SIO_LED1){
 		SIO_LED1_GPIO_PORT->ODR ^= SIO_LED1_GPIO_PIN;
@@ -222,7 +222,7 @@ void mSTM_SIO_LEDToggle(SIO_LED_TypeDef Led)
  * Led: either SIO_LED1 or SIO_LED2
  * Return value: 0 means off, 0xffff error, otherwise on
  */
-uint16_t mSTM_SIO_LEDGetStatus(SIO_LED_TypeDef Led)
+uint16_t SIO_LEDGetStatus(SIO_LED_TypeDef Led)
 {
 	if(Led == SIO_LED1)
 		return((SIO_LED1_GPIO_PORT->IDR) & SIO_LED1_GPIO_PIN);
@@ -232,7 +232,7 @@ uint16_t mSTM_SIO_LEDGetStatus(SIO_LED_TypeDef Led)
 }
 
 /* Just let it be like this for now
-void mSTM_SIO_LEDPWMControl(SIO_LED_TypeDef Led, uint16_t Duty)
+void SIO_LEDPWMControl(SIO_LED_TypeDef Led, uint16_t Duty)
 {
 }
 */
@@ -243,7 +243,7 @@ void mSTM_SIO_LEDPWMControl(SIO_LED_TypeDef Led, uint16_t Duty)
  * Button: either SIO_BTN1 or SIO_BTN2
  * Return value: 0 means off, 0xffff error, otherwise on
  */
-uint16_t mSTM_SIO_ButtonGetState(SIO_Button_TypeDef Button)
+uint16_t SIO_PBGetState(SIO_Button_TypeDef Button)
 {
 
 	if(Button == SIO_BTN1)
@@ -260,7 +260,7 @@ uint16_t mSTM_SIO_ButtonGetState(SIO_Button_TypeDef Button)
  *       MAX_PIEZO_FREQ to make corresponding output. others to turn off
  *
  */
-void mSTM_SIO_PiezoControl(uint16_t Freq)
+void SIO_PiezoControl(uint16_t Freq)
 {
 	uint16_t u16Period = 0;
 
@@ -285,7 +285,7 @@ void mSTM_SIO_PiezoControl(uint16_t Freq)
  *
  * Output should be between 0(min) and 2^12-1 = 4097(max)
  */
-uint16_t mSTM_SIO_POTGetValue(void)
+uint16_t SIO_POTGetValue(void)
 {
 
 	ADC_SoftwareStartConvCmd(SIO_POT_ADC, ENABLE);

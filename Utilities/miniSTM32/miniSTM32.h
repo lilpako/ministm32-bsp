@@ -103,33 +103,34 @@ typedef enum{
  * miniSTM32 Exported Functions
  */ 
 
-/* board */
-void mSTM_BoardInit(void);
 
-/* LED */
-void mSTM_LEDInit(void);
-void mSTM_LEDOn(void);
-void mSTM_LEDOff(void);
-void mSTM_LEDToggle(void);
+/* Mainboard: board */
+void MBD_Init(void);
 
-/* pushbutton */
-void mSTM_PBInit(ButtonMode_TypeDef Button_Mode);
-uint32_t mSTM_PBGetState(void);
+/* Mainboard: LED */
+void MBD_LEDInit(void);
+void MBD_LEDOn(void);
+void MBD_LEDOff(void);
+void MBD_LEDToggle(void);
 
-/* COM port */
-void mSTM_COMInit(uint32_t Speed);
+/* Mainboard: pushbutton */
+void MBD_PBInit(ButtonMode_TypeDef Button_Mode);
+uint32_t MBD_PBGetState(void);
 
-/* SPI module */
-void mSTM_SPIInit(SPIMode_TypeDef SPI_Mode);
-void mSTM_SPISetMode(SPIMode_TypeDef SPI_Mode);
-uint8_t mSTM_SPISendByte(uint8_t Byte);
-uint16_t mSTM_SPISendHalfWord(uint16_t HalfWord);
+/* Mainboard: COM port */
+void MBD_COMInit(uint32_t Speed);
 
-/* Flash */
-void mSTM_FlashPortInit(void);
+/* MCU: serial flash interface */
+void MCU_SFLPortInit(void);
 
-/* touch sensor */
-void mSTM_TSCPortInit(void);
+/* MCU: SPI module */
+void MCU_SPI1Init(SPIMode_TypeDef SPI_Mode);
+void MCU_SPI1SetMode(SPIMode_TypeDef SPI_Mode);
+uint8_t MCU_SPI1SendByte(uint8_t Byte);
+uint16_t MCU_SPI1SendHalfWord(uint16_t HalfWord);
+
+/* MCU: touch screen controller interface */
+void MCU_TSCPortInit(void);
 
 #ifdef __cplusplus
 }

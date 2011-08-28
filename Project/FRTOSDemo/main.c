@@ -203,7 +203,7 @@ static void vLEDTimerCallback( xTimerHandle xTimer )
 	a critical section because it is accessed from multiple tasks, and the
 	button interrupt - in this trivial case, for simplicity, the critical
 	section is omitted. */
-	mSTM_SIO_LEDOff( SIO_LED2 );
+	SIO_LEDOff( SIO_LED2 );
 }
 /*-----------------------------------------------------------*/
 
@@ -215,7 +215,7 @@ portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
 	/* The button was pushed, so ensure the LED is on before resetting the
 	LED timer.  The LED timer will turn the LED off if the button is not
 	pushed within 5000ms. */
-	mSTM_SIO_LEDOn( SIO_LED2 );
+	SIO_LEDOn( SIO_LED2 );
 
 	/* This interrupt safe FreeRTOS function can be called from this interrupt
 	because the interrupt priority is below the
@@ -291,7 +291,7 @@ unsigned long ulReceivedValue;
 			because it is accessed from multiple tasks, and the button interrupt 
 			- in this trivial case, for simplicity, the critical section is 
 			omitted. */
-			mSTM_SIO_LEDToggle( SIO_LED1 );
+			SIO_LEDToggle( SIO_LED1 );
 		}
 	}
 }
@@ -304,13 +304,13 @@ static void prvSetupHardware( void )
 	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4 );
 
 	/* Set up the LED outputs and the button inputs. */
-	mSTM_BoardInit();
-	mSTM_SIO_BoardInit();
+	MBD_Init();
+	SIO_Init();
 	
 	/* Start with the LEDs off. */
-	mSTM_LEDOff();
-	mSTM_SIO_LEDOff(SIO_LED1);
-	mSTM_SIO_LEDOff(SIO_LED2);
+	MBD_LEDOff();
+	SIO_LEDOff(SIO_LED1);
+	SIO_LEDOff(SIO_LED2);
 }
 /*-----------------------------------------------------------*/
 

@@ -14,11 +14,10 @@
 #include "stm32f10x_it.h"
 #include "miniSTM32.h"
 
-#define DEBOUNCE_DELAY		300	/* 300msec key debouncer */
+#define DEBOUNCE_DELAY		300				/* 300msec key debouncer */
 
-volatile uint16_t u16IRQFlag = 0;
-volatile uint16_t u16SysTick = 0;		/* 1msec reference counter */
-volatile uint16_t u16Debouncer = 0;		/* key debouncer timer */
+volatile uint16_t IRQFlag = 0;
+volatile uint16_t u16KeyDebouncer = 0;		/* key debouncer timer */
 
 
 /* Private typedef -----------------------------------------------------------*/
@@ -127,13 +126,10 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
-	/* System 1msec tick */
-	if(u16SysTick < 0xFFFF)
-		u16SysTick++;
 
 	/* Debounce timer */
-	if(u16Debouncer)
-		u16Debouncer--;
+	if(u16KeyDebouncer)
+		u16KeyDebouncer--;
 }
 
 /******************************************************************************/
@@ -153,9 +149,9 @@ void EXTI15_10_IRQHandler(void)
 {
 	if(EXTI_GetITStatus(MAIN_BTN_EXTI_LINE)) {
 
-		if(u16Debouncer == 0){
-			u16IRQFlag = MAIN_BTN_EXTI_LINE;
-			u16Debouncer = DEBOUNCE_DELAY;
+		if(u16KeyDebouncer == 0){
+			IRQFlag = MAIN_BTN_EXTI_LINE;
+			u16KeyDebouncer = DEBOUNCE_DELAY;
 		}
 	
 		EXTI_ClearITPendingBit(MAIN_BTN_EXTI_LINE);
@@ -171,7 +167,7 @@ void EXTI15_10_IRQHandler(void)
 void SDIO_IRQHandler(void)
 {
   /* Process All SDIO Interrupt Sources */
-  mSTM_SDProcessIRQSrc();
+  SDC_ProcessIRQSrc();
 }
 
 

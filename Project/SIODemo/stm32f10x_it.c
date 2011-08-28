@@ -13,10 +13,9 @@
 
 #define DEBOUNCE_DELAY		300			/* 300msec key debouncer */
 
-volatile uint16_t u16IRQFlag = 0;		/* IRQ number */
-volatile uint16_t u16SysTick = 0;		/* 1msec reference counter */
+volatile uint16_t IRQFlag = 0;			/* IRQ number : set by IRQ handler */
+volatile uint16_t LEDOffTimer = 0;		/* LED auto turn-off timer */
 volatile uint16_t u16Debouncer = 0;		/* key debouncer timer */
-volatile uint16_t u16LEDFlasher = 0;	/* LED auto turn-off timer */
 
 
 /******************************************************************************/
@@ -118,17 +117,14 @@ void PendSV_Handler(void)
  */
 void SysTick_Handler(void)
 {
-	/* System 1msec tick */
-	if(u16SysTick < 0xFFFF)
-		u16SysTick++;
 
 	/* Debounce timer */
 	if(u16Debouncer)
 		u16Debouncer--;
 
 	/* LED Flasher timer */
-	if(u16LEDFlasher)
-		u16LEDFlasher--;
+	if(LEDOffTimer)
+		LEDOffTimer--;
 }
 
 /******************************************************************************/
@@ -146,7 +142,7 @@ void EXTI2_IRQHandler(void)
 	/* only accept key input after debuncing dead zone */
 	if(u16Debouncer == 0){
 		/* set IRQ flag for later use */
-		u16IRQFlag = 2;
+		IRQFlag = 2;
 		/* start new debounce count */
 		u16Debouncer = DEBOUNCE_DELAY;
 	}
@@ -165,7 +161,7 @@ void EXTI3_IRQHandler(void)
 	/* only accept key input after debuncing dead zone */
 	if(u16Debouncer == 0){
 		/* set IRQ flag for later use */
-		u16IRQFlag = 3;
+		IRQFlag = 3;
 		/* start new debounce count */
 		u16Debouncer = DEBOUNCE_DELAY;
 	}

@@ -14,11 +14,11 @@
  extern "C" {
 #endif 
 
-void FlashInit(void);
-uint32_t FlashReadID(void);
-void FlashErase(BlockSize_TypeDef Size, uint32_t StartAddr);
-void FlashWriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByte);
-void FlashReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr, uint16_t NumByte);
+void SFL_Init(void);
+uint32_t SFL_ReadID(void);
+void SFL_Erase(BlockSize_TypeDef Size, uint32_t StartAddr);
+void SFL_WriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByte);
+void SFL_ReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr, uint16_t NumByte);
 
 #ifdef __cplusplus
 }

@@ -94,17 +94,18 @@ typedef enum
 } SDCardState;
 
 
-SD_Error mSTM_SDInit(void);
-SD_Error mSTM_SDReadBlock(uint8_t *Buff, uint32_t Addr, uint16_t BlockSize);
-SD_Error mSTM_SDReadMultiBlocks(uint8_t *Buff, uint32_t Addr, uint16_t BlockSize, uint32_t NumberOfBlocks);
-SD_Error mSTM_SDWriteBlock(uint8_t *Buff, uint32_t Addr, uint16_t BlockSize);
-SD_Error mSTM_SDWriteMultiBlocks(uint8_t *Buff, uint32_t Addr, uint16_t BlockSize, uint32_t NumberOfBlocks);
-SD_Error mSTM_SDErase(uint32_t StartAddr, uint32_t EndAddr);
-SD_Error mSTM_SDWaitReadOperation(void);
-SD_Error mSTM_SDWaitWriteOperation(void);
-SDTransferState mSTM_SDGetStatus(void);
-SD_Error mSTM_SDProcessIRQSrc(void);
-SD_Error mSTM_SDSetBlockSize(uint32_t BlockSize);
+SD_Error SDC_Init(void);
+SD_Error SDC_ReadBlock(uint8_t *Buff, uint32_t Addr, uint16_t BlockSize);
+SD_Error SDC_ReadMultiBlocks(uint8_t *Buff, uint32_t Addr, uint16_t BlockSize, uint32_t NumberOfBlocks);
+SD_Error SDC_WriteBlock(uint8_t *Buff, uint32_t Addr, uint16_t BlockSize);
+SD_Error SDC_WriteMultiBlocks(uint8_t *Buff, uint32_t Addr, uint16_t BlockSize, uint32_t NumberOfBlocks);
+SD_Error SDC_Erase(uint32_t StartAddr, uint32_t EndAddr);
+SD_Error SDC_WaitReadOperation(void);
+SD_Error SDC_WaitWriteOperation(void);
+SD_Error SDC_ProcessIRQSrc(void);
+SD_Error SDC_SetBlockSize(uint32_t BlockSize);
+SDCardState SDC_GetState(void);
+SDTransferState SDC_GetStatus(void);
 
 
 #ifdef __cplusplus

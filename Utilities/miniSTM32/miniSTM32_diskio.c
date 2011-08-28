@@ -57,7 +57,7 @@ DSTATUS disk_status ( BYTE drv )
 	if( drv != 0 )  return STA_NODISK;
 
 	/* check if SD card is ready to use */
-	if( mSTM_SDGetState() != SD_CARD_TRANSFER )
+	if( SDC_GetState() != SD_CARD_TRANSFER )
 		return STA_NOINIT;
 	else 
 		return STA_OK;
@@ -78,11 +78,11 @@ DSTATUS disk_initialize ( BYTE drv )
 	/* only one drive is supported */
 	if(drv != 0) return STA_NODISK;
 
-	if(mSTM_SDInit() == SD_OK)
+	if(SDC_Init() == SD_OK)
 	{
 		/* It is important to set the block size to FAT_SECTORSIZE here,
 		   otherwise subsequent disk operations would freeze */
-		if(mSTM_SDSetBlockSize(FAT_SECTORSIZE) != SD_OK)
+		if(SDC_SetBlockSize(FAT_SECTORSIZE) != SD_OK)
 			return STA_NOINIT;
 		else
 			return STA_OK;
@@ -113,28 +113,28 @@ DRESULT disk_read (BYTE drv, BYTE *buff, DWORD sector, BYTE count)
 	if( drv != 0 ) return RES_PARERR;
 	if( !count ) return RES_PARERR;
 
-	s = mSTM_SDGetState();
+	s = SDC_GetState();
 
 	if( (s == SD_CARD_READY) || (s == SD_CARD_IDENTIFICATION) )
 		return RES_NOTRDY;
 	else if( (s == SD_CARD_ERROR) || (s == SD_CARD_DISCONNECTED) )
 		return RES_ERROR;
 	else if( s != SD_CARD_TRANSFER )
-		while( mSTM_SDGetState() != SD_CARD_TRANSFER );
+		while( SDC_GetState() != SD_CARD_TRANSFER );
 
 	sector *= FAT_SECTORSIZE; /* Convert LBA to byte address */
 
 	if( count == 1 )
 	{
-		mSTM_SDReadBlock( buff, sector, FAT_SECTORSIZE );
+		SDC_ReadBlock( buff, sector, FAT_SECTORSIZE );
 	}
 	else
 	{
-		mSTM_SDReadMultiBlocks( buff, sector, FAT_SECTORSIZE, count );
+		SDC_ReadMultiBlocks( buff, sector, FAT_SECTORSIZE, count );
 	}
-	mSTM_SDWaitReadOperation();
+	SDC_WaitReadOperation();
 
-	while(mSTM_SDGetStatus() != SD_TRANSFER_OK);
+	while(SDC_GetStatus() != SD_TRANSFER_OK);
 
 	return RES_OK;
 
@@ -164,28 +164,28 @@ DRESULT disk_write (BYTE drv, const BYTE *buff, DWORD sector, BYTE count)
 	if( drv != 0 ) return RES_PARERR;
 	if( !count ) return RES_PARERR;
 
-	s = mSTM_SDGetState();
+	s = SDC_GetState();
 
 	if( (s == SD_CARD_READY) || (s == SD_CARD_IDENTIFICATION) )
 		return RES_NOTRDY;
 	else if( (s == SD_CARD_ERROR) || (s == SD_CARD_DISCONNECTED) )
 		return RES_ERROR;
 	else if( s != SD_CARD_TRANSFER )
-		while( mSTM_SDGetState() != SD_CARD_TRANSFER );
+		while( SDC_GetState() != SD_CARD_TRANSFER );
 
 	sector *= FAT_SECTORSIZE; /* Convert LBA to byte address */
 
 	if( count == 1 )
 	{
-		mSTM_SDWriteBlock((uint8_t*)buff, sector, FAT_SECTORSIZE);
+		SDC_WriteBlock((uint8_t*)buff, sector, FAT_SECTORSIZE);
 	}
 	else
 	{
-		mSTM_SDWriteMultiBlocks((uint8_t*)buff, sector, FAT_SECTORSIZE, count);
+		SDC_WriteMultiBlocks((uint8_t*)buff, sector, FAT_SECTORSIZE, count);
 	}
-	mSTM_SDWaitWriteOperation();
+	SDC_WaitWriteOperation();
 
-	while(mSTM_SDGetStatus() != SD_TRANSFER_OK);
+	while(SDC_GetStatus() != SD_TRANSFER_OK);
 
 	return RES_OK;
 
@@ -234,7 +234,7 @@ DRESULT disk_ioctl ( BYTE drv, BYTE ctrl, void *buff )
 	}
 #endif
 	else if( ctrl == CTRL_ERASE_SECTOR ) {
-		if(mSTM_SDErase( (*((DWORD*)buff)) * FAT_SECTORSIZE, 
+		if(SDC_Erase( (*((DWORD*)buff)) * FAT_SECTORSIZE, 
 			(*((DWORD*)buff+1)) * FAT_SECTORSIZE) == SD_OK)
 			return RES_OK;
 		else

@@ -13,10 +13,10 @@
 #include "miniSTM32_tsc.h"
 
 #define KEY_DEBOUNCE_DELAY		300				/* 300msec key debouncer */
-#define TSC_DEBOUNCE_DELAY		300				/* 300msec key debouncer */
+#define TSC_DEBOUNCE_DELAY		100				/* 300msec key debouncer */
 
 volatile uint16_t u16IRQFlag = 0;			/* IRQ number */
-volatile uint16_t u16SysTick = 0;			/* 1msec reference counter */
+volatile uint16_t u16TSCDelay = 0;			/* 1msec reference counter */
 volatile uint16_t u16KeyDebouncer = 0;		/* key debouncer timer */
 volatile uint16_t u16TSCDebouncer = 0;
 
@@ -31,11 +31,9 @@ void MsecDelay(uint16_t u16Delay);
  */
 void MsecDelay(uint16_t u16Delay)
 {
-	uint16_t u16TmpValue;
+	u16TSCDelay = u16Delay;
 
-	u16TmpValue = u16SysTick;
-
-	while( (u16TmpValue + u16Delay) > u16SysTick );
+	while( u16TSCDelay );
 }
 
 /******************************************************************************/
@@ -138,23 +136,15 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
 	/* System 1msec tick */
-	if(u16SysTick < 0xFFFF)
-		u16SysTick++;
+	if(u16TSCDelay)
+		u16TSCDelay--;
 
 	/* Debounce timers */
 	if(u16KeyDebouncer)
-	{
 		u16KeyDebouncer--;
-		if( u16KeyDebouncer == 0)
-			EXTI_ClearMask(MAIN_BTN_EXTI_LINE);
-	}
 
 	if(u16TSCDebouncer)
-	{
 		u16TSCDebouncer--;
-		if( u16TSCDebouncer == 0)
-			EXTI_ClearMask(MAIN_TSC_INT_EXTI_LINE);
-	}
 }
 
 /******************************************************************************/
@@ -169,20 +159,22 @@ void SysTick_Handler(void)
 void EXTI9_5_IRQHandler(void)
 {
 
+
 	/* touch screen controller interrupt */
 	if(EXTI_GetITStatus(MAIN_TSC_INT_EXTI_LINE)) {
 
+//		EXTI_SetMask(MAIN_TSC_INT_EXTI_LINE);
+
 		if(u16TSCDebouncer == 0) {
 
-		EXTI_SetMask(MAIN_TSC_INT_EXTI_LINE);
 
-		if(TStatus == TOUCH_IDLE)
-			TStatus = TOUCH_DETECTED;
+			if(TStatus == TOUCH_IDLE) TStatus = TOUCH_DETECTED;
 
 			u16IRQFlag = MAIN_TSC_INT_EXTI_LINE;
 			u16TSCDebouncer = TSC_DEBOUNCE_DELAY;
 
 		}
+
 		EXTI_ClearITPendingBit(MAIN_TSC_INT_EXTI_LINE);
 	}
 }
@@ -199,6 +191,8 @@ void EXTI15_10_IRQHandler(void)
 	/* main board push button is depressed */
 	if(EXTI_GetITStatus(MAIN_BTN_EXTI_LINE)) {
 
+		/* set mask */
+//		EXTI_SetMask(MAIN_BTN_EXTI_LINE);
 
 		/* wait for debounce period */
 		if(u16KeyDebouncer == 0){
@@ -210,11 +204,7 @@ void EXTI15_10_IRQHandler(void)
 
 		/* clear the IT bit */
 		EXTI_ClearITPendingBit(MAIN_BTN_EXTI_LINE);
-
-		/* set mask */
-		EXTI_SetMask(MAIN_BTN_EXTI_LINE);
 	}
-
 }
 
 

@@ -12,7 +12,6 @@
   
 #include "miniSTM32.h"
 #include "stm32f10x_dma.h"
-//#include "stm32f10x_sdio.h"
 #include "stm32f10x_spi.h"
 #include "stm32f10x_usart.h"
 
@@ -59,19 +58,19 @@
  * @retval	None
  */
 
-void mSTM_BoardInit(void)
+void MBD_Init(void)
 {
 	/* Initialize LED */
-	mSTM_LEDInit();
+	MBD_LEDInit();
 
 	/* Initialize push buttons */
-	mSTM_PBInit(BTN_MODE_EXTI);
+	MBD_PBInit(BTN_MODE_EXTI);
 
 	/* Initialize COM port */
-	mSTM_COMInit(115200);
+	MBD_COMInit(115200);
 }
 
-void mSTM_LEDInit(void)
+void MBD_LEDInit(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 
@@ -85,7 +84,7 @@ void mSTM_LEDInit(void)
 	GPIO_Init(MAIN_LED_GPIO_PORT, &GPIO_InitStructure);
 }
 
-void mSTM_PBInit(ButtonMode_TypeDef Button_Mode)
+void MBD_PBInit(ButtonMode_TypeDef Button_Mode)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 	EXTI_InitTypeDef EXTI_InitStructure;
@@ -127,7 +126,7 @@ void mSTM_PBInit(ButtonMode_TypeDef Button_Mode)
  * @param	Speed: baud rate
  * @retval	None
  */
-void mSTM_COMInit(uint32_t Speed)
+void MBD_COMInit(uint32_t Speed)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 	USART_InitTypeDef USART_InitStructure;
@@ -180,7 +179,7 @@ __io_putchar(int ch)
 	return ch;
 }
 
-void mSTM_LEDOn(void)
+void MBD_LEDOn(void)
 {
   MAIN_LED_GPIO_PORT->BSRR = MAIN_LED_PIN;     
 }
@@ -188,7 +187,7 @@ void mSTM_LEDOn(void)
 /*
  * This function turns the LED Off.
  */
-void mSTM_LEDOff(void)
+void MBD_LEDOff(void)
 {
   MAIN_LED_GPIO_PORT->BRR = MAIN_LED_PIN;    
 }
@@ -196,7 +195,7 @@ void mSTM_LEDOff(void)
 /*
  * This function toggles the LED.
  */
-void mSTM_LEDToggle(void)
+void MBD_LEDToggle(void)
 {
   MAIN_LED_GPIO_PORT->ODR ^= MAIN_LED_PIN;
 }
@@ -205,13 +204,13 @@ void mSTM_LEDToggle(void)
 /*
  * This function returns the selected Button state.
  */
-uint32_t mSTM_PBGetState(void)
+uint32_t MBD_PBGetState(void)
 {
   return GPIO_ReadInputDataBit(MAIN_BTN_GPIO_PORT, MAIN_BTN_PIN);
 }
 
 
-void mSTM_SPIInit(SPIMode_TypeDef SPI_Mode)
+void MCU_SPI1Init(SPIMode_TypeDef SPI_Mode)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 
@@ -238,14 +237,14 @@ void mSTM_SPIInit(SPIMode_TypeDef SPI_Mode)
 		GPIO_Init(MAIN_SPI01_MISO_GPIO_PORT, &GPIO_InitStructure);
 	}
 
-	mSTM_SPISetMode( SPI_Mode );
+	MCU_SPI1SetMode( SPI_Mode );
 
 	/* Enable the MAIN_SPI01  */
 	SPI_Cmd(MAIN_SPI01, ENABLE);
 }
 
 
-void mSTM_SPISetMode(SPIMode_TypeDef SPI_Mode)
+void MCU_SPI1SetMode(SPIMode_TypeDef SPI_Mode)
 {
 	SPI_InitTypeDef  SPI_InitStructure;
 
@@ -283,7 +282,7 @@ void mSTM_SPISetMode(SPIMode_TypeDef SPI_Mode)
 
 }
 
-void mSTM_FlashPortInit(void)
+void MCU_SFLPortInit(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 
@@ -304,7 +303,7 @@ void mSTM_FlashPortInit(void)
  * @param  Byte: byte to send.
  * @retval The value of the received byte.
  */
-uint8_t mSTM_SPISendByte(uint8_t Byte)
+uint8_t MCU_SPI1SendByte(uint8_t Byte)
 {
 	/* Loop while DR register in not emplty */
 	while (SPI_I2S_GetFlagStatus(MAIN_SPI01, SPI_I2S_FLAG_TXE) == RESET);
@@ -325,7 +324,7 @@ uint8_t mSTM_SPISendByte(uint8_t Byte)
  * @param  HalfWord: Half Word to send.
  * @retval The value of the received Half Word.
  */
-uint16_t mSTM_SPISendHalfWord(uint16_t HalfWord)
+uint16_t MCU_SPI1SendHalfWord(uint16_t HalfWord)
 {
 	/* Loop while DR register in not emplty */
 	while (SPI_I2S_GetFlagStatus(MAIN_SPI01, SPI_I2S_FLAG_TXE) == RESET);
@@ -341,7 +340,7 @@ uint16_t mSTM_SPISendHalfWord(uint16_t HalfWord)
 }
 
 
-void mSTM_TSCPortInit(void)
+void MCU_TSCPortInit(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 	EXTI_InitTypeDef EXTI_InitStructure;

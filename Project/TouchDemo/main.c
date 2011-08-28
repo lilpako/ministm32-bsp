@@ -37,20 +37,17 @@ void Touch_Demo(void);
 int main(void)
 {
 	uint16_t u16Menu = 0;
-	uint16_t u16Value = 0;
-	uint16_t u16ValueX = 0;
-	uint16_t u16ValueY = 0;
 
 	/* Initialize SysTick - 1msec */
 	SysTick_Config(SystemCoreClock / 1000);
 
 	/* Initialize main board peripherals */
-	mSTM_BoardInit();
+	MBD_Init();
 	printf("miniSTM32 mainboard initialized\n");
 
 	/* Initialize LCD */
-	mSTM_LCDInit();
-	mSTM_BLTOff();
+	LCD_Init();
+	LCD_BacklightOff();
 	printf("LCD initialized\n");
 
 	/* Initialize touch screen controller */
@@ -63,59 +60,13 @@ int main(void)
 
 			printf("Button pressed\n");
 			u16IRQFlag = 0;
+			TStatus = TOUCH_DETECTED;
 
-/*
-			if( u16Menu == MENU_BLT_ON ) {
-				mSTM_LEDOn();
-				mSTM_BLTOn();
-				printf("Backlight Turned On\n");
-			}
-			else if( u16Menu == MENU_TCH_CAL ) {
-				printf("Start Calibration\n");
-				Touch_Calibration();
-			}
-			else if( u16Menu == MENU_TCH_DEMO ) {
-				printf("Touch Controller Demo\n");
-				Touch_Demo();
-			}
-			else if( u16Menu == MENU_BLT_OFF) {
-				mSTM_LEDOff();
-				mSTM_BLTOff();
-				printf("Backlight Turned Off\n");
-			}
-
-			if( ++u16Menu == MENU_END )
-				u16Menu = 0;
-
-*/
-
-/*
-			u16ValueX = mSTM_TSCRead_X();
-			MsecDelay(2);
-			u16ValueY = mSTM_TSCRead_Y();
-
-			printf("mSTM_TSCRead_X : %d\n", u16ValueX);
-			printf("mSTM_TSCRead_Y : %d\n\n", u16ValueY);
-
-
-
-			TSCRead();
-			printf("mSTM_TSCRead_X : %d\n", TSC_Value_X);
-			printf("mSTM_TSCRead_Y : %d\n", TSC_Value_Y);
-
-*/
 		}
 
-/*
-		else if( u16IRQFlag == MAIN_TSC_INT_EXTI_LINE ) {
-			u16IRQFlag = 0;
-			printf("Screen touch detected\n");
-		}
-*/
 		else if(TStatus == TOUCH_CALIBRATED)
 		{
-			printf("Touch detected(%d): %d, %d\n",u16Value, TSC_Value_X, TSC_Value_Y);	
-			u16Value++;
+			printf("Touch detected: %d, %d\n", TSC_Value_X, TSC_Value_Y);	
 			TStatus = TOUCH_IDLE;
 
 		}

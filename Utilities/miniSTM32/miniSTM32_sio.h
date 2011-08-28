@@ -1,5 +1,5 @@
 /*******************************************************************************
- * @file	mSTM_sio.h
+ * @file	miniSTM32_sio.h
  * @author	Brian
  * @version	V0.1.0
  * @date	06-July-2011
@@ -94,17 +94,17 @@ typedef enum
 #define MIN_PIEZO_FREQ			(1000)
 #define MAX_PIEZO_FREQ			(15000)
 
-void mSTM_SIO_BoardInit(void);
-void mSTM_SIO_LEDOn(SIO_LED_TypeDef Led);
-void mSTM_SIO_LEDOff(SIO_LED_TypeDef Led);
-void mSTM_SIO_LEDToggle(SIO_LED_TypeDef Led);
-uint16_t mSTM_SIO_LEDGetStatus(SIO_LED_TypeDef Led);
+void SIO_Init(void);
+void SIO_LEDOn(SIO_LED_TypeDef Led);
+void SIO_LEDOff(SIO_LED_TypeDef Led);
+void SIO_LEDToggle(SIO_LED_TypeDef Led);
+void SIO_PiezoControl(uint16_t Duty);
 /* maybe I can do it later
-void mSTM_SIO_LEDPWMControl(SIO_LED_TypeDef Led, uint16_t Duty);
+void SIO_LEDPWMControl(SIO_LED_TypeDef Led, uint16_t Duty);
 */
-uint16_t mSTM_SIO_ButtonGetState(SIO_Button_TypeDef Button);
-void mSTM_SIO_PiezoControl(uint16_t Duty);
-uint16_t mSTM_SIO_POTGetValue(void);
+uint16_t SIO_LEDGetStatus(SIO_LED_TypeDef Led);
+uint16_t SIO_PBGetState(SIO_Button_TypeDef Button);
+uint16_t SIO_POTGetValue(void);
 
 
 #ifdef __cplusplus
