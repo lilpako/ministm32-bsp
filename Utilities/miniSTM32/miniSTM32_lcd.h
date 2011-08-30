@@ -15,6 +15,10 @@
 /* LCD controller definition */
 #define LCDC_SSD1963		
 
+/* LCD definition */
+#define LCD_WIDTH				(480)
+#define LCD_HEIGHT				(272)
+
 
 void LCD_Init(void);
 void LCD_BacklightOn(void);

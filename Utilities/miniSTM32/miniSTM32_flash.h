@@ -14,6 +14,22 @@
  extern "C" {
 #endif 
 
+#define FLASH_SST25VF106				1
+
+#ifdef FLASH_SST25VF106
+#define SFLASH_JEDEC_ID					(0xBF2541)
+#define SFLASH_CAPACITY					(2*1024*1024)
+#define SFLASH_ERASE_BLOCK_SIZE			(4*1024)
+#endif // FLASH_SST25VF106
+
+/* FLASH typedefs */
+typedef enum{
+	EBSIZE_4KB,
+	EBSIZE_32KB,
+	EBSIZE_64KB,
+	EBSIZE_CHIP
+} BlockSize_TypeDef;
+
 void SFL_Init(void);
 uint32_t SFL_ReadID(void);
 void SFL_Erase(BlockSize_TypeDef Size, uint32_t StartAddr);

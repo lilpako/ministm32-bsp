@@ -18,9 +18,7 @@
 
 #include "stm32f10x.h"
 
-/*
- * Push button
- */
+/* Push button */
 typedef enum
 {
 	BTN_MODE_GPIO = 0,
@@ -37,6 +35,7 @@ typedef enum
 #define MAIN_BTN_EXTI_TRIG				EXTI_Trigger_Falling
 #define MAIN_BTN_EXTI_IRQn				EXTI15_10_IRQn  
 
+/* SPI mode */
 typedef enum
 {
 	SPI_MODE_FLASH = 0,
@@ -47,18 +46,6 @@ typedef enum
 #define MAIN_FLASH_SPI_BAUD				SPI_BaudRatePrescaler_4;
 /* Touch Controler SPI baudrate : PCLK2/43 = 1.125MHz */
 #define MAIN_TOUCH_SPI_BAUD				SPI_BaudRatePrescaler_64;
-
-/*
- * SST25VF016B SPI Flash 
- */
-
-/* FLASH typedefs */
-typedef enum{
-	EBSIZE_4KB,
-	EBSIZE_32KB,
-	EBSIZE_64KB,
-	EBSIZE_CHIP
-} BlockSize_TypeDef;
 
 /* FLASH interface pins */  
 #define MAIN_FLASH_CS_PIN				GPIO_Pin_4                  /* PA.04 */
@@ -71,10 +58,7 @@ typedef enum{
 #define MAIN_FLASH_CS_HIGH()			GPIO_SetBits(MAIN_FLASH_CS_GPIO_PORT, \
 	MAIN_FLASH_CS_PIN) 
 
-
-/*
- * Touch Sensor Controller interrupt and chip select
- */
+/* Touch Sensor Controller interrupt and chip select */
 #define MAIN_TSC_INT_PIN				GPIO_Pin_6
 #define MAIN_TSC_INT_GPIO_PORT			GPIOB
 #define MAIN_TSC_INT_GPIO_CLK			RCC_APB2Periph_GPIOB
@@ -102,7 +86,6 @@ typedef enum{
 /*
  * miniSTM32 Exported Functions
  */ 
-
 
 /* Mainboard: board */
 void MBD_Init(void);

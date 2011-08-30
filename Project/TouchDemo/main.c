@@ -13,10 +13,9 @@
 
 /* demo menu list */
 enum{
-	MENU_BLT_ON = 0,
-	MENU_TCH_CAL,
+	MENU_TCH_CAL = 0,
+	MENU_TCH_CHK,
 	MENU_TCH_DEMO,
-	MENU_BLT_OFF,
 	MENU_END
 };
 
@@ -30,7 +29,6 @@ extern volatile uint16_t uTSC_ValueX;
 extern volatile uint16_t uTSC_ValueY;
 extern volatile TouchStatus TSC_Status;
 
-void Touch_Calibration(void);
 void Touch_Demo(void);
 
 int main(void)
@@ -50,38 +48,64 @@ int main(void)
 	printf("LCD initialized\n");
 
 	/* Initialize touch screen controller */
-	TSCInit();
-	printf("Touch controller initialized\n\n");
+	TSC_Init();
+	printf("Touch controller initialized\n");
+	printf("Press the pushbutton to start\n\n");
         
 	while (1) 
 	{
 		if( uIRQFlag == MAIN_BTN_EXTI_LINE ) {
 
-			printf("Button pressed\n");
-			uIRQFlag = 0;
-			TSC_Status = TOUCH_DETECTED;
+			if( u16Menu == MENU_TCH_CAL ) {
+				TSC_Calibration();
+				printf("Calibration done\n");
+				printf("Press the pushbutton to proceed\n");
+			}
+			else if( u16Menu == MENU_TCH_CHK ) {
+				TSC_CheckCalibration();
+			}
+			else if( u16Menu == MENU_TCH_DEMO ) {
+				Touch_Demo();
+				printf("End of Demo\n");
+				printf("Press the pushbutton to restart\n");
+			}
 
-		}
-
-		else if(TSC_Status == TOUCH_CALIBRATED)
-		{
-			printf("Touch detected: %d, %d\n", uTSC_ValueX, uTSC_ValueY);	
-			TSC_Status = TOUCH_IDLE;
+			u16Menu++;
+			if(u16Menu == MENU_END) u16Menu = MENU_TCH_CAL;
 
 		}
 		/* usual household routines here */
 		{
-			TouchRoutine();
 		}
 	}
 }
 
-void Touch_Calibration(void)
-{
-}
 
 void Touch_Demo(void)
 {
+	uint16_t u16Count = 0;
+	uint16_t u16X, u16Y;
+
+	LCD_BacklightOn();
+
+	while(u16Count < 20)
+	{
+		printf("Waiting for touch(%d)\n", u16Count + 1);
+		
+		TSC_WaitForTouch();
+
+		u16X = TSC_GetDisplayX(uTSC_ValueX, uTSC_ValueY);
+		u16Y = TSC_GetDisplayY(uTSC_ValueX, uTSC_ValueY);
+
+		LCD_DrawLine(u16X - 5, u16Y, u16X + 5, u16Y, 5, 50, 200, 50);
+		LCD_DrawLine(u16X, u16Y - 5, u16X, u16Y +5, 5, 50, 200, 50);
+
+		u16Count++;
+	}
+
+	LCD_Clear();
+	LCD_BacklightOff();
+
 }
 
 #ifdef  USE_FULL_ASSERT

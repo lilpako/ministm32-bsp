@@ -156,7 +156,7 @@ int main(void)
 				printf("FLASH Write Data: %s\n", Tx_Buffer);
 			}
 			else if( u16Menu == MENU_FLASH_READ ) {
-				SFL_ReadBuffer(Rx_Buffer, FLASH_ADDRESS, sizeof(Rx_Buffer) - 1);
+				SFL_ReadBuffer(Rx_Buffer, FLASH_ADDRESS, sizeof(Rx_Buffer));
 				printf("FLASH Read Back: %s\n", Rx_Buffer);
 			}
 			else if( u16Menu == MENU_FLASH_ERASE ) {
@@ -164,7 +164,7 @@ int main(void)
 				printf("FLASH Erase Block: Data Erased\n");
 			}
 			else if( u16Menu == MENU_FLASH_ERASECHECK ) {
-				SFL_ReadBuffer(Rx_Buffer, FLASH_ADDRESS, sizeof(Rx_Buffer) - 1);
+				SFL_ReadBuffer(Rx_Buffer, FLASH_ADDRESS, sizeof(Rx_Buffer));
 				printf("FLASH Read Data Again: %s\n", Rx_Buffer);
 			}
 

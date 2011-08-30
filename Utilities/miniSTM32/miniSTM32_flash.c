@@ -10,6 +10,7 @@
   
 #include "miniSTM32.h"
 #include "stm32f10x_spi.h"
+#include "miniSTM32_flash.h"
 
 /*
  * SST25VF016B SPI Flash supported commands
@@ -24,8 +25,6 @@
 #define SFLASH_BP_8						0x0C	/* upper 1/8  */
 #define SFLASH_BP_4						0x10	/* upper 1/4  */
 #define SFLASH_BP_2						0x14	/* upper 1/2  */
-
-#define SFLASH_SST25VF016_ID			0xBF2541
 
 #define SFLASH_CMD_RD25M				0x03
 #define SFLASH_CMD_RD80M				0x0B
@@ -94,23 +93,23 @@ void SFL_WaitForWriteEnd(void)
 {
 	uint8_t flashstatus = 0;
 
-	/*!< Select the FLASH: Chip Select low */
+	/* Select the FLASH: Chip Select low */
 	MAIN_FLASH_CS_LOW();
 
-	/*!< Send "Read Status Register" instruction */
+	/* Send "Read Status Register" instruction */
 	MCU_SPI1SendByte(SFLASH_CMD_RDSR);
 
-	/*!< Loop as long as the memory is busy with a write cycle */
+	/* Loop as long as the memory is busy with a write cycle */
 	do
 	{
-		/*!< Send a dummy byte to generate the clock needed by the FLASH
+		/* Send a dummy byte to generate the clock needed by the FLASH
 		and put the value of the status register in FLASH_Status variable */
 		flashstatus = MCU_SPI1SendByte(SFLASH_DUMMY_BYTE);
 
 	}
 	while ((flashstatus & SFLASH_WIP_FLAG) == SET); /* Write in progress */
 
-	/*!< Deselect the FLASH: Chip Select high */
+	/* Deselect the FLASH: Chip Select high */
 	MAIN_FLASH_CS_HIGH();
 }
 
@@ -147,10 +146,10 @@ uint8_t SFL_ReadRegister(void)
 {
 	uint8_t u8Data;
 
-	/*!< Select the FLASH: Chip Select low */
+	/* Select the FLASH: Chip Select low */
 	MAIN_FLASH_CS_LOW();
 
-	/*!< Send "RDID " instruction */
+	/* Send "RDID " instruction */
 	MCU_SPI1SendByte(SFLASH_CMD_RDSR);
 
 	u8Data = MCU_SPI1SendByte(SFLASH_DUMMY_BYTE);
@@ -251,27 +250,27 @@ void SFL_Erase(BlockSize_TypeDef Size, uint32_t StartAddr)
 	{
 		return;
 	}
-	/*!< Send write enable instruction */
+	/* Send write enable instruction */
 	SFL_WriteEnable();
 
-	/*!< Select the FLASH: Chip Select low */
+	/* Select the FLASH: Chip Select low */
 	MAIN_FLASH_CS_LOW();
-	/*!< Send Sector Erase instruction */
+	/* Send Sector Erase instruction */
 	MCU_SPI1SendByte(u8CmdByte);
 
 	if( u8CmdByte != SFLASH_CMD_ERCHIP )
 	{
-		/*!< Send SectorAddr high nibble address byte */
+		/* Send SectorAddr high nibble address byte */
 		MCU_SPI1SendByte((StartAddr & 0xFF0000) >> 16);
-		/*!< Send SectorAddr medium nibble address byte */
+		/* Send SectorAddr medium nibble address byte */
 		MCU_SPI1SendByte((StartAddr & 0xFF00) >> 8);
-		/*!< Send SectorAddr low nibble address byte */
+		/* Send SectorAddr low nibble address byte */
 		MCU_SPI1SendByte(StartAddr & 0xFF);
 	}
-	/*!< Deselect the FLASH: Chip Select high */
+	/* Deselect the FLASH: Chip Select high */
 	MAIN_FLASH_CS_HIGH();
 
-	/*!< Wait the end of Flash writing */
+	/* Wait the end of Flash writing */
 	SFL_WaitForWriteEnd();
 }
 
@@ -302,7 +301,7 @@ void SFL_WriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByte)
 
 	SFL_WaitForWriteEnd();
 
-	while( u16Index < (NumByte-1) )
+	while( u16Index < NumByte )
 	{
 		/* chip select */
 		MAIN_FLASH_CS_LOW();
@@ -314,9 +313,9 @@ void SFL_WriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByte)
 		MCU_SPI1SendByte(pBuffer[u16Index++]);
 
 		/* second data byte */
-		/* fill the last byte if the NumByte is odd */
-		if( u16Index == (NumByte -1) )
+		if( u16Index == NumByte )
 		{
+			/* fill the last byte if the NumByte is odd */
 			MCU_SPI1SendByte(0xFF);
 		}
 		else
@@ -353,21 +352,21 @@ void SFL_WriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByte)
  */
 void SFL_ReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr, uint16_t NumByte)
 {
-	/*!< Select the FLASH: Chip Select low */
+	/* Select the FLASH: Chip Select low */
 	MAIN_FLASH_CS_LOW();
 
-	/*!< Send "Read from Memory " instruction */
+	/* Send "Read from Memory " instruction */
 #ifdef FLASH_HIGHSPEED_READ
 	MCU_SPI1SendByte(SFLASH_CMD_RD80M);
 #else
 	MCU_SPI1SendByte(SFLASH_CMD_RD25M);
 #endif // FLASH_HIGHSPEED_READ
 
-	/*!< Send ReadAddr high nibble address byte to read from */
+	/* Send ReadAddr high nibble address byte to read from */
 	MCU_SPI1SendByte((ReadAddr & 0xFF0000) >> 16);
-	/*!< Send ReadAddr medium nibble address byte to read from */
+	/* Send ReadAddr medium nibble address byte to read from */
 	MCU_SPI1SendByte((ReadAddr& 0xFF00) >> 8);
-	/*!< Send ReadAddr low nibble address byte to read from */
+	/* Send ReadAddr low nibble address byte to read from */
 	MCU_SPI1SendByte(ReadAddr & 0xFF);
 
 #ifdef FLASH_HIGHSPEED_READ
@@ -375,15 +374,15 @@ void SFL_ReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr, uint16_t NumByte)
 	MCU_SPI1SendByte(SFLASH_DUMMY_BYTE);
 #endif // FLASH HIGHSPEED_READ
 
-	while (NumByte--) /*!< while there is data to be read */
+	while (NumByte--) /* while there is data to be read */
 	{
-		/*!< Read a byte from the FLASH */
+		/* Read a byte from the FLASH */
 		*pBuffer = MCU_SPI1SendByte(SFLASH_DUMMY_BYTE);
-		/*!< Point to the next location where the byte read will be saved */
+		/* Point to the next location where the byte read will be saved */
 		pBuffer++;
 	}
 
-	/*!< Deselect the FLASH: Chip Select high */
+	/* Deselect the FLASH: Chip Select high */
 	MAIN_FLASH_CS_HIGH();
 }
 
