@@ -5,14 +5,16 @@
 #include "miniSTM32.h"
 #include "miniSTM32_lcd.h"
 
-/* FSMC use NOR(BANK1) interface with A16 as RS */
-#define Bank1_LCD_Ctrl    ((uint32_t)0x60000000) // display controller Register ADDR
-#define Bank1_LCD_Data    ((uint32_t)0x60020000) // display controller Data ADDR
+/* FSMC use NOR(BANK1) interface with A16 as RS 
+ * RS(A16) = 0 : register (8bit)
+ * RS(A16) = 1 : data (16bit)
+*/
+#define Bank1_LCD_Ctrl			((uint32_t)0x60000000) 
+#define Bank1_LCD_Data			((uint32_t)0x60020000)
 
 
-#ifdef LCDC_SSD1963
+/* SSD 1963 Command Code */
 
-// SSD 1963 Command Table, see manual p.20
 #define CMD_NOP 				0x0000
 #define CMD_SOFT_RESET			0x0001
 #define CMD_GET_PWR_MODE 		0x000A
@@ -22,36 +24,29 @@
 #define CMD_GET_SIGNAL_MODE		0x000E
 #define CMD_RESERVED_1			0x000F
 
-// Operation modes
 #define CMD_ENTER_SLEEP			0x0010
 #define CMD_EXIT_SLEEP			0x0011
 #define CMD_ENTER_PARTIAL		0x0012
 #define CMD_ENTER_NORMAL		0x0013
+
 #define CMD_EXIT_INVERT			0x0020
 #define CMD_ENTER_INVERT		0x0021
-
 #define CMD_SET_GAMMA_CURVE		0x0026
 #define CMD_SET_DISPLAY_OFF		0x0028
 #define CMD_SET_DISPLAY_ON		0x0029
-
 #define CMD_SET_COL_ADDRESS		0x002A
 #define CMD_SET_PAGE_ADDRESS	0x002B
-
 #define CMD_WRITE_MEM_START		0x002C
 #define CMD_READ_MEM_START		0x002E
 
 #define CMD_SET_PARTIAL_AREA	0x0030
 #define CMD_SET_SCROLL_AREA		0x0033
-
 #define CMD_SET_TEAR_OFF		0x0034
 #define CMD_SET_TEAR_ON			0x0035
-
 #define CMD_SET_ADDRESS_MODE	0x0036
 #define CMD_SET_SCROLL_START	0x0037
-
 #define CMD_EXIT_IDLE_MODE		0x0038
 #define CMD_ENTER_IDLE_MODE		0x0039
-
 #define CMD_SET_PIXEL_FMT		0x003A
 #define CMD_WRITE_MEM_CONT		0x003C
 #define CMD_READ_MEM_CONT		0x003E
@@ -64,21 +59,16 @@
 
 #define CMD_SET_LCD_MODE		0x00B0
 #define CMD_GET_LCD_MODE		0x00B1
-
 #define CMD_SET_HORIZ_PERIOD	0x00B4
 #define CMD_GET_HORIZ_PERIOD	0x00B5
-
 #define CMD_SET_VERT_PERIOD		0x00B6
 #define CMD_GET_VERT_PERIOD		0x00B7
-
 #define CMD_SET_GPIO_CONF		0x00B8
 #define CMD_GET_GPIO_CONF		0x00B9
 #define CMD_SET_GPIO_VAL		0x00BA
 #define CMD_GET_GPIO_STATUS		0x00BB
-
 #define CMD_SET_POST_PROC		0x00BC
 #define CMD_GET_POST_PROC		0x00BD
-
 #define CMD_SET_PWM_CONF		0x00BE
 #define CMD_GET_PWM_CONF		0x00BF
 
@@ -90,7 +80,6 @@
 #define CMD_GET_LCD_GEN2		0x00C5
 #define CMD_SET_LCD_GEN3		0x00C6
 #define CMD_GET_LCD_GEN3		0x00C7
-
 #define CMD_SET_GPIO0_ROP		0x00C8
 #define CMD_GET_GPIO0_ROP		0x00C9
 #define CMD_SET_GPIO1_ROP		0x00CA
@@ -112,19 +101,17 @@
 #define CMD_SET_DEEP_SLEEP		0x00E5
 #define CMD_SET_PIXCLK_FREQ		0x00E6
 #define CMD_GET_PIXCLK_FREQ		0x00E7
-
 #define CMD_RESERVED_3			0x00E8
 #define CMD_RESERVED_4			0x00E9
 
 #define CMD_SET_PIXDATA_IF_FMT	0x00F0
 #define CMD_GET_PIXDATA_IF_FMT	0x00F1
-
 #define CMD_RESERVED_5			0x00FF
+#define CMD_DUMMY				0x00A5
 
-#endif // LCDC_SSD1963
 
 /* LCD delay routine : 1 msec interval */
-#define LCD_DELAY(x)		{uLCD_Delay = x; while( uLCD_Delay);}
+#define LCD_DELAY(x)			{uLCD_Delay = x; while( uLCD_Delay);}
 
 typedef struct _POINT
 {
@@ -141,28 +128,34 @@ typedef struct _RECT
 } RECT, *PRECT;
 
 unsigned long color1 = 0;
-
 volatile uint16_t uLCD_Delay;
 
+void LCD_WR_REG(uint16_t command);
+void LCD_WR_Data(uint16_t val);
+uint16_t LCD_RD_REG(uint16_t command);
+uint16_t LCD_RD_Data(void);
+void LCD_SetColumnPageAddr(uint16_t colS, uint16_t colE, uint16_t pageS, uint16_t pageE);
 
-void LCD_Reset(void);
-//void LCD_CtrlLinesConfig(void);
-//void LCD_FSMCConfig(void);
 
-//void MUC_Init();
-void LCD_WR_REG(unsigned int command);
-unsigned int LCD_RD_REG(unsigned int command);
-void LCD_WR_CMD(unsigned int index, unsigned int val);
 
-unsigned int LCD_RD_Data(void);
-void LCD_WR_Data(unsigned int val);
-void LCD_WR_Data_8(unsigned int val);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void LCD_Test(void);
 
-//void lcd_wr_zf(unsigned int a, unsigned int b, unsigned int a1,unsigned int b1, unsigned int d,unsigned int e, unsigned char g, unsigned char *f); 
 void lcd_wr_pixel(unsigned int a, unsigned int b, unsigned int e);
 unsigned char *num_pub(unsigned int a);
-void LCD_Clear(unsigned int);
 
 // PiXCLe Primitives Declarations
 void LCD_DrawCheckerPattern(short blue, short green, short red);
@@ -176,152 +169,31 @@ void SetLCDStartPixelLineAddress(int x1,int y1, int x2, int y2);
 
 // TODO update colour array comments and names
 unsigned int color[] = {0xf800,0x07e0,0x001f,0xffe0,0x0000,0xffff,0x07ff,0xf81f};
-//=====================================================================================
-
-//	Controller Registers
-
-//=====================================================================================
-
-//
-//	 SSD1963 Register Values for the 7.0" 800x480 display
-//
-/*
-unsigned int  HDP = 799; 
-unsigned int  HT = 850;
-unsigned int  HPS = 51;
-unsigned int  LPS = 3;
-unsigned char HPW = 48;
-
-unsigned int  VDP = 479;
-unsigned int  VT = 530;
-unsigned int  VPS = 50;
-unsigned int  FPS = 30;
-unsigned char VPW = 3;
-*/
-
-/*
-//
-//	 SSD1963 Register Values for the 4.3" 480x272 display
-//
-unsigned int  HDP = 479;
-unsigned int  HT = 525;
-unsigned int  HPS = 25;
-unsigned int  LPS = 0;
-unsigned char HPW = 2;
-
-unsigned int  VDP = 271;
-unsigned int  VT = 286;
-unsigned int  VPS = 8;
-unsigned int  FPS = 0;
-unsigned char VPW = 1;
-
-//
-//	 SSD1963 Register Values for an alternate 4.3" 480x272 display
-//	 Model is unknown, may be the display with the flaw fixed.
-//
-unsigned int  HDP = 479; // width, 0-indexed
-unsigned int  HT = 499;
-unsigned int  HPS = 20;
-unsigned int  LPS = 3;
-unsigned char HPW = 17;
-
-unsigned int  VDP = 271; // height, 0-indexed
-unsigned int  VT = 291;
-unsigned int  VPS = 20;
-unsigned int  FPS = 17;
-unsigned char   VPW = 3;
- 
-*/
-
-//
-//	 SSD1963 Register Values for the 4.3" 400x272 display
-//
-//
-//		HDP == Horizontal Data Pixels
-//		HT  == Horizontal Timing
-//		HPS == Horizontal per ?
-//		LPS == ? Lines Per ?
-//		HPW == Horizontal per ?
-//
-//		VDP == Vertical Data Pixels
-//		VT 	== Vertical Timing
-//		VPS == Vertical per ? 
-//		FPS == Frames per ?
-//		VPW == Vertical 
-//
-
-unsigned int  HDP = 479; // width, 0-indexed
-unsigned int  HT = 531;  // horizontal timing
-unsigned int  HPS = 43;
-unsigned int  LPS = 8;
-unsigned char HPW = 1;	// horizontal pulse width
-
-unsigned int  VDP = 271; // height, 0-indexed
-unsigned int  VT = 288;	 // vertical timing
-unsigned int  VPS = 12;
-unsigned int  FPS = 4;
-unsigned char VPW = 10;	// vertical pulse width
-
-
-//=====================================================================================
-// These extern's do not exist in any other sample code. Original purpose is unknown.
-// Assume these can be removed.
-extern unsigned char zm9[];
-extern unsigned char zm8[];
-extern unsigned char zm7[];
-extern unsigned char zm6[];
-extern unsigned char zm5[];
-extern unsigned char zm4[];
-extern unsigned char zm3[];
-extern unsigned char zm2[];
-extern unsigned char zm1[];
-extern unsigned char zm0[];
-
-extern unsigned char a1[];
-extern unsigned char a2[];
-
-extern unsigned char zf2[];
-extern unsigned char zf3[];	
 
 unsigned int LCD_RD_data(void);
 extern void Delay(__IO uint32_t nCount);
 
-
-/*
- * Brian : replaced by LCD_DELAY()
-void delay_time(unsigned int i);
- */
 void SetScrollArea(unsigned int top, unsigned int scroll, unsigned int bottom);
 void SetScrollStart(unsigned int line);
 void SetTearingCfg(unsigned char state, unsigned char mode);
 
 
-
-
-
 //	Write a command to the LCD Register
-void LCD_WR_REG(unsigned int command)
+void LCD_WR_REG(uint16_t command)
 {
 	*(__IO uint16_t *) (Bank1_LCD_Ctrl) =  command;
 }
 
 // 	Read a value from an LCD Register
-unsigned int LCD_RD_REG(unsigned int command)
+uint16_t LCD_RD_REG(uint16_t command)
 {
 	 *(__IO uint16_t *) (Bank1_LCD_Ctrl) =  command;
 
 	return *(__IO uint16_t *) (Bank1_LCD_Data);
 }
 
-// The Bank1_LCD_Ctrl is the register where the start 
-// address in a line is written.
-void LCD_WR_CMD(unsigned int index, unsigned int val)
-{	
-	*(__IO uint16_t *) (Bank1_LCD_Ctrl) =  index;	
-	*(__IO uint16_t *) (Bank1_LCD_Data) =  val;
-}
 
-unsigned int LCD_RD_Data(void)
+uint16_t LCD_RD_Data(void)
 {
 	unsigned int a = 0;
 	//a = (*(__IO uint16_t *) (Bank1_LCD_Data)); 	//Dummy
@@ -334,14 +206,9 @@ unsigned int LCD_RD_Data(void)
 
 //	Write a pixel in the display. The address counter is incremented by
 // 	this command.
-void LCD_WR_Data(unsigned int val)
+void LCD_WR_Data(uint16_t val)
 {   
 	*(__IO uint16_t *) (Bank1_LCD_Data) =  val; 	
-}
-
-void LCD_WR_Data_8(unsigned int val)
-{
-	*(__IO uint16_t *) (Bank1_LCD_Data) =  val;
 }
 
 
@@ -352,146 +219,429 @@ void LCD_WR_Data_8(unsigned int val)
 void LCD_Init(void)
 { 
 
-	/* 
-	 * Brian : merge port setting routine here
-	 */
-
 	/* port setting */
-//	LCD_CtrlLinesConfig();
 	MCU_LCDPortInit();
 
 	/* FSMC setting */
-//	LCD_FSMCConfig();
 	MCU_FSMCInit();
 
-	/* initial reset */
-	LCD_Reset();
+	/* initial hard reset: PE1 */
+	GPIO_ResetBits(GPIOE, GPIO_Pin_1);
+	LCD_DELAY(1);
+	GPIO_SetBits(GPIOE, GPIO_Pin_1);
+	LCD_DELAY(1);
 
-	// Set up the Phase Lock Loop circuits. This only has to be done once.
-	LCD_WR_REG(CMD_SET_PLL_MN); // PLL multiplier, set PLL clock to 120M
-	LCD_WR_Data(0x0023); // Divider N = 0x36 for 6.5MHz, 0x23 for 10MHz crystal
-	LCD_WR_Data(0x0002); // Multiplier M = 2
-	LCD_WR_Data(0x0004); // dummy value, can be anything
+	/* setup system clock */
+
+	/* set pll parameters
+	 * target system clock	: 110MHz
+	 * crystal frequency	: 10MHz
+	 * VCO range			: 250MHz - 800MHz
+	 * multiplier			: 33 (M = 0x20)
+	 * divider				: 3 (N = 0x02)
+	 */
+	LCD_WR_REG(CMD_SET_PLL_MN);
+	LCD_WR_Data(0x0020);
+	LCD_WR_Data(0x0002);
+	LCD_WR_Data(CMD_DUMMY);
 	
-	LCD_WR_REG(CMD_SET_PLL);  	// PLL enable
-	LCD_WR_Data(0x0001);  // Use PLL output as system clock
-
-	/*
-	 * Brian : use LCD_DELAY()
-	delay_time(1); // this is 100 us, allows the PLL to stabilize
-	 */
-	LCD_DELAY(1);
-
+	/* enable pll */
 	LCD_WR_REG(CMD_SET_PLL);
-	LCD_WR_Data(0x0003); // SSD1963 is switched to PLL output after PLL has stabilized.
-	/*
-	 * Brian : use LCD_DELAY()
-	delay_time(5); // this is 500 us, allows the PLL to stabilize
-	 */
-	LCD_DELAY(1);
-
-	LCD_WR_REG(CMD_SOFT_RESET); // software reset, see SSD1963 manual p.20 Command Table.
-	/*
-	 * Brian : use LCD_DELAY()
-	delay_time(5); // this is 500 us,
-	 */
-	LCD_DELAY(1);
-	LCD_WR_REG(CMD_SET_PIXCLK_FREQ);	//PLL setting for PCLK, depends on LCD resolution
-
-	// For the 7.0" LCD
-	//	LCD_WR_Data(0x0003);
-	//	LCD_WR_Data(0x0033);
-	//	LCD_WR_Data(0x0033);
-
-	// For the alternate 4.3" LCD
-	// LCD_WR_Data(0x0000);
-	// LCD_WR_Data(0x00b4);
-	// LCD_WR_Data(0x00e7);
-
-	// For the 4.3" LCD
 	LCD_WR_Data(0x0001);
-	LCD_WR_Data(0x0048);
-	LCD_WR_Data(0x009e);
 
+	/* 100 usec delay for locking */
+	LCD_DELAY(1);
 
-	LCD_WR_REG(CMD_SET_LCD_MODE);	// LCD SPECIFICATION
-	// We have to write 7 parameter values. Various bit values are
-	// set. See manual p.43.
-	LCD_WR_Data(0x0000);  // 18 bit, FRC dithering off, TFT dithering on, other stuff
-	 
-	LCD_WR_Data(0x0000);  // LFRAME signal polarities
+	/* activate pll output */
+	LCD_WR_REG(CMD_SET_PLL);
+	LCD_WR_Data(0x0003); 
 
-	LCD_WR_Data((HDP>>8)&0X00FF);  // 2 entries for Set HDP Horizontal Display Panel size
-	LCD_WR_Data(HDP&0X00FF);
+	LCD_DELAY(1);
 
-    LCD_WR_Data((VDP>>8)&0X00FF);  // 2 entries for Set VDP
-	LCD_WR_Data(VDP&0X00FF);
+	/* soft reset */
+	LCD_WR_REG(CMD_SOFT_RESET);
 
-    LCD_WR_Data(0x0000); // Even line RGB sequence 000 == RGB
+	LCD_DELAY(1);
 
-	LCD_WR_REG(CMD_SET_HORIZ_PERIOD);	//HSYNC
-	LCD_WR_Data((HT>>8)&0X00FF);  //Set HT
-	LCD_WR_Data(HT&0X00FF);
-	LCD_WR_Data((HPS>>8)&0X00FF);  //Set HPS
-	LCD_WR_Data(HPS&0X00FF);
-	LCD_WR_Data(HPW);			   //Set HPW
-	LCD_WR_Data((LPS>>8)&0X00FF);  //Set HPS
-	LCD_WR_Data(LPS&0X00FF);
-	LCD_WR_Data(0x0000);
+	/* set tear off */
+	/* set gpio configuration */
+	/* set post processing */
 
-	LCD_WR_REG(CMD_SET_VERT_PERIOD); //VSYNC
-	LCD_WR_Data((VT>>8)&0X00FF);   //Set VT
-	LCD_WR_Data(VT&0X00FF);
-	LCD_WR_Data((VPS>>8)&0X00FF);  //Set VPS
-	LCD_WR_Data(VPS&0X00FF);
-	LCD_WR_Data(VPW);			   //Set VPW
-	LCD_WR_Data((FPS>>8)&0X00FF);  //Set FPS
-	LCD_WR_Data(FPS&0X00FF);
+	/* pixel data interface (host) */
+	LCD_WR_REG(CMD_SET_PIXDATA_IF_FMT);
+	LCD_WR_Data(0x0003);	/* 16bit 565 */
 
-	LCD_WR_REG(CMD_SET_GPIO_VAL);
-	// Set various bit values, see manual p.49
-	LCD_WR_Data(0x000F);    //GPIO[3:0] out 1
+#if defined(LCD_HSD043I9W)
+	
+	/* HannStar HSD043I9W */
 
-	LCD_WR_REG(CMD_SET_GPIO_CONF);
-	LCD_WR_Data(0x0007);    //GPIO3 = input, GPIO[2:0] = output
-	LCD_WR_Data(0x0001);    //GPIO0 normal
-
-	LCD_WR_REG(CMD_SET_ADDRESS_MODE); //rotation, see p.18
-	LCD_WR_Data(0x0000);
-//	LCD_WR_Data(0x0060);
-
-
-	LCD_WR_REG(CMD_SET_PIXDATA_IF_FMT); //pixel data interface
-	LCD_WR_Data(0x0003);
-
-
-	/*
-	 * Brian : use LCD_DELAY();
-	delay_time(5); // 5 ms
+	/* set pixel clock frequency
+	 * pll frequency	: 110MHz
+	 * target frequency : 9MHz
+	 * LCDC_FPR			: 85793 (0x014F21)
 	 */
-	LCD_DELAY(5);
+	LCD_WR_REG(CMD_SET_PIXCLK_FREQ);
+	LCD_WR_Data(0x0001);
+	LCD_WR_Data(0x004F);
+	LCD_WR_Data(0x0021);
 
-	LCD_Clear(0);
-	LCD_WR_REG(CMD_SET_DISPLAY_ON); //display on
+	/* set lcd mode 
+	 * P1(0x14): data 18bit, dithering, dclk rising edge, hsync low, vsync low
+	 * P2(0x00): TFT mode
+	 * P3(0x01): HDP 479(0x1DF)
+	 * P4(0xDF): HDP 479(0x1DF)
+	 * P5(0x01): VDP 271(0x10F)
+	 * P6(0x0F): VDP 271(0x10F)
+	 * P7(0x00): RGB sequence don't care
+	 *
+	 */
+	LCD_WR_REG(CMD_SET_LCD_MODE);
+	LCD_WR_Data(0x14);
+	LCD_WR_Data(0x00);
+	LCD_WR_Data(0x01);
+	LCD_WR_Data(0xDF);
+	LCD_WR_Data(0x01);
+	LCD_WR_Data(0x0F);
+	LCD_WR_Data(0X00);
+
+	/* set horizontal timing
+	 * P1(0x02): HT - horizontal period : th-1 = 524 (0x20D)
+	 * P2(0x0D): HT - horizontal period : th-1 = 524 (0x20D)
+	 * P3(0x00): HPS - hsync width + front pouch : Thpw + Thfb = 41 (0x33)
+	 * P4(0x33): HPS - hsync width + front pouch : Thpw + Thfb = 41 (0x33)
+	 * P5(0x28): HPW - horizontal sync pulse width : Thpw -1 = 40 (0x28)
+	 * P6(0x00): LPS - horizontal sync pulse location : 0 (0x00)
+	 * P7(0x00): LPS - horizontal sync pulse location : 0 (0x00)
+	 * P8(0x00): horizontal sync pulse subpixel start position(LPSPP) : N/A
+	 */
+	LCD_WR_REG(CMD_SET_HORIZ_PERIOD);
+	LCD_WR_Data(0x0002);
+	LCD_WR_Data(0x000D);
+	LCD_WR_Data(0x0000);
+	LCD_WR_Data(0x0033);
+	LCD_WR_Data(0x0028);
+	LCD_WR_Data(0x0000);
+	LCD_WR_Data(0x0000);
+	LCD_WR_Data(0x0000);
+
+	/* set vertical timing
+	 * P1(0x02): VT - vertical period : tV-1 = 287 (0x20C)
+	 * P2(0x0C): VT - vertical period : tV-1 = 287 (0x20C)
+	 * P3(0x00): VPS - vsync width + front poch : Tvpw + Tvfp = 12 (0x0C)
+	 * P4(0x0C): VPS - vsync width + front poch : Tvpw + Tvfp = 12 (0x0C)
+	 * P5(0x09): VPW - vertical sync pulse width : Tvpw-1 = 9 (0x09)
+	 * P6(0x00): FPS - vertical sync pulse location : 0 (0x00)
+	 * P7(0x00): FPS - vertical sync pulse location : 0 (0x00)
+	 */
+	LCD_WR_REG(CMD_SET_VERT_PERIOD);
+	LCD_WR_Data(0x02);
+	LCD_WR_Data(0x0C);
+	LCD_WR_Data(0x00);
+	LCD_WR_Data(0x0C);
+	LCD_WR_Data(0x09);
+	LCD_WR_Data(0x00);
+	LCD_WR_Data(0x00);
+
+#elif defined(LCD_AT043TN13)
+
+	/* Innolux AT043TN13 */
+
+	/* set pixel clock frequency
+	 * pll frequency	: 110MHz
+	 * target frequency : 9MHz
+	 * LCDC_FPR			: 85793 (0x014F21)
+	 */
+	LCD_WR_REG(CMD_SET_PIXCLK_FREQ);
+	LCD_WR_Data(0x0001);
+	LCD_WR_Data(0x004F);
+	LCD_WR_Data(0x0021);
+
+	/* set lcd mode 
+	 * P1(0x10): data 18bit, dithering, dclk falling edge, hsync low, vsync low
+	 * P2(0x00): TFT mode
+	 * P3(0x01): HDP 479(0x1DF)
+	 * P4(0xDF): HDP 479(0x1DF)
+	 * P5(0x01): VDP 271(0x10F)
+	 * P6(0x0F): VDP 271(0x10F)
+	 * P7(0x00): RGB sequence don't care
+	 *
+	 */
+	LCD_WR_REG(CMD_SET_LCD_MODE);
+	LCD_WR_Data(0x10);
+	LCD_WR_Data(0x00);
+	LCD_WR_Data(0x01);
+	LCD_WR_Data(0xDF);
+	LCD_WR_Data(0x01);
+	LCD_WR_Data(0x0F);
+	LCD_WR_Data(0X00);
+
+	/* set horizontal timing
+	 * P1(0x02): HT - horizontal period : th-1 = 524 (0x20D)
+	 * P2(0x0D): HT - horizontal period : th-1 = 524 (0x20D)
+	 * P3(0x00): HPS - hsync width + front pouch : thp + thb = 41 (0x33)
+	 * P4(0x33): HPS - hsync width + front pouch : thp + thb = 41 (0x33)
+	 * P5(0x28): HPW - horizontal sync pulse width : thb -1 = 40 (0x28)
+	 * P6(0x00): LPS - horizontal sync pulse location : 0 (0x00)
+	 * P7(0x00): LPS - horizontal sync pulse location : 0 (0x00)
+	 * P8(0x00): horizontal sync pulse subpixel start position(LPSPP) : N/A
+	 */
+	LCD_WR_REG(CMD_SET_HORIZ_PERIOD);
+	LCD_WR_Data(0x0002);
+	LCD_WR_Data(0x000D);
+	LCD_WR_Data(0x0000);
+	LCD_WR_Data(0x0033);
+	LCD_WR_Data(0x0028);
+	LCD_WR_Data(0x0000);
+	LCD_WR_Data(0x0000);
+	LCD_WR_Data(0x0000);
+
+	/* set vertical timing
+	 * P1(0x02): VT - vertical period : tv-1 = 285 (0x20A)
+	 * P2(0x0A): VT - vertical period : tv-1 = 285 (0x20A)
+	 * P3(0x00): VPS - vsync width + front poch : Tvpw + Tvfp = 12 (0x0C)
+	 * P4(0x0C): VPS - vsync width + front poch : Tvpw + Tvfp = 12 (0x0C)
+	 * P5(0x09): VPW - vertical sync pulse width : Tvpw-1 = 9 (0x09)
+	 * P6(0x00): FPS - vertical sync pulse location : 0 (0x00)
+	 * P7(0x00): FPS - vertical sync pulse location : 0 (0x00)
+	 */
+	LCD_WR_REG(CMD_SET_VERT_PERIOD);
+	LCD_WR_Data(0x02);
+	LCD_WR_Data(0x0A);
+	LCD_WR_Data(0x00);
+	LCD_WR_Data(0x0C);
+	LCD_WR_Data(0x09);
+	LCD_WR_Data(0x00);
+	LCD_WR_Data(0x00);
+
+#elif defined(LCD_AT070TN83)
+
+	/* Innolux AT070TN83 */
+
+	/* set pixel clock frequency
+	 * pll frequency	: 110MHz
+	 * target frequency : 33.3MHz
+	 * LCDC_FPR			: 317433 (0x04D7F9)
+	 */
+	LCD_WR_REG(CMD_SET_PIXCLK_FREQ);
+	LCD_WR_Data(0x0004);
+	LCD_WR_Data(0x00D7);
+	LCD_WR_Data(0x00F9);
+
+	/* set lcd mode 
+	 * P1(0x10): data 18bit, dithering, dclk falling edge, hsync low, vsync low
+	 * P2(0x00): TFT mode
+	 * P3(0x03): HDP 799(0x31F)
+	 * P4(0x1F): HDP 799(0x31F)
+	 * P5(0x01): VDP 479(0x1DF)
+	 * P6(0xDF): VDP 479(0x1DF)
+	 * P7(0x00): RGB sequence don't care
+	 *
+	 */
+	LCD_WR_REG(CMD_SET_LCD_MODE);
+	LCD_WR_Data(0x10);
+	LCD_WR_Data(0x00);
+	LCD_WR_Data(0x03);
+	LCD_WR_Data(0x1F);
+	LCD_WR_Data(0x01);
+	LCD_WR_Data(0xDF);
+	LCD_WR_Data(0X00);
+
+	/* set horizontal timing
+	 * P1(0x03): HT - horizontal period : tHP+tHW-1 = 975 (0x3CF)
+	 * P2(0xCF): HT - horizontal period : tHP+tHW-1 = 975 (0x3CF)
+	 * P3(0x00): HPS - hsync width + front pouch : tHW + tHFP = 88 (0x58)
+	 * P4(0x58): HPS - hsync width + front pouch : tHW + tHFP = 88 (0x58)
+	 * P5(0x2F): HPW - horizontal sync pulse width : tHW -1 = 47 (0x2F)
+	 * P6(0x00): LPS - horizontal sync pulse location : 0 (0x00)
+	 * P7(0x00): LPS - horizontal sync pulse location : 0 (0x00)
+	 * P8(0x00): horizontal sync pulse subpixel start position(LPSPP) : N/A
+	 */
+	LCD_WR_REG(CMD_SET_HORIZ_PERIOD);
+	LCD_WR_Data(0x0003);
+	LCD_WR_Data(0x00CF);
+	LCD_WR_Data(0x0000);
+	LCD_WR_Data(0x0058);
+	LCD_WR_Data(0x002F);
+	LCD_WR_Data(0x0000);
+	LCD_WR_Data(0x0000);
+	LCD_WR_Data(0x0000);
+
+	/* set vertical timing
+	 * P1(0x02): VT - vertical period : tVP-1 = 524 (0x20C)
+	 * P2(0x0C): VT - vertical period : tVP-1 = 524 (0x20C)
+	 * P3(0x00): VPS - vsync width + front poch : tVW + tVFP = 16 (0x10)
+	 * P4(0x10): VPS - vsync width + front poch : tVW + tVFP = 16 (0x10)
+	 * P5(0x02): VPW - vertical sync pulse width : tVW-1 = 2 (0x02)
+	 * P6(0x00): FPS - vertical sync pulse location : 0 (0x00)
+	 * P7(0x00): FPS - vertical sync pulse location : 0 (0x00)
+	 */
+	LCD_WR_REG(CMD_SET_VERT_PERIOD);
+	LCD_WR_Data(0x02);
+	LCD_WR_Data(0x0C);
+	LCD_WR_Data(0x00);
+	LCD_WR_Data(0x10);
+	LCD_WR_Data(0x02);
+	LCD_WR_Data(0x00);
+	LCD_WR_Data(0x00);
+
+#endif /* LCD_AT070TN83 */
+
+	/* set address mode */
+	LCD_WR_REG(CMD_SET_ADDRESS_MODE);
+	LCD_WR_Data(0x00);
+
+	/* clear lcd */
+	LCD_Clear(LCD_COLOR_BLACK);
+}
+
+void LCD_BacklightOn(void)
+{
+
+#if defined(MCU_BLTCONTROL)
+
+	GPIO_SetBits(BLTCONTROL_PORT, BLTCONTROL_PIN);
+
+#elif defined(SSD1963_BLTCONTROL)
+
+	/* pwm configuration (300Hz, 100%)
+	 * P1(0x06) : PWMF - PWM frequency in system clock : 6 (0x06)
+	 * P2(0xFF) : PWM - PWM duty cycle : 255 (0xFF)
+	 * P3(0x01) : PWM enabled, control by host : (0x01)
+	 * P4(0x00) : DBC manual brightness : (0x00)
+	 * P5(0x00) : DBC minimum brightness : (0x00)
+	 * p6(0x00) : brightness prescaler : (0x00)
+	 */
+
+	LCD_WR_REG(CMD_SET_PWM_CONF);
+	LCD_WR_Data(0x0006);
+	LCD_WR_Data(0x00FF);
+	LCD_WR_Data(0x0001);
+	LCD_WR_Data(0x0000);
+	LCD_WR_Data(0x0000);
+	LCD_WR_Data(0x0000);
+
+#endif /* LCD_AT070TN83 */
+
+}
+
+void LCD_BacklightOff(void)
+{
+#if defined(MCU_BLTCONTROL)
+
+	GPIO_ResetBits(BLTCONTROL_PORT, BLTCONTROL_PIN);
+
+#elif defined(SSD1963_BLTCONTROL)
+
+	/* pwm configuration (300Hz, 100%)
+	 * P1(0x00) : PWMF - PWM frequency in system clock : 0 (0x00)
+	 * P2(0x00) : PWM - PWM duty cycle : 0 (0x00)
+	 * P3(0x00) : PWM disabled, control by host : (0x01)
+	 * P4(0x00) : DBC manual brightness : (0x00)
+	 * P5(0x00) : DBC minimum brightness : (0x00)
+	 * p6(0x00) : brightness prescaler : (0x00)
+	 */
 
 	LCD_WR_REG(CMD_SET_PWM_CONF); //set PWM for Backlight. Manual p.53
-	// 6 parameters to be set
-	LCD_WR_Data(0x0006); // PWM Freq 
-	//LCD_WR_Data(0x0008);
-	LCD_WR_Data(0x0080); // PWM period
-	//LCD_WR_Data(0x00f0);
-	
-	LCD_WR_Data(0x0001); // PWM controlled by host, PWM enabled
-	LCD_WR_Data(0x00f0); // brightness level 0x00 - 0xFF
-	LCD_WR_Data(0x0000); // minimum brightness level =  0x00 - 0xFF
-	LCD_WR_Data(0x0000); // brightness prescalar 0x0 - 0xF
+	LCD_WR_Data(0x0000);
+	LCD_WR_Data(0x0000);
+	LCD_WR_Data(0x0000);
+	LCD_WR_Data(0x0000);
+	LCD_WR_Data(0x0000);
+	LCD_WR_Data(0x0000);
 
-	LCD_WR_REG(CMD_SET_DBC_CONF); // Dynamic Backlight Config thresholding
-	LCD_WR_Data(0x000d); // 0001101. == Enabled, Agressive mode
-
-	LCD_BacklightOn();
- 
+#endif /* LCD_AT070TN83 */
 }
+
+
+void LCD_DisplayOn(void)
+{
+	LCD_WR_REG(CMD_SET_DISPLAY_ON);
+}
+
+void LCD_DisplayOff(void)
+{
+	LCD_WR_REG(CMD_SET_DISPLAY_OFF);
+}
+
+void LCD_DrawColorBars(void)
+{
+}
+//
+//	Clear the LCD display by zeroing each pixel using
+//	a double loop.
+//	The LCD is HDP+1 x VDP+1
+//
+void LCD_Clear(LCDCOLOR c)
+{
+	uint32_t index = 0;
+
+	LCD_SetColumnPageAddr(0, LCD_WIDTH-1, 0, LCD_HEIGHT-1);
+	LCD_WR_REG(CMD_WRITE_MEM_START);
+
+	while( index < (LCD_WIDTH * LCD_HEIGHT) )
+	{
+		LCD_WR_Data(c);
+		index++;
+	}
+
+}
+
+void LCD_SetColumnPageAddr(uint16_t colS, uint16_t colE, uint16_t pageS, uint16_t pageE)
+{
+	/* set column address */
+	LCD_WR_REG(CMD_SET_COL_ADDRESS);
+	/* start column */
+	LCD_WR_Data(colS >> 8);
+	LCD_WR_Data(colS & 0x00ff);
+	/* end column */
+	LCD_WR_Data(colE >> 8);
+	LCD_WR_Data(colE & 0x00ff);
+
+	/* set page address */
+    LCD_WR_REG(CMD_SET_PAGE_ADDRESS);
+	/* start page */
+	LCD_WR_Data(pageS >> 8);
+	LCD_WR_Data(pageS & 0x00ff);
+	/* end page */
+	LCD_WR_Data(pageE >> 8); 
+	LCD_WR_Data(pageE & 0x00ff);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //
@@ -533,6 +683,7 @@ void SetLCDStartPixelLineAddress(int pixel_x1, int line_y1, int pixel_x2, int li
 	return;
 } 
 
+
 //
 //	Display LCD Test utility function
 // 
@@ -541,7 +692,7 @@ void SetLCDStartPixelLineAddress(int pixel_x1, int line_y1, int pixel_x2, int li
 //
 void LCD_DrawCheckerPattern(short blue, short green, short red)
 {
-    unsigned int lineWidth = HDP + 1,height = VDP + 1, w;
+    unsigned int lineWidth = LCD_WIDTH,height = LCD_HEIGHT, w;
 	unsigned short rgb666_1  =  0;
 	unsigned short rgb666_2  =  0;
 	int check_x = 10;
@@ -555,7 +706,7 @@ void LCD_DrawCheckerPattern(short blue, short green, short red)
 	rgb666_2 = !rgb666_1;
 
 
-	SetLCDStartPixelLineAddress(0,0,HDP,VDP);
+	SetLCDStartPixelLineAddress(0,0,lineWidth-1,height-1);
 
 	while(lineWidth--)
 	{
@@ -567,30 +718,6 @@ void LCD_DrawCheckerPattern(short blue, short green, short red)
 
 }
 
-//
-//	Clear the LCD display by zeroing each pixel using
-//	a double loop.
-//	The LCD is HDP+1 x VDP+1
-//
-void LCD_Clear(unsigned int pixelValue)
-{
-    unsigned int lineWidth = HDP + 1,height = VDP + 1, w;
-	uint16_t uPixel = pixelValue;
-
-	// Set the start column and page addresses
-	SetLCDStartPixelLineAddress(0,0,HDP,VDP);
-	
-	// The 4.3" LCD is 480x272. When the SSD1963 frame buffer is read or written
-	// the "address counter" increments or decrements depending on the frame buffer
-	// settings (SSD 1963 manual, p.18).
-	while(lineWidth--)
-	{
-	    for(w  =  0;w < height;w++)
-		{    
-          	LCD_WR_Data(uPixel);
-		}
-	}
-}
 
 
 //	PiXCLe command primitive PARTIALLY TESTED
@@ -710,12 +837,12 @@ void LCD_DrawRectangle(int x1, int y1, int x2, int y2, short red, short green, s
 // PiXCLe command primitive
 void LCD_Test_BlackToWhite(void)
 {
-    unsigned int lineWidth  =  HDP + 1,height  =  VDP + 1, w;
+    unsigned int lineWidth  =  LCD_WIDTH,height  =  LCD_HEIGHT, w;
 	unsigned short rgb888  =  0;
-	unsigned int width = HDP + 1, counter = 0;
+	unsigned int width = LCD_WIDTH, counter = 0;
 
 	// Write the whole screen
-	SetLCDStartPixelLineAddress(0,0,HDP,VDP);
+	SetLCDStartPixelLineAddress(0,0,lineWidth-1,height-1);
 
 	// This double loop writes the vertical pixels, not lines at a time.
 	// The address register increments on each call to LCD_WR_Data 
@@ -735,10 +862,10 @@ void LCD_Test_BlackToWhite(void)
 // PiXCLe command primitive
 void LCD_DrawBackground(short blue, short green, short red)
 {
-    unsigned int lineWidth  =  HDP + 1,height  =  VDP + 1, w;
+    unsigned int lineWidth  =  LCD_WIDTH,height  =  LCD_HEIGHT, w;
 	unsigned short rgb666  =  0;
 
-	SetLCDStartPixelLineAddress(0,0,HDP,VDP);
+	SetLCDStartPixelLineAddress(0,0,lineWidth-1,height-1);
 	
 	// Convert the R,G,B values into RGB666
 	rgb666  =  blue<<12;
@@ -764,23 +891,12 @@ void LCD_Test(void)
 	//	unsigned int line = 0;
     
 
-	//LCD_WR_CMD(0x20, 0xa4);
-    //LCD_WR_CMD(0x21,0x07);
-
-	/*	  2.4" 320x240 LCD command values
-	LCD_WR_CMD(0,0x00,0xa4);
-	LCD_WR_CMD(0,0x01,0x07);
-	LCD_WR_CMD(0,0x02,0);        //0-239
-	LCD_WR_CMD(1,0x03,0);        //0-319
-	
-    LCD_WR_CMD(0,0x04,239);      //0-239
-	LCD_WR_CMD(1,0x05,319);      //0-319
-	 */
-	
 
 	//LCD_WR_REG(CMD_SET_PLL); // irrelevent here
 	n = 0;
 	
+#if 0
+
 	LCD_WR_REG(CMD_SET_COL_ADDRESS);	
 	LCD_WR_Data(0);	    
 	LCD_WR_Data(0);
@@ -794,6 +910,7 @@ void LCD_Test(void)
 	LCD_WR_Data(VDP&0x00ff);
 	LCD_WR_REG(0x002c);
 	
+#endif
 	
 	while(n<261120)
 	{
@@ -802,7 +919,6 @@ void LCD_Test(void)
 		//	temp = (uint16_t)( a2[n]<<8)+a2[n+1];
 			temp = 0xf800;
 			  //temp++;	
-			  //LCD_WR_CMD(0x20, 0xa4);			
 			LCD_WR_Data(temp);
 		//	if(n<125000)
 		//	LCD_WR_Data(0x07e0);
@@ -969,14 +1085,6 @@ void SetTearingCfg(unsigned char state, unsigned char mode)
 }
 
 
-void LCD_Reset(void)
-{
-	GPIO_ResetBits(GPIOE, GPIO_Pin_1);
-	LCD_DELAY(1);
-	GPIO_SetBits(GPIOE, GPIO_Pin_1);
-	LCD_DELAY(1);
-}
-
 
 #if 0
 void LCD_CtrlLinesConfig(void)
@@ -1096,17 +1204,6 @@ void LCD_FSMCConfig(void)
 	FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM1, ENABLE);
 }
 #endif
-
-
-void LCD_BacklightOn(void)
-{
-	GPIO_SetBits(GPIOD, GPIO_Pin_13);
-}
-
-void LCD_BacklightOff(void)
-{
-	GPIO_ResetBits(GPIOD, GPIO_Pin_13);
-}
 
 
 

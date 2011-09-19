@@ -13,7 +13,7 @@
 #include "miniSTM32_tsc.h"
 
 #define KEY_DEBOUNCE_DELAY		300				/* 300msec key debouncer */
-#define TSC_DEBOUNCE_DELAY		100				/* 300msec key debouncer */
+#define TSC_DEBOUNCE_DELAY		300				/* 300msec key debouncer */
 
 extern volatile uint16_t uTSC_Delay;			/* 1msec reference counter */
 extern volatile uint16_t uLCD_Delay;			/* 1msec reference counter */

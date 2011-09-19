@@ -12,71 +12,67 @@
 
 #include "stm32f10x.h"
 
-/* LCD controller definition */
-#define LCDC_SSD1963		
+/* LCD type definition */
+#if (!defined(LCD_HSD043I9W) && !defined(LCD_AT043TN13) && !defined(LCD_AT070TN83))
+//	#define LCD_HSD043I9W			/* HannStar 4.3 inch */
+	#define LCD_AT043TN13			/* Innolux 4.3 inch */
+//	#define LCD_AT070TN83			/* Innolux 7.0 inch */
+#endif
 
-/* LCD definition */
-#define LCD_WIDTH				(480)
-#define LCD_HEIGHT				(272)
+/* LCD size definition */
+#if (defined(LCD_HSD043I9W) || defined(LCD_AT043TN13))
+	#define LCD_WIDTH				(480)
+	#define LCD_HEIGHT				(272)
+#elif defined(LCD_AT070TN83)
+	#define LCD_WIDTH				(800)
+	#define LCD_HEIGHT				(480)
+#endif
 
+/* backlight control */
+
+#if (defined(LCD_HSD043I9W) || defined(LCD_AT043TN13))
+	/* backlight controlled by MCU */
+	#define MCU_BLTCONTROL
+#elif defined(LCD_AT070TN83)
+	/* backlight controlled by display controller */
+	#define SSD1963_BLTCONTROL
+#endif
+
+/* MCU backlight control port */
+#define BLTCONTROL_PORT				GPIOD
+#define BLTCONTROL_PIN				GPIO_Pin_13
+
+
+/* LCD color (RGB565) */
+#define LCD_COLOR_WHITE				0xFFFF
+#define LCD_COLOR_BLACK				0x0000
+#define LCD_COLOR_GREY				0xF7DE
+#define LCD_COLOR_BLUE				0x001F
+#define LCD_COLOR_RED				0xF800
+#define LCD_COLOR_MAGENTA			0xF81F
+#define LCD_COLOR_GREEN				0x07E0
+#define LCD_COLOR_CYAN				0x7FFF
+#define LCD_COLOR_YELLOW			0xFFE0
+#define LCD_COLOR(R, G, B)			((((R)& 0x00F8) << 8) | \
+									(((G) & 0x00FC) << 3) | \
+									(((B) & 0x00F8) >> 3))  
+
+typedef uint16_t	LCDCOLOR;
 
 void LCD_Init(void);
 void LCD_BacklightOn(void);
 void LCD_BacklightOff(void);
 
+void LCD_DisplayOn(void);
+void LCD_DisplayOff(void);
 
+void LCD_DrawColorBars(void);
+void LCD_Clear(LCDCOLOR x);
 
 
 #if 0
 
-#define LCD_COLOR_WHITE          0xFFFF
-#define LCD_COLOR_BLACK          0x0000
-#define LCD_COLOR_GREY           0xF7DE
-#define LCD_COLOR_BLUE           0x001F
-#define LCD_COLOR_BLUE2          0x051F
-#define LCD_COLOR_RED            0xF800
-#define LCD_COLOR_MAGENTA        0xF81F
-#define LCD_COLOR_GREEN          0x07E0
-#define LCD_COLOR_CYAN           0x7FFF
-#define LCD_COLOR_YELLOW         0xFFE0
 
-#define LCD_LINE_0               LINE(0)
-#define LCD_LINE_1               LINE(1)
-#define LCD_LINE_2               LINE(2)
-#define LCD_LINE_3               LINE(3)
-#define LCD_LINE_4               LINE(4)
-#define LCD_LINE_5               LINE(5)
-#define LCD_LINE_6               LINE(6)
-#define LCD_LINE_7               LINE(7)
-#define LCD_LINE_8               LINE(8)
-#define LCD_LINE_9               LINE(9)
-#define LCD_LINE_10              LINE(10)
-#define LCD_LINE_11              LINE(11)
-#define LCD_LINE_12              LINE(12)
-#define LCD_LINE_13              LINE(13)
-#define LCD_LINE_14              LINE(14)
-#define LCD_LINE_15              LINE(15)
-#define LCD_LINE_16              LINE(16)
-#define LCD_LINE_17              LINE(17)
-#define LCD_LINE_18              LINE(18)
-#define LCD_LINE_19              LINE(19)
-#define LCD_LINE_20              LINE(20)
-#define LCD_LINE_21              LINE(21)
-#define LCD_LINE_22              LINE(22)
-#define LCD_LINE_23              LINE(23)
-#define LCD_LINE_24              LINE(24)
-#define LCD_LINE_25              LINE(25)
-#define LCD_LINE_26              LINE(26)
-#define LCD_LINE_27              LINE(27)
-#define LCD_LINE_28              LINE(28)
-#define LCD_LINE_29              LINE(29)
-#define LCD_DEFAULT_FONT         Font16x24
-#define LCD_DIR_HORIZONTAL       0x0000
-#define LCD_DIR_VERTICAL         0x0001
-#define LCD_PIXEL_WIDTH          0x0140
-#define LCD_PIXEL_HEIGHT         0x00F0
-
-#define ASSEMBLE_RGB(R, G, B)    ((((R)& 0xF8) << 8) | (((G) & 0xFC) << 3) | (((B) & 0xF8) >> 3))  
 
 
 void LCD_DeInit(void);  
@@ -113,8 +109,6 @@ void LCD_WriteRAM_Prepare(void);
 void LCD_WriteRAM(uint16_t RGB_Code);
 uint16_t LCD_ReadRAM(void);
 void LCD_PowerOn(void);
-void LCD_DisplayOn(void);
-void LCD_DisplayOff(void);
 void LCD_CtrlLinesConfig(void);
 void LCD_FSMCConfig(void);
 

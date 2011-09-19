@@ -15,7 +15,10 @@
 enum{
 	MENU_LED_ON = 0,
 	MENU_LED_OFF,
-	MENU_LCD_TEST,
+	MENU_LCD_TEST1,
+	MENU_LCD_TEST2,
+	MENU_LCD_TEST3,
+	MENU_LCD_TESTX,
 	MENU_END
 };
 
@@ -23,14 +26,15 @@ enum{
 extern volatile uint16_t uIRQFlag;
 
 
-extern unsigned int  HDP;
-extern unsigned int  VDP;
-
 /* delay parameters */
 #define VERYSHORT_DELAY	50
 #define SHORT_DELAY		100
 #define MEDIUM_DELAY	500
 #define LONG_DELAY		1000
+
+/* define LCD panel */
+#define LCD_HSD043I9W	1		
+
 
 void TestLCD(void);
 
@@ -68,11 +72,30 @@ int main(void)
 			}
 			else if( u16Menu == MENU_LED_OFF ) {
 				MBD_LEDOff();
+				LCD_Clear(LCD_COLOR_BLACK);
+				LCD_BacklightOn();
 				printf("LED1 Turned Off\n");
+				LCD_DisplayOn();
 			}
-			else if( u16Menu == MENU_LCD_TEST ) {
-				TestLCD();
-				printf("LCD test finished\n");
+			else if( u16Menu == MENU_LCD_TEST1 ) {
+//				LCD_Clear(LCD_COLOR_RED);
+				LCD_Clear(LCD_COLOR(255,0,0));
+				printf("Red\n");
+			}
+			else if( u16Menu == MENU_LCD_TEST2 ) {
+//				LCD_Clear(LCD_COLOR_GREEN);
+				LCD_Clear(LCD_COLOR(0,255,0));
+				printf("Green\n");
+			}
+			else if( u16Menu == MENU_LCD_TEST3 ) {
+//				LCD_Clear(LCD_COLOR_BLUE);
+				LCD_Clear(LCD_COLOR(0,0,255));
+				printf("Blue\n");
+			}
+			else if( u16Menu == MENU_LCD_TESTX ) {
+				LCD_BacklightOff();
+				LCD_DisplayOff();
+				printf("LCD Off\n");
 			}
 
 			/* at the end of menu, restart all over */
@@ -100,14 +123,19 @@ void TestLCD(void)
  	unsigned int active=0;
  	unsigned char maindisppic=0;
 
+	LCD_DisplayOn();
+	LCD_BacklightOn();
+
  	LCD_Test(active);
 
+#if 0
 	//Delay(0xaffff);
 	//Delay(0xafffff);
 	//Delay(0xafffff);
 	//Delay(0xafffff);
 
 	LCD_Clear(0);
+
 	LCD_DrawBackground(255,255,0); //yellow
 	/*
 	 * Brian : replace with MSecTimer()
@@ -119,9 +147,9 @@ void TestLCD(void)
 
 	// Draw some 10x10 corner squares
 	LCD_DrawRectangle(0,0,10,10, 255,255,255);	// TLC white
-	LCD_DrawRectangle(HDP-10,0,HDP,10, 255,255,255);	// TRC white
-	LCD_DrawRectangle(0,VDP-10,10,VDP, 255,255,255);	// white
-	LCD_DrawRectangle(HDP-10,VDP-10,HDP,VDP, 255,255,255);	// white
+	LCD_DrawRectangle((LCD_WIDTH-1)-10,0,(LCD_WIDTH-1),10, 255,255,255);	// TRC white
+	LCD_DrawRectangle(0,(LCD_HEIGHT-1)-10,10,(LCD_HEIGHT-1), 255,255,255);	// white
+	LCD_DrawRectangle((LCD_WIDTH-1)-10,(LCD_HEIGHT-1)-10,(LCD_WIDTH-1),(LCD_HEIGHT-1), 255,255,255);	// white
 
 	// 
 	LCD_DrawRectangle(10,10,50,136, 0,0,255); // blue
@@ -189,8 +217,8 @@ void TestLCD(void)
 	
 	for (j = 1; j <= 100; j++)
 	{
-	   x1 = rand()%HDP; 
-	   y1 = rand()%VDP; 
+	   x1 = rand()%(LCD_WIDTH-1); 
+	   y1 = rand()%(LCD_HEIGHT-1); 
 	   width = rand()%130;
 	   height = rand()% 210;
 	   LCD_DrawRectangle(x1,y1,x1 + width,y1 + height, red, green, blue);
@@ -243,11 +271,11 @@ void TestLCD(void)
 
 
 	// Draw lines round the edges
-	LCD_DrawLine(0,0,HDP,0,3,255,150,40);  	// top
-	LCD_DrawLine(0,VDP,HDP,VDP,3,255,150,40); // bottom
+	LCD_DrawLine(0,0,(LCD_WIDTH-1),0,3,255,150,40);  	// top
+	LCD_DrawLine(0,(LCD_HEIGHT-1),(LCD_WIDTH-1),(LCD_HEIGHT-1),3,255,150,40); // bottom
 
-	LCD_DrawLine(0,0,0,VDP,3,255,150,40);	 // left
-	LCD_DrawLine(HDP,0,HDP,VDP,3,255,150,40); // right
+	LCD_DrawLine(0,0,0,(LCD_HEIGHT-1),3,255,150,40);	 // left
+	LCD_DrawLine((LCD_WIDTH-1),0,(LCD_WIDTH-1),(LCD_HEIGHT-1),3,255,150,40); // right
 	
 
 	
@@ -370,7 +398,10 @@ void TestLCD(void)
 //		MSecTimer(VERYSHORT_DELAY);
 	} 
 
+#endif
+
 	LCD_BacklightOff();
+	LCD_DisplayOff();
 	
   	// End test code
 }

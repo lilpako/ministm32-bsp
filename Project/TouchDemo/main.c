@@ -44,13 +44,15 @@ int main(void)
 
 	/* Initialize LCD */
 	LCD_Init();
-	LCD_BacklightOff();
 	printf("LCD initialized\n");
 
 	/* Initialize touch screen controller */
 	TSC_Init();
 	printf("Touch controller initialized\n");
 	printf("Press the pushbutton to start\n\n");
+	LCD_Clear(LCD_COLOR_BLACK);
+	LCD_DisplayOn();
+	LCD_BacklightOn();
         
 	while (1) 
 	{
@@ -86,8 +88,6 @@ void Touch_Demo(void)
 	uint16_t u16Count = 0;
 	uint16_t u16X, u16Y;
 
-	LCD_BacklightOn();
-
 	while(u16Count < 20)
 	{
 		printf("Waiting for touch(%d)\n", u16Count + 1);
@@ -103,8 +103,7 @@ void Touch_Demo(void)
 		u16Count++;
 	}
 
-	LCD_Clear();
-	LCD_BacklightOff();
+	LCD_Clear(LCD_COLOR_BLACK);
 
 }
 

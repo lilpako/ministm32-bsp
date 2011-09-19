@@ -393,34 +393,53 @@ void MCU_LCDPortInit(void)
 	GPIO_Init(GPIOE, &GPIO_InitStructure);
 }
 
+/*
+ * set FSMC for LCD controller
+ *	mcu clock		: 72MHz
+ *	controller clock: 110MHz
+ *	memory type		: NOR
+ *	access mode		: NOR - OE toggling (reference manual RM0008 p.503)
+ */
 void MCU_FSMCInit(void)
 {
 	FSMC_NORSRAMInitTypeDef  FSMC_NORSRAMInitStructure;
-	FSMC_NORSRAMTimingInitTypeDef  p;
+	FSMC_NORSRAMTimingInitTypeDef  pr, pw;
 
-	p.FSMC_AddressSetupTime = 0;			/* 0 - 0xF  */
-	p.FSMC_AddressHoldTime = 1;				/* 1 - 0xF  */
-	p.FSMC_DataSetupTime = 1;				/* 1 - 0xFF */
-	p.FSMC_BusTurnAroundDuration = 0;		/* 0 - 0xF  */
-	p.FSMC_CLKDivision = 1;					/* 1 - 0xF  */
-	p.FSMC_DataLatency = 0;					/* 0 - 0xF  */
-	p.FSMC_AccessMode = FSMC_AccessMode_B;	/* NOR      */
+	/* read timing */
+	pr.FSMC_AccessMode = FSMC_AccessMode_C;		/* Mode C   */
+	pr.FSMC_AddressSetupTime = 0;				/* 0 - 0xF  */
+	pr.FSMC_AddressHoldTime = 1;				/* 1 - 0xF  */
+	pr.FSMC_DataSetupTime = 2;					/* 1 - 0xFF */
+	pr.FSMC_BusTurnAroundDuration = 0;			/* 0 - 0xF  */
+	pr.FSMC_CLKDivision = 1;					/* 1 - 0xF  */
+	pr.FSMC_DataLatency = 0;					/* 0 - 0xF  */
+
+	/* write timining */
+	pw.FSMC_AccessMode = FSMC_AccessMode_C;		/* Mode C   */
+	pw.FSMC_AddressSetupTime = 0;				/* 0 - 0xF  */
+	pw.FSMC_AddressHoldTime = 1;				/* 1 - 0xF  */
+	pw.FSMC_DataSetupTime = 2;					/* 1 - 0xFF */
+	pw.FSMC_BusTurnAroundDuration = 0;			/* 0 - 0xF  */
+	pw.FSMC_CLKDivision = 1;					/* 1 - 0xF  */
+	pw.FSMC_DataLatency = 0;					/* 0 - 0xF  */
 
 	FSMC_NORSRAMInitStructure.FSMC_Bank = FSMC_Bank1_NORSRAM1;
-	FSMC_NORSRAMInitStructure.FSMC_DataAddressMux = FSMC_DataAddressMux_Disable;
-	FSMC_NORSRAMInitStructure.FSMC_MemoryType = FSMC_MemoryType_NOR;
-	FSMC_NORSRAMInitStructure.FSMC_MemoryDataWidth = FSMC_MemoryDataWidth_16b;
-	FSMC_NORSRAMInitStructure.FSMC_BurstAccessMode = FSMC_BurstAccessMode_Disable;
-	FSMC_NORSRAMInitStructure.FSMC_AsynchronousWait = FSMC_AsynchronousWait_Disable;
-	FSMC_NORSRAMInitStructure.FSMC_WaitSignalPolarity = FSMC_WaitSignalPolarity_Low;
-	FSMC_NORSRAMInitStructure.FSMC_WrapMode = FSMC_WrapMode_Disable;
-	FSMC_NORSRAMInitStructure.FSMC_WaitSignalActive = FSMC_WaitSignalActive_BeforeWaitState;
-	FSMC_NORSRAMInitStructure.FSMC_WriteOperation = FSMC_WriteOperation_Enable;
-	FSMC_NORSRAMInitStructure.FSMC_WaitSignal = FSMC_WaitSignal_Disable;
-	FSMC_NORSRAMInitStructure.FSMC_ExtendedMode = FSMC_ExtendedMode_Disable;
 	FSMC_NORSRAMInitStructure.FSMC_WriteBurst = FSMC_WriteBurst_Disable;
-	FSMC_NORSRAMInitStructure.FSMC_ReadWriteTimingStruct = &p;
-	FSMC_NORSRAMInitStructure.FSMC_WriteTimingStruct = &p;
+	FSMC_NORSRAMInitStructure.FSMC_AsynchronousWait = FSMC_AsynchronousWait_Disable;
+	FSMC_NORSRAMInitStructure.FSMC_ExtendedMode = FSMC_ExtendedMode_Enable;
+	FSMC_NORSRAMInitStructure.FSMC_WaitSignal = FSMC_WaitSignal_Disable;
+	FSMC_NORSRAMInitStructure.FSMC_WriteOperation = FSMC_WriteOperation_Enable;
+	FSMC_NORSRAMInitStructure.FSMC_WaitSignalActive = FSMC_WaitSignalActive_BeforeWaitState;
+	FSMC_NORSRAMInitStructure.FSMC_WrapMode = FSMC_WrapMode_Disable;
+	FSMC_NORSRAMInitStructure.FSMC_WaitSignalPolarity = FSMC_WaitSignalPolarity_Low;
+	FSMC_NORSRAMInitStructure.FSMC_BurstAccessMode = FSMC_BurstAccessMode_Disable;
+	FSMC_NORSRAMInitStructure.FSMC_MemoryDataWidth = FSMC_MemoryDataWidth_16b;
+	FSMC_NORSRAMInitStructure.FSMC_MemoryType = FSMC_MemoryType_NOR;
+	FSMC_NORSRAMInitStructure.FSMC_DataAddressMux = FSMC_DataAddressMux_Disable;
+	
+	FSMC_NORSRAMInitStructure.FSMC_ReadWriteTimingStruct = &pr;
+	FSMC_NORSRAMInitStructure.FSMC_WriteTimingStruct = &pw;
+
 	FSMC_NORSRAMInit(&FSMC_NORSRAMInitStructure);  
 	
 	/* BANK 1 (of NOR/SRAM Bank) is enabled */

@@ -225,7 +225,6 @@ void TSC_WaitForTouch(void)
 
 void TSC_Calibration(void)
 {
-	LCD_BacklightOn();
 
 	uint32_t coordinate_X1 = 0, coordinate_X2 = 0, coordinate_X3 = 0;
 	uint32_t coordinate_X4 = 0, coordinate_X5 = 0;
@@ -247,6 +246,8 @@ void TSC_Calibration(void)
 	uint32_t alfa = 0, beta = 0, chi = 0, Kx = 0, Ky = 0, Lx = 0, Ly = 0;
 	uint16_t epsilon = 0, fi = 0, Mx = 0, My = 0;
 
+	LCD_Clear(LCD_COLOR_BLACK);
+
 	/* center */
 
 	LCD_DrawLine((LCD_WIDTH/2) - CURSOR_SIZE, (LCD_HEIGHT/2), \
@@ -259,7 +260,7 @@ void TSC_Calibration(void)
 	coordinate_X1 = uTSC_ValueX;
 	coordinate_Y1 = uTSC_ValueY;
 
-	LCD_Clear();
+	LCD_Clear(LCD_COLOR_BLACK);
 
 	/* upper left corner */
 	
@@ -273,7 +274,7 @@ void TSC_Calibration(void)
 	coordinate_X2 = uTSC_ValueX;
 	coordinate_Y2 = uTSC_ValueY;
 
-	LCD_Clear();
+	LCD_Clear(LCD_COLOR_BLACK);
 
 	/* upper right corner*/
 	
@@ -287,7 +288,7 @@ void TSC_Calibration(void)
 	coordinate_X3 = uTSC_ValueX;
 	coordinate_Y3 = uTSC_ValueY;
 
-	LCD_Clear();
+	LCD_Clear(LCD_COLOR_BLACK);
 
 	/* lower right corner */
 	
@@ -301,7 +302,7 @@ void TSC_Calibration(void)
 	coordinate_X4 = uTSC_ValueX;
 	coordinate_Y4 = uTSC_ValueY;
 
-	LCD_Clear();
+	LCD_Clear(LCD_COLOR_BLACK);
 
 	/* lower left corner */
 	
@@ -315,7 +316,7 @@ void TSC_Calibration(void)
 	coordinate_X5 = uTSC_ValueX;
 	coordinate_Y5 = uTSC_ValueY;
 
-	LCD_Clear();
+	LCD_Clear(LCD_COLOR_BLACK);
 
 	X2_1 = (coordinate_X1 * coordinate_X1);
 	X2_2 = (coordinate_X2 * coordinate_X2);
@@ -396,8 +397,6 @@ void TSC_Calibration(void)
 
 	/* save the variables */
 	TSC_SaveCalibration();
-
-	LCD_BacklightOff();
 
 }
 
