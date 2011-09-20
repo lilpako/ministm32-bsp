@@ -15,22 +15,18 @@
 
 /* Includes ------------------------------------------------------------------*/
 
-#ifdef STM32L1XX_MD
- #include "stm32l1xx_it.h"
-#else
- #include "stm32f10x_it.h"
-#endif /* STM32L1XX_MD */
- 
+/* Brian 
+ * header files for miniSTM32
+ */
+#include "stm32f10x_it.h"
 #include "hw_config.h"
-#if defined(STM32F10X_HD) || defined(STM32F10X_XL) 
- #include "stm32_eval_sdio_sd.h"
-#endif /* STM32F10X_HD | STM32F10X_XL*/
 #include "platform_config.h"
 #include "mass_mal.h"
 #include "usb_desc.h"
 #include "usb_pwr.h"
 #include "usb_lib.h"
-#include "stm32_eval.h"
+#include "miniSTM32.h"
+#include "miniSTM32_sdc.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -68,10 +64,12 @@ void Set_System(void)
 #endif /* STM32L1XX_MD */ 
   
   
-#if !defined (USE_STM3210C_EVAL) && !defined (USE_STM32L152_EVAL)  
+  /* Brian 
+   * USB disconnect control port setup for miniSTM32
+   */
   /* Enable and Disconnect Line GPIO clock */
+	MBD_Init();
   USB_Disconnect_Config();
-#endif /* USE_STM3210C_EVAL && USE_STM32L152_EVAL */
 
 #if defined(USB_USE_EXTERNAL_PULLUP)
   /* Enable the USB disconnect GPIO clock */
@@ -211,11 +209,11 @@ void USB_Interrupts_Config(void)
 *******************************************************************************/
 void Led_Config(void)
 {
+	/* Brian
+	 * configure LED for miniSTM32
+	 */
+	MBD_LEDInit();
   /* Configure the LEDs */
-  STM_EVAL_LEDInit(LED1);
-  STM_EVAL_LEDInit(LED2);  
-  STM_EVAL_LEDInit(LED3);
-  STM_EVAL_LEDInit(LED4);  
 }
 
 /*******************************************************************************
@@ -227,7 +225,10 @@ void Led_Config(void)
 *******************************************************************************/
 void Led_RW_ON(void)
 {
-  STM_EVAL_LEDOn(LED3);
+	/* Brian
+	 * turn on miniSTM32 LED
+	 */
+	MBD_LEDOn();
 }
 
 /*******************************************************************************
@@ -239,7 +240,10 @@ void Led_RW_ON(void)
 *******************************************************************************/
 void Led_RW_OFF(void)
 {
-  STM_EVAL_LEDOff(LED3);
+	/* Brian
+	 * turn off miniSTM32 LED
+	 */
+	 MBD_LEDOff();
 }
 /*******************************************************************************
 * Function Name  : USB_Configured_LED
@@ -250,7 +254,10 @@ void Led_RW_OFF(void)
 *******************************************************************************/
 void USB_Configured_LED(void)
 {
-  STM_EVAL_LEDOn(LED1);
+	/* Brian
+	 * turn on miniSTM32 LED
+	 */
+	MBD_LEDOn();
 }
 
 /*******************************************************************************
@@ -262,7 +269,10 @@ void USB_Configured_LED(void)
 *******************************************************************************/
 void USB_NotConfigured_LED(void)
 {
-  STM_EVAL_LEDOff(LED1);
+	/* Brian
+	 * turn off miniSTM32 LED
+	 */
+	 MBD_LEDOff();
 }
 
 /*******************************************************************************
@@ -380,7 +390,9 @@ void MAL_Config(void)
 #endif /* STM32F10X_HD | STM32F10X_XL */
 }
 
-#if defined (USE_STM3210B_EVAL) || defined (USE_STM3210E_EVAL)
+/* Brian
+ * USB disconnect control port setup for miniSTM32
+ */
 /*******************************************************************************
 * Function Name  : USB_Disconnect_Config
 * Description    : Disconnect pin configuration
@@ -400,7 +412,6 @@ void USB_Disconnect_Config(void)
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
   GPIO_Init(USB_DISCONNECT, &GPIO_InitStructure);
 }
-#endif /* USE_STM3210B_EVAL or USE_STM3210E_EVAL */
 
 #ifdef STM32F10X_CL
 /*******************************************************************************

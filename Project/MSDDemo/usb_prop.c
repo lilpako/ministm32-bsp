@@ -27,15 +27,10 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-#ifdef USE_STM3210B_EVAL
+/* Brian
+ * Max_Lun definition for miniSTM32
+ */
  uint32_t Max_Lun = 0;
-#elif defined (USE_STM3210E_EVAL)
- uint32_t Max_Lun = 1;
-#elif defined (USE_STM3210C_EVAL)
- uint32_t Max_Lun = 0;
-#elif defined (USE_STM32L152_EVAL)
- uint32_t Max_Lun = 0; 
-#endif
 
 DEVICE Device_Table =
   {

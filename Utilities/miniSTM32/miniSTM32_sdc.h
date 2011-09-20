@@ -8,14 +8,31 @@
  *			standard peripheral library V3.5.0 (stm32_eval_sdio_sd.h).
  */ 
 
-#ifndef __MINISTM32_SD_H
-#define __MINISTM32_SD_H
+#ifndef __MINISTM32_SDC_H
+#define __MINISTM32_SDC_H
 
 #ifdef __cplusplus
  extern "C" {
 #endif
 
 #include "stm32f10x.h"
+
+
+/* SDIO Data transfer mode : activate one and only one */  
+/*
+#define SD_POLLING_MODE								((uint32_t)0x00000002)
+*/
+#define SD_DMA_MODE									((uint32_t)0x00000000)
+
+/*Supported SD Memory Cards */
+#define SDIO_STD_CAPACITY_SD_CARD_V1_1				((uint32_t)0x00000000)
+#define SDIO_STD_CAPACITY_SD_CARD_V2_0				((uint32_t)0x00000001)
+#define SDIO_HIGH_CAPACITY_SD_CARD					((uint32_t)0x00000002)
+#define SDIO_MULTIMEDIA_CARD						((uint32_t)0x00000003)
+#define SDIO_SECURE_DIGITAL_IO_CARD					((uint32_t)0x00000004)
+#define SDIO_HIGH_SPEED_MULTIMEDIA_CARD				((uint32_t)0x00000005)
+#define SDIO_SECURE_DIGITAL_IO_COMBO_CARD			((uint32_t)0x00000006)
+#define SDIO_HIGH_CAPACITY_MMC_CARD					((uint32_t)0x00000007)
 
 /**
  * @brief	SD error state
@@ -204,6 +221,6 @@ SDTransferState SDC_GetStatus(void);
 }
 #endif
 
-#endif /*  __MINISTM32_SD_H */
+#endif /*  __MINISTM32_SDC_H */
 
 /* End of File */

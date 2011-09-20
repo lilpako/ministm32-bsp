@@ -14,17 +14,15 @@
 *******************************************************************************/
 
 /* Includes ------------------------------------------------------------------*/
-#ifdef STM32L1XX_MD
- #include "stm32l1xx.h"
-#else
- #include "stm32f10x.h"
-#endif /* STM32L1XX_MD */
+#include "stm32f10x.h"
  
 #include "usb_lib.h"
 #include "hw_config.h"
 #include "usb_pwr.h"
 
+/*
 extern uint16_t MAL_Init (uint8_t lun);
+*/
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/

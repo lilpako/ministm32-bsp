@@ -20,9 +20,10 @@
 #include "usb_lib.h"
 #include "usb_istr.h"
 #include "usb_pwr.h"
-#if defined(STM32F10X_HD) || defined(STM32F10X_XL) 
- #include "stm32_eval_sdio_sd.h"
-#endif /* STM32F10X_HD | STM32F10X_XL*/
+/* Brian
+ * sdio support function for miniSTM32
+ */
+#include "miniSTM32_sdc.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -194,7 +195,10 @@ void USB_LP_CAN1_RX0_IRQHandler(void)
 void SDIO_IRQHandler(void)
 { 
   /* Process All SDIO Interrupt Sources */
-  SD_ProcessIRQSrc();
+  /* Brian
+   * miniSTM32_sdc specific
+   */
+  SDC_ProcessIRQSrc();
   
 }
 #endif /* STM32F10X_HD | STM32F10X_XL*/

@@ -136,9 +136,7 @@ C_SRC += ./system_stm32f10x.c
 C_SRC += ./hw_config.c
 C_SRC += ./mass_mal.c
 C_SRC += ./memory.c
-C_SRC += ./nand_if.c
 C_SRC += ./scsi_data.c
-C_SRC += ./nand_if.c
 C_SRC += ./usb_bot.c
 C_SRC += ./usb_desc.c
 C_SRC += ./usb_endp.c
@@ -185,7 +183,7 @@ C_SRC += ../../Libraries/STM32_USB-FS-Device_Driver/src/usb_sil.c
 
 # Board support 
 C_SRC += ../../Utilities/miniSTM32/miniSTM32.c
-#C_SRC += ../../Utilities/miniSTM32/miniSTM32_sdc.c
+C_SRC += ../../Utilities/miniSTM32/miniSTM32_sdc.c
 #C_SRC += ../../Utilities/miniSTM32/miniSTM32_diskio.c
 #C_SRC += ../../Utilities/miniSTM32/miniSTM32_flash.c
 #C_SRC += ../../Utilities/miniSTM32/miniSTM32_lcd.c

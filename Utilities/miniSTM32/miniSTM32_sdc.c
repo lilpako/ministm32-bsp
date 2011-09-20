@@ -189,16 +189,6 @@
 #define SDIO_STATIC_FLAGS							((uint32_t)0x000005FF)
 #define SDIO_CMD0TIMEOUT							((uint32_t)0x00010000)
 
-/*Supported SD Memory Cards */
-#define SDIO_STD_CAPACITY_SD_CARD_V1_1				((uint32_t)0x00000000)
-#define SDIO_STD_CAPACITY_SD_CARD_V2_0				((uint32_t)0x00000001)
-#define SDIO_HIGH_CAPACITY_SD_CARD					((uint32_t)0x00000002)
-#define SDIO_MULTIMEDIA_CARD						((uint32_t)0x00000003)
-#define SDIO_SECURE_DIGITAL_IO_CARD					((uint32_t)0x00000004)
-#define SDIO_HIGH_SPEED_MULTIMEDIA_CARD				((uint32_t)0x00000005)
-#define SDIO_SECURE_DIGITAL_IO_COMBO_CARD			((uint32_t)0x00000006)
-#define SDIO_HIGH_CAPACITY_MMC_CARD					((uint32_t)0x00000007)
-
 /* SDIO clock division: SDIO_CK = HCLK/(2 + SDIO_CLK_DIV) */
 #define SDIO_INIT_CLK_DIV							((uint8_t)0xB2)	/* 400KHz */
 #define SDIO_TRNS_CLK_DIV							((uint8_t)0x01)	/* 24MHz */
@@ -220,11 +210,6 @@
 #define SDIO_CMD_GPIO_PORT							GPIOD
 #define SDIO_CMD_GPIO_CLK							RCC_APB2Periph_GPIOD
   
-/* SDIO Data transfer mode : activate one and only one */  
-/*
-#define SD_POLLING_MODE								((uint32_t)0x00000002)
-*/
-#define SD_DMA_MODE									((uint32_t)0x00000000)
 
 
 static uint32_t CardType = SDIO_STD_CAPACITY_SD_CARD_V1_1;
