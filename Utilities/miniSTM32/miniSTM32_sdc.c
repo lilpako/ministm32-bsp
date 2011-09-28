@@ -12,6 +12,11 @@
  *               
  *			Programming Model 
  *          ======================================= 
+ *			// Somewhere in your source
+ *			#define SD_DMA_MODE
+ *			// or
+ *			#define SD_POLLING_MODE
+ *
  *			// Initialization
  *			Status = SDC_Init(); 
  *               
@@ -21,6 +26,7 @@
  *			while(SDC_GetStatus() != SD_TRANSFER_OK); 
  *             
  *			// Raw write operation(multiple block)
+ *			// NOTE THAT THIS ROUTINE DOES NOT WORK IN SD_POLLING_MODE
  *			Status = SDC_WriteMultiBlocks(buffer, address, 512, numblocks);
  *			Status = SDC_WaitWriteOperation();
  *			while(SDC_GetStatus() != SD_TRANSFER_OK);     
@@ -31,10 +37,17 @@
  *			while(SDC_GetStatus() != SD_TRANSFER_OK);
  *             
  *			// Raw read operation(multiple block)
+ *			// NOTE THAT THIS ROUTINE DOES NOT WORK IN SD_POLLING_MODE
  *			Status = SDC_ReadMultiBlocks(buffer, address, 512, numblocks);
  *			Status = SDC_WaitReadOperation();
  *			while(SDC_GetStatus() != SD_TRANSFER_OK);            
  *               
+ *			// Include the interrupt handling routine in your interrupt code
+ *			void SDIO_IRQHandler(void)
+ *			{
+ *				SDC_ProcessIRQSrc();
+ *			}
+ *
  *                                     
  *          STM32 SDIO Pin assignment
  *          =========================    
@@ -321,8 +334,10 @@ SD_Error SDC_Init(void)
 	/* enable the SDIO AHB Clock */
 	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_SDIO, ENABLE);
 
+#if defined(SD_DMA_MODE)
 	/* enable the DMA2 Clock */
 	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA2, ENABLE);
+#endif
 	
 	SDIO_DeInit();
 	
@@ -357,10 +372,12 @@ SD_Error SDC_Init(void)
 		errorstatus = SDC_SelectDeselect((uint32_t) (SDCardInfo.RCA << 16));
 	}
 	
+#if defined(SD_DMA_MODE)
 	if (errorstatus == SD_OK)
 	{
 		errorstatus = SDC_EnableWideBusOperation(SDIO_BusWide_4b);
 	}  
+#endif
 
 	if( errorstatus == SD_OK )
 	{
@@ -370,6 +387,7 @@ SD_Error SDC_Init(void)
 		NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 		NVIC_Init(&NVIC_InitStructure);
 	}
+
 	return(errorstatus);
 }
 
@@ -588,7 +606,6 @@ SD_Error SDC_PowerOn(void)
 		/* Send ACMD41 SD_APP_OP_COND with Argument 0x80100000 */
 		while ((!validvoltage) && (count < SD_MAX_VOLT_TRIAL))
 		{
-	
 			/* SEND CMD55 APP_CMD with RCA as 0 */
 			SDIO_CmdInitStructure.SDIO_Argument = 0x00;
 			SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_APP_CMD;
@@ -1122,7 +1139,7 @@ SD_Error SDC_SelectDeselect(uint32_t addr)
 SD_Error SDC_ReadBlock(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize)
 {
 	SD_Error errorstatus = SD_OK;
-#if defined (SD_POLLING_MODE) 
+#if defined(SD_POLLING_MODE) 
 	uint32_t count = 0, *tempbuff = (uint32_t *)readbuff;
 #endif
 
@@ -1160,7 +1177,8 @@ SD_Error SDC_ReadBlock(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize)
 		return(errorstatus);
 	}
 
-#if defined (SD_POLLING_MODE)  
+#if defined(SD_POLLING_MODE)  
+
 	/* In case of single block transfer, no need of stop transfer at all.*/
 	/* Polling mode */
 	while (!(SDIO->STA &(SDIO_FLAG_RXOVERR | SDIO_FLAG_DCRCFAIL | \
@@ -1209,10 +1227,12 @@ SD_Error SDC_ReadBlock(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize)
 	/* Clear all the static flags */
 	SDIO_ClearFlag(SDIO_STATIC_FLAGS);
 
-#elif defined (SD_DMA_MODE)
+#elif defined(SD_DMA_MODE)
+
     SDIO_ITConfig(SDIO_IT_DATAEND, ENABLE);
     SDC_DMARxConfig((uint32_t *)readbuff, BlockSize);
     SDIO_DMACmd(ENABLE);
+
 #endif
 
 	return(errorstatus);
@@ -1304,6 +1324,8 @@ SD_Error SDC_ReadMultiBlocks(uint8_t *readbuff, uint32_t ReadAddr, uint16_t Bloc
 SD_Error SDC_WaitReadOperation(void)
 {
 
+#if defined(SD_DMA_MODE)
+
 	while ((SDC_DMAEndOfTransferStatus() == RESET) && 
 		(TransferEnd == 0) && (TransferError == SD_OK)) {}
 	
@@ -1311,6 +1333,8 @@ SD_Error SDC_WaitReadOperation(void)
 	{
 		return(TransferError);
 	}
+
+#endif // SD_DMA_MODE
 	
 	return(SD_OK);
 }
@@ -1333,7 +1357,7 @@ SD_Error SDC_WriteBlock(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSi
 {
 	SD_Error errorstatus = SD_OK;
 
-#if defined (SD_POLLING_MODE)
+#if defined(SD_POLLING_MODE)
 	uint32_t bytestransferred = 0, count = 0, restwords = 0;
 	uint32_t *tempbuff = (uint32_t *)writebuff;
 #endif
@@ -1372,8 +1396,9 @@ SD_Error SDC_WriteBlock(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSi
 	SDIO_DataInitStructure.SDIO_DPSM = SDIO_DPSM_Enable;
 	SDIO_DataConfig(&SDIO_DataInitStructure);
 
+#if defined(SD_POLLING_MODE) 
+
   /* In case of single data block transfer no need of stop command at all */
-#if defined (SD_POLLING_MODE) 
 	while (!(SDIO->STA & (SDIO_FLAG_DBCKEND | SDIO_FLAG_TXUNDERR | \
 		SDIO_FLAG_DCRCFAIL | SDIO_FLAG_DTIMEOUT | SDIO_FLAG_STBITERR)))
 	{
@@ -1425,10 +1450,13 @@ SD_Error SDC_WriteBlock(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSi
 		errorstatus = SD_START_BIT_ERR;
 		return(errorstatus);
 	}
-#elif defined (SD_DMA_MODE)
+
+#elif defined(SD_DMA_MODE)
+
 	SDIO_ITConfig(SDIO_IT_DATAEND, ENABLE);
 	SDC_DMATxConfig((uint32_t *)writebuff, BlockSize);
 	SDIO_DMACmd(ENABLE);
+
 #endif
 
 	return(errorstatus);
@@ -1534,7 +1562,8 @@ SD_Error SDC_WriteMultiBlocks(uint8_t *writebuff, uint32_t WriteAddr, uint16_t B
  */
 SD_Error SDC_WaitWriteOperation(void)
 {
-	SD_Error errorstatus = SD_OK;
+
+#if defined(SD_DMA_MODE)
 	
 	while ((SDC_DMAEndOfTransferStatus() == RESET) && \
 		(TransferEnd == 0) && (TransferError == SD_OK)) {}
@@ -1547,7 +1576,9 @@ SD_Error SDC_WaitWriteOperation(void)
 	/* Clear all the static flags */
 	SDIO_ClearFlag(SDIO_STATIC_FLAGS);
 	
-	return(errorstatus);
+#endif // SD_DMA_MODE
+
+	return(SD_OK);
 }
 
 /**
@@ -1845,9 +1876,11 @@ SD_Error SDC_ProcessIRQSrc(void)
 	{
 		TransferError = SD_OK;
 	}
+
 	SDIO_ClearITPendingBit(SDIO_IT_DATAEND);
 	SDIO_ITConfig(SDIO_IT_DATAEND, DISABLE);
 	TransferEnd = 1;
+
 	return(TransferError);
 }
 
@@ -1958,6 +1991,7 @@ static SD_Error SDC_CmdResp3Error(void)
 		SDIO_ClearFlag(SDIO_FLAG_CTIMEOUT);
 		return(errorstatus);
 	}
+
 	/* Clear all the static flags */
 	SDIO_ClearFlag(SDIO_STATIC_FLAGS);
 	return(errorstatus);
@@ -2047,8 +2081,8 @@ static SD_Error SDC_CmdResp6Error(uint8_t cmd, uint16_t *prca)
 	/* We have received response, retrieve it.  */
 	response_r1 = SDIO_GetResponse(SDIO_RESP1);
 	
-	if (SD_ALLZERO == (response_r1 & 
-		(SD_R6_GENERAL_UNKNOWN_ERROR | SD_R6_ILLEGAL_CMD | SD_R6_COM_CRC_FAILED)))
+	if (SD_ALLZERO == (response_r1 & (SD_R6_GENERAL_UNKNOWN_ERROR | \
+		SD_R6_ILLEGAL_CMD | SD_R6_COM_CRC_FAILED)))
 	{
 		*prca = (uint16_t) (response_r1 >> 16);
 		return(errorstatus);
@@ -2450,9 +2484,15 @@ static SD_Error SDC_FindSCR(uint16_t rca, uint32_t *pscr)
 	/* Clear all the static flags */
 	SDIO_ClearFlag(SDIO_STATIC_FLAGS);
 	
-	*(pscr + 1) = ((tempscr[0] & SD_0TO7BITS) << 24) | ((tempscr[0] & SD_8TO15BITS) << 8) | ((tempscr[0] & SD_16TO23BITS) >> 8) | ((tempscr[0] & SD_24TO31BITS) >> 24);
+	*(pscr + 1) = ((tempscr[0] & SD_0TO7BITS) << 24) | \
+		((tempscr[0] & SD_8TO15BITS) << 8) | \
+		((tempscr[0] & SD_16TO23BITS) >> 8) | \
+		((tempscr[0] & SD_24TO31BITS) >> 24);
 	
-	*(pscr) = ((tempscr[1] & SD_0TO7BITS) << 24) | ((tempscr[1] & SD_8TO15BITS) << 8) | ((tempscr[1] & SD_16TO23BITS) >> 8) | ((tempscr[1] & SD_24TO31BITS) >> 24);
+	*(pscr) = ((tempscr[1] & SD_0TO7BITS) << 24) | \
+		((tempscr[1] & SD_8TO15BITS) << 8) | \
+		((tempscr[1] & SD_16TO23BITS) >> 8) | \
+		((tempscr[1] & SD_24TO31BITS) >> 24);
 	
 	return(errorstatus);
 }

@@ -45,10 +45,9 @@ void USB_NotConfigured_LED(void);
 void USB_Cable_Config (FunctionalState NewState);
 void Get_SerialNum(void);
 void MAL_Config(void);
-/* Brian 
- * USB disconnect control port setup for miniSTM32
- */
+#if defined (USE_STM3210B_EVAL) || defined (USE_STM3210E_EVAL) || defined (USE_MINISTM32)
 void USB_Disconnect_Config(void);
+#endif /* USE_STM3210B_EVAL or USE_STM3210E_EVAL */
 /* External variables --------------------------------------------------------*/
 
 #endif  /*__HW_CONFIG_H*/

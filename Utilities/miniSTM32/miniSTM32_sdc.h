@@ -17,12 +17,10 @@
 
 #include "stm32f10x.h"
 
-
-/* SDIO Data transfer mode : activate one and only one */  
-/*
-#define SD_POLLING_MODE								((uint32_t)0x00000002)
-*/
-#define SD_DMA_MODE									((uint32_t)0x00000000)
+/* SDIO Data transfer mode */  
+//#if (!defined(SD_DMA_MODE) && !defined(SD_POLLING_MODE))
+	#define SD_POLLING_MODE			1
+//#endif
 
 /*Supported SD Memory Cards */
 #define SDIO_STD_CAPACITY_SD_CARD_V1_1				((uint32_t)0x00000000)

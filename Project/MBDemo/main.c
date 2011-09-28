@@ -17,8 +17,9 @@
  * If you want raw read/write test, uncomment the following line
  * otherwise FAT test will be performed.
  *
-#define SD_RAW_ACCESS				1
  */
+
+#define SD_RAW_ACCESS				1
 
 #include "stm32f10x.h"				/* CMSIS */
 #include "miniSTM32.h"				/* mainboard BSP */
@@ -75,9 +76,6 @@ uint8_t Buffer_Block_Tx[BLOCK_SIZE];
 uint8_t Buffer_Block_Rx[BLOCK_SIZE];
 uint8_t Buffer_MultiBlock_Tx[MULTI_BUFFER_SIZE];
 uint8_t Buffer_MultiBlock_Rx[MULTI_BUFFER_SIZE];
-volatile TestStatus EraseStatus = FAILED;
-volatile TestStatus TransferStatus1 = FAILED;
-volatile TestStatus TransferStatus2 = FAILED;
 SD_Error Status = SD_OK;
 
 /* sd raw access demo function prototypes */
@@ -128,6 +126,10 @@ int main(void)
 	{
 		printf("SD interface initialized\n");
 	}
+	else
+	{
+		printf("SD interface init fail\n");
+	}
 #endif
         
 	while (1) 
@@ -170,13 +172,21 @@ int main(void)
 
 #ifdef SD_RAW_ACCESS
 			else if( u16Menu == MENU_SD_ERASE ) {
+			#ifdef SD_DMA_MODE
 				SD_EraseTest();
+			#else
+				printf("EraseTest does not support SD_POLLING_MODE\n");
+			#endif
 			}
 			else if( u16Menu == MENU_SD_BLOCK ) {
 				SD_SingleBlockTest();
 			}
 			else if( u16Menu == MENU_SD_MULTIBLOCK ) {
+			#ifdef SD_DMA_MODE
 				SD_MultiBlockTest();
+			#else
+				printf("MultiBlockTest does not support SD_POLLING_MODE\n");
+			#endif
 			}
 #else
 			else if( u16Menu == MENU_FAT_TEST ) {
@@ -207,6 +217,8 @@ int main(void)
  */
 void SD_EraseTest(void)
 {
+	TestStatus EraseStatus = FAILED;
+
 	/* Erase NumberOfBlocks Blocks of WRITE_BL_LEN(512 Bytes) */
     Status = SDC_Erase(0x00, (BLOCK_SIZE * NUMBER_OF_BLOCKS));
 
@@ -221,21 +233,26 @@ void SD_EraseTest(void)
 		/* Wait until end of DMA transfer */
 		while(SDC_GetStatus() != SD_TRANSFER_OK);
 	}
+	else
+	{
+		printf("SD_EraseTest:SDC_Erase failed\n");
+	}
 
 	/* Check the correctness of erased blocks */
 	if (Status == SD_OK)
 	{
 		EraseStatus = eBuffercmp(Buffer_MultiBlock_Rx, MULTI_BUFFER_SIZE);
+
+		if(EraseStatus == PASSED)
+		{
+			printf("SD_EraseTest passed\n");
+		}
+		else
+		{
+			printf("SD_EraseTest:eBuffercmp failed\n");
+		}
 	}
   
-	if(EraseStatus == PASSED)
-	{
-		printf("SD_EraseTest(): passed\n");
-	}
-	else
-	{
-		printf("SD_EraseTest(): failed\n");
-	}
 }
 
 /**
@@ -245,24 +262,34 @@ void SD_EraseTest(void)
  */
 void SD_SingleBlockTest(void)
 {
+	TestStatus TransferStatus1 = FAILED;
+
 	/* Fill the buffer to send */
 	Fill_Buffer(Buffer_Block_Tx, BLOCK_SIZE, 0x320F);
 
 	/* Write block of 512 bytes on address 0 */
 	Status = SDC_WriteBlock(Buffer_Block_Tx, 0x00, BLOCK_SIZE);
 
+//#ifdef SD_DMA_MODE
 	/* Check if the Transfer is finished */
 	Status = SDC_WaitWriteOperation();
 	while(SDC_GetStatus() != SD_TRANSFER_OK);
+//#endif
 	
 	if (Status == SD_OK)
 	{
 		/* Read block of 512 bytes from address 0 */
 		Status = SDC_ReadBlock(Buffer_Block_Rx, 0x00, BLOCK_SIZE);
 
+//#ifdef SD_DMA_MODE
 		/* Check if the Transfer is finished */
 		Status = SDC_WaitReadOperation();
 		while(SDC_GetStatus() != SD_TRANSFER_OK);
+//#endif
+	}
+	else
+	{
+		printf("SD_SingleBlockTest:SDC_WriteBlock failed with %d\n",Status);
 	}
 
 	/* Check the correctness of written data */
@@ -270,16 +297,21 @@ void SD_SingleBlockTest(void)
 	{
 		TransferStatus1 = Buffercmp(Buffer_Block_Tx, Buffer_Block_Rx, \
 			BLOCK_SIZE);
-	}
-	
-	if(TransferStatus1 == PASSED)
-	{
-		printf("SD_SingleBlockTest(): passed\n");
+
+		if(TransferStatus1 == PASSED)
+		{
+			printf("SD_SingleBlockTest() passed\n");
+		}
+		else
+		{
+			printf("SD_SingleBlockTest():Buffercmp failed\n");
+		}
 	}
 	else
 	{
-		printf("SD_SingleBlockTest(): failed\n");
+		printf("SD_SingleBlockTest:SDC_ReadBlock failed with %d\n",Status);
 	}
+	
 }
 
 /**
@@ -289,6 +321,8 @@ void SD_SingleBlockTest(void)
  */
 void SD_MultiBlockTest(void)
 {
+	TestStatus TransferStatus2 = FAILED;
+	
 	/* Fill the buffer to send */
 	Fill_Buffer(Buffer_MultiBlock_Tx, MULTI_BUFFER_SIZE, 0x0);
 	
@@ -309,22 +343,30 @@ void SD_MultiBlockTest(void)
 		Status = SDC_WaitReadOperation();
 		while(SDC_GetStatus() != SD_TRANSFER_OK);
 	}
+	else
+	{
+		printf("SD_MultiBlockTest:SDC_WriteMultiBlock failed\n");
+	}
 	
 	/* Check the correctness of written data */
 	if (Status == SD_OK)
 	{
 		TransferStatus2 = Buffercmp(Buffer_MultiBlock_Tx, \
 			Buffer_MultiBlock_Rx, MULTI_BUFFER_SIZE);
-	}
-	
-	if(TransferStatus2 == PASSED)
-	{
-		printf("SD_MultiBlockTest(): passed\n");
+		if(TransferStatus2 == PASSED)
+		{
+			printf("SD_MultiBlockTest passed\n");
+		}
+		else
+		{
+			printf("SD_MultiBlockTest:Buffercmp failed\n");
+		}
 	}
 	else
 	{
-		printf("SD_MultiBlockTest(): failed\n");
+		printf("SD_MultiBlockTest:SDC_ReadMultiBlock failed\n");
 	}
+	
 }
 
 /**

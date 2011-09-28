@@ -92,6 +92,9 @@ CFLAGS += -D USE_STDPERIPH_DRIVER
 # garbage collection: this doesn't seem to work with CSLite
 CFLAGS += -ffunction-sections 
 CFLAGS += -Wl,--gc-sections
+# platform specific
+CFLAGS += -D USE_MINISTM32
+CFLSGS += -D SD_POLLING_MODE
 
 # ARM specific
 ASMFLAGS += -mthumb 
