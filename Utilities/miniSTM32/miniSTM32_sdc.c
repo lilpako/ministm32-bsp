@@ -12,7 +12,7 @@
  *               
  *			Programming Model 
  *          ======================================= 
- *			// Somewhere in your source
+ *			// Choose the mode (preferably in the Makefile)
  *			#define SD_DMA_MODE
  *			// or
  *			#define SD_POLLING_MODE
@@ -26,7 +26,6 @@
  *			while(SDC_GetStatus() != SD_TRANSFER_OK); 
  *             
  *			// Raw write operation(multiple block)
- *			// NOTE THAT THIS ROUTINE DOES NOT WORK IN SD_POLLING_MODE
  *			Status = SDC_WriteMultiBlocks(buffer, address, 512, numblocks);
  *			Status = SDC_WaitWriteOperation();
  *			while(SDC_GetStatus() != SD_TRANSFER_OK);     
@@ -37,7 +36,6 @@
  *			while(SDC_GetStatus() != SD_TRANSFER_OK);
  *             
  *			// Raw read operation(multiple block)
- *			// NOTE THAT THIS ROUTINE DOES NOT WORK IN SD_POLLING_MODE
  *			Status = SDC_ReadMultiBlocks(buffer, address, 512, numblocks);
  *			Status = SDC_WaitReadOperation();
  *			while(SDC_GetStatus() != SD_TRANSFER_OK);            
@@ -72,6 +70,7 @@
 
 #include "miniSTM32_sdc.h"
 
+/* definitions for internal use */
 /* SDIO Commands  Index */
 #define SD_CMD_GO_IDLE_STATE						((uint8_t)0)
 #define SD_CMD_SEND_OP_COND							((uint8_t)1)
@@ -223,8 +222,7 @@
 #define SDIO_CMD_GPIO_PORT							GPIOD
 #define SDIO_CMD_GPIO_CLK							RCC_APB2Periph_GPIOD
   
-
-
+/* variables for internal use */
 static uint32_t CardType = SDIO_STD_CAPACITY_SD_CARD_V1_1;
 static uint32_t CSD_Tab[4], CID_Tab[4], RCA = 0;
 static uint8_t SDSTATUS_Tab[16];
@@ -236,6 +234,7 @@ SD_CardInfo SDCardInfo;
 SDIO_CmdInitTypeDef SDIO_CmdInitStructure;
 SDIO_DataInitTypeDef SDIO_DataInitStructure;   
 
+/* functions for internal use */
 void MCU_SDIOInit(uint8_t ClockDiv, uint32_t BusWide);
 
 void SDC_DeInit(void);
@@ -372,6 +371,7 @@ SD_Error SDC_Init(void)
 		errorstatus = SDC_SelectDeselect((uint32_t) (SDCardInfo.RCA << 16));
 	}
 	
+	/* POLLING MODE IS NOT FAST ENOUGH TO USE 4BIT BUS TRANSFER */
 #if defined(SD_DMA_MODE)
 	if (errorstatus == SD_OK)
 	{
@@ -1179,8 +1179,7 @@ SD_Error SDC_ReadBlock(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize)
 
 #if defined(SD_POLLING_MODE)  
 
-	/* In case of single block transfer, no need of stop transfer at all.*/
-	/* Polling mode */
+	/* read 1 block of data by polling */
 	while (!(SDIO->STA &(SDIO_FLAG_RXOVERR | SDIO_FLAG_DCRCFAIL | \
 		SDIO_FLAG_DTIMEOUT | SDIO_FLAG_DBCKEND | SDIO_FLAG_STBITERR)))
 	{
@@ -1218,6 +1217,7 @@ SD_Error SDC_ReadBlock(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize)
 		errorstatus = SD_START_BIT_ERR;
 		return(errorstatus);
 	}
+	/* read any additional data left */
 	while (SDIO_GetFlagStatus(SDIO_FLAG_RXDAVL) != RESET)
 	{
 		*tempbuff = SDIO_ReadData();
@@ -1226,6 +1226,8 @@ SD_Error SDC_ReadBlock(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize)
 	
 	/* Clear all the static flags */
 	SDIO_ClearFlag(SDIO_STATIC_FLAGS);
+
+	/* In case of single block transfer, no need of stop transfer at all.*/
 
 #elif defined(SD_DMA_MODE)
 
@@ -1256,6 +1258,10 @@ SD_Error SDC_ReadBlock(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize)
 SD_Error SDC_ReadMultiBlocks(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize, uint32_t NumberOfBlocks)
 {
 	SD_Error errorstatus = SD_OK;
+#if defined(SD_POLLING_MODE)
+	uint32_t count = 0, *tempbuff = (uint32_t *)readbuff;
+#endif
+
 	TransferError = SD_OK;
 	TransferEnd = 0;
 	StopCondition = 1;
@@ -1306,9 +1312,66 @@ SD_Error SDC_ReadMultiBlocks(uint8_t *readbuff, uint32_t ReadAddr, uint16_t Bloc
 		return(errorstatus);
 	}
 	
+#if defined(SD_POLLING_MODE) 
+
+	/* read data by polling */
+	while (!(SDIO->STA &(SDIO_FLAG_RXOVERR | SDIO_FLAG_DCRCFAIL | \
+		SDIO_FLAG_DTIMEOUT | SDIO_FLAG_DATAEND | SDIO_FLAG_STBITERR)))
+	{
+		if (SDIO_GetFlagStatus(SDIO_FLAG_RXFIFOHF) != RESET)
+		{
+			for (count = 0; count < 8; count++)
+			{
+				*(tempbuff + count) = SDIO_ReadData();
+			}
+			tempbuff += 8;
+		}
+	}
+	
+	if (SDIO_GetFlagStatus(SDIO_FLAG_DTIMEOUT) != RESET)
+	{
+		SDIO_ClearFlag(SDIO_FLAG_DTIMEOUT);
+		errorstatus = SD_DATA_TIMEOUT;
+		return(errorstatus);
+	}
+	else if (SDIO_GetFlagStatus(SDIO_FLAG_DCRCFAIL) != RESET)
+	{
+		SDIO_ClearFlag(SDIO_FLAG_DCRCFAIL);
+		errorstatus = SD_DATA_CRC_FAIL;
+		return(errorstatus);
+	}
+	else if (SDIO_GetFlagStatus(SDIO_FLAG_RXOVERR) != RESET)
+	{
+		SDIO_ClearFlag(SDIO_FLAG_RXOVERR);
+		errorstatus = SD_RX_OVERRUN;
+		return(errorstatus);
+	}
+	else if (SDIO_GetFlagStatus(SDIO_FLAG_STBITERR) != RESET)
+	{
+		SDIO_ClearFlag(SDIO_FLAG_STBITERR);
+		errorstatus = SD_START_BIT_ERR;
+		return(errorstatus);
+	}
+	/* read any additional data left */
+	while (SDIO_GetFlagStatus(SDIO_FLAG_RXDAVL) != RESET)
+	{
+		*tempbuff = SDIO_ReadData();
+		tempbuff++;
+	}
+	
+	/* Clear all the static flags */
+	SDIO_ClearFlag(SDIO_STATIC_FLAGS);
+
+	/* send stop transfer command */
+	errorstatus = SDC_StopTransfer();
+
+#else
+
 	SDIO_ITConfig(SDIO_IT_DATAEND, ENABLE);
 	SDC_DMARxConfig((uint32_t *)readbuff, (NumberOfBlocks * BlockSize));
 	SDIO_DMACmd(ENABLE);
+
+#endif /* SD_POLLING_MODE */
 
 	return(errorstatus);
 }
@@ -1398,7 +1461,6 @@ SD_Error SDC_WriteBlock(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSi
 
 #if defined(SD_POLLING_MODE) 
 
-  /* In case of single data block transfer no need of stop command at all */
 	while (!(SDIO->STA & (SDIO_FLAG_DBCKEND | SDIO_FLAG_TXUNDERR | \
 		SDIO_FLAG_DCRCFAIL | SDIO_FLAG_DTIMEOUT | SDIO_FLAG_STBITERR)))
 	{
@@ -1451,6 +1513,8 @@ SD_Error SDC_WriteBlock(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSi
 		return(errorstatus);
 	}
 
+	/* In case of single data block transfer no need of stop command at all */
+
 #elif defined(SD_DMA_MODE)
 
 	SDIO_ITConfig(SDIO_IT_DATAEND, ENABLE);
@@ -1480,8 +1544,12 @@ SD_Error SDC_WriteBlock(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSi
 SD_Error SDC_WriteMultiBlocks(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSize, uint32_t NumberOfBlocks)
 {
 	SD_Error errorstatus = SD_OK;
-	__IO uint32_t count = 0;
 	
+#if defined(SD_POLLING_MODE)
+	uint32_t bytestransferred = 0, count = 0, restwords = 0, datalength;
+	uint32_t *tempbuff = (uint32_t *)writebuff;
+#endif
+
 	TransferError = SD_OK;
 	TransferEnd = 0;
 	StopCondition = 1;
@@ -1537,17 +1605,79 @@ SD_Error SDC_WriteMultiBlocks(uint8_t *writebuff, uint32_t WriteAddr, uint16_t B
 		return(errorstatus);
 	}
 	
+	datalength = NumberOfBlocks * BlockSize;
 	SDIO_DataInitStructure.SDIO_DataTimeOut = SD_DATATIMEOUT;
-	SDIO_DataInitStructure.SDIO_DataLength = NumberOfBlocks * BlockSize;
+	SDIO_DataInitStructure.SDIO_DataLength = datalength;
 	SDIO_DataInitStructure.SDIO_DataBlockSize = (uint32_t) 9 << 4;
 	SDIO_DataInitStructure.SDIO_TransferDir = SDIO_TransferDir_ToCard;
 	SDIO_DataInitStructure.SDIO_TransferMode = SDIO_TransferMode_Block;
 	SDIO_DataInitStructure.SDIO_DPSM = SDIO_DPSM_Enable;
 	SDIO_DataConfig(&SDIO_DataInitStructure);
 	
+#if defined(SD_POLLING_MODE)
+
+	while (!(SDIO->STA & (SDIO_FLAG_DATAEND | SDIO_FLAG_TXUNDERR | \
+		SDIO_FLAG_DCRCFAIL | SDIO_FLAG_DTIMEOUT | SDIO_FLAG_STBITERR)))
+	{
+		if (SDIO_GetFlagStatus(SDIO_FLAG_TXFIFOHE) != RESET)
+		{
+			if ((datalength - bytestransferred) < 32)
+			{
+				restwords = ((datalength - bytestransferred) % 4 == 0) ? \
+					((datalength - bytestransferred) / 4) : (( datalength -  bytestransferred) \
+					/ 4 + 1);
+				for (count = 0; count < restwords; count++, tempbuff++, \
+					bytestransferred += 4)
+				{
+					SDIO_WriteData(*tempbuff);
+				}
+			}
+			else
+			{
+				for (count = 0; count < 8; count++)
+				{
+					SDIO_WriteData(*(tempbuff + count));
+				}
+				tempbuff += 8;
+				bytestransferred += 32;
+			}
+		}
+	}
+	if (SDIO_GetFlagStatus(SDIO_FLAG_DTIMEOUT) != RESET)
+	{
+		SDIO_ClearFlag(SDIO_FLAG_DTIMEOUT);
+		errorstatus = SD_DATA_TIMEOUT;
+		return(errorstatus);
+	}
+	else if (SDIO_GetFlagStatus(SDIO_FLAG_DCRCFAIL) != RESET)
+	{
+		SDIO_ClearFlag(SDIO_FLAG_DCRCFAIL);
+		errorstatus = SD_DATA_CRC_FAIL;
+		return(errorstatus);
+	}
+	else if (SDIO_GetFlagStatus(SDIO_FLAG_TXUNDERR) != RESET)
+	{
+		SDIO_ClearFlag(SDIO_FLAG_TXUNDERR);
+		errorstatus = SD_TX_UNDERRUN;
+		return(errorstatus);
+	}
+	else if (SDIO_GetFlagStatus(SDIO_FLAG_STBITERR) != RESET)
+	{
+		SDIO_ClearFlag(SDIO_FLAG_STBITERR);
+		errorstatus = SD_START_BIT_ERR;
+		return(errorstatus);
+	}
+
+	/* send stop transfer command */
+	errorstatus = SDC_StopTransfer();
+
+#else
+
 	SDIO_ITConfig(SDIO_IT_DATAEND, ENABLE);
 	SDC_DMATxConfig((uint32_t *)writebuff, (NumberOfBlocks * BlockSize));
 	SDIO_DMACmd(ENABLE);    
+
+#endif
 	
 	return(errorstatus);
 }

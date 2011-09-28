@@ -19,7 +19,7 @@
  *
  */
 
-#define SD_RAW_ACCESS				1
+//#define SD_RAW_ACCESS				1
 
 #include "stm32f10x.h"				/* CMSIS */
 #include "miniSTM32.h"				/* mainboard BSP */
@@ -172,21 +172,21 @@ int main(void)
 
 #ifdef SD_RAW_ACCESS
 			else if( u16Menu == MENU_SD_ERASE ) {
-			#ifdef SD_DMA_MODE
+//			#ifdef SD_DMA_MODE
 				SD_EraseTest();
-			#else
-				printf("EraseTest does not support SD_POLLING_MODE\n");
-			#endif
+//			#else
+//				printf("EraseTest does not support SD_POLLING_MODE\n");
+//			#endif
 			}
 			else if( u16Menu == MENU_SD_BLOCK ) {
 				SD_SingleBlockTest();
 			}
 			else if( u16Menu == MENU_SD_MULTIBLOCK ) {
-			#ifdef SD_DMA_MODE
+//			#ifdef SD_DMA_MODE
 				SD_MultiBlockTest();
-			#else
-				printf("MultiBlockTest does not support SD_POLLING_MODE\n");
-			#endif
+//			#else
+//				printf("MultiBlockTest does not support SD_POLLING_MODE\n");
+//			#endif
 			}
 #else
 			else if( u16Menu == MENU_FAT_TEST ) {
@@ -270,22 +270,18 @@ void SD_SingleBlockTest(void)
 	/* Write block of 512 bytes on address 0 */
 	Status = SDC_WriteBlock(Buffer_Block_Tx, 0x00, BLOCK_SIZE);
 
-//#ifdef SD_DMA_MODE
 	/* Check if the Transfer is finished */
 	Status = SDC_WaitWriteOperation();
 	while(SDC_GetStatus() != SD_TRANSFER_OK);
-//#endif
 	
 	if (Status == SD_OK)
 	{
 		/* Read block of 512 bytes from address 0 */
 		Status = SDC_ReadBlock(Buffer_Block_Rx, 0x00, BLOCK_SIZE);
 
-//#ifdef SD_DMA_MODE
 		/* Check if the Transfer is finished */
 		Status = SDC_WaitReadOperation();
 		while(SDC_GetStatus() != SD_TRANSFER_OK);
-//#endif
 	}
 	else
 	{

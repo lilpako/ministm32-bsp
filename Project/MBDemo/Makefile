@@ -92,6 +92,7 @@ CFLAGS += -D USE_STDPERIPH_DRIVER
 # garbage collection: this doesn't seem to work with CSLite
 CFLAGS += -ffunction-sections 
 CFLAGS += -Wl,--gc-sections
+# SD transfer mode selection
 CFLAGS += -D SD_POLLING_MODE
 
 # ARM specific
