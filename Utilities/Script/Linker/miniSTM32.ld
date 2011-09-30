@@ -333,7 +333,7 @@ SECTIONS
     
     /* check that idata remains in FLASH region */
     _lastdataromaddress = ORIGIN(FLASH) + LENGTH(FLASH);
-    toobig = ( _eidata > _lastdataromaddress) ? 1:0 ;
+	ASSERT((_eidata < _lastdataromaddress), "!!!!!!!! FLASH IS FULL !!!!!!!!")
 
     /* uninitialized data section */
     .bss :
