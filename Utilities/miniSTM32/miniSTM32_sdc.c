@@ -371,7 +371,9 @@ SD_Error SDC_Init(void)
 		errorstatus = SDC_SelectDeselect((uint32_t) (SDCardInfo.RCA << 16));
 	}
 	
-	/* POLLING MODE IS NOT FAST ENOUGH TO USE 4BIT BUS TRANSFER */
+	/* FIXME: POLLING MODE IS NOT FAST ENOUGH TO USE 4BIT BUS TRANSFER.
+	 * You can reduce the clock speed instead of taking 1bit bus transfer 
+	 */
 #if defined(SD_DMA_MODE)
 	if (errorstatus == SD_OK)
 	{
@@ -1185,6 +1187,9 @@ SD_Error SDC_ReadBlock(uint8_t *readbuff, uint32_t ReadAddr, uint16_t BlockSize)
 	{
 		if (SDIO_GetFlagStatus(SDIO_FLAG_RXFIFOHF) != RESET)
 		{
+			/* FIXME: Speed optimization of following code might make 
+			 * it possible to use 4bit bus transaction.
+			 */
 			for (count = 0; count < 8; count++)
 			{
 				*(tempbuff + count) = SDIO_ReadData();
@@ -1320,6 +1325,9 @@ SD_Error SDC_ReadMultiBlocks(uint8_t *readbuff, uint32_t ReadAddr, uint16_t Bloc
 	{
 		if (SDIO_GetFlagStatus(SDIO_FLAG_RXFIFOHF) != RESET)
 		{
+			/* FIXME: Speed optimization of following code might make 
+			 * it possible to use 4bit bus transaction.
+			 */
 			for (count = 0; count < 8; count++)
 			{
 				*(tempbuff + count) = SDIO_ReadData();
@@ -1466,6 +1474,9 @@ SD_Error SDC_WriteBlock(uint8_t *writebuff, uint32_t WriteAddr, uint16_t BlockSi
 	{
 		if (SDIO_GetFlagStatus(SDIO_FLAG_TXFIFOHE) != RESET)
 		{
+			/* FIXME: Speed optimization of following code might make 
+			 * it possible to use 4bit bus transaction.
+			 */
 			if ((512 - bytestransferred) < 32)
 			{
 				restwords = ((512 - bytestransferred) % 4 == 0) ? \
@@ -1621,6 +1632,9 @@ SD_Error SDC_WriteMultiBlocks(uint8_t *writebuff, uint32_t WriteAddr, uint16_t B
 	{
 		if (SDIO_GetFlagStatus(SDIO_FLAG_TXFIFOHE) != RESET)
 		{
+			/* FIXME: Speed optimization of following code might make 
+			 * it possible to use 4bit bus transaction.
+			 */
 			if ((datalength - bytestransferred) < 32)
 			{
 				restwords = ((datalength - bytestransferred) % 4 == 0) ? \

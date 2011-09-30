@@ -8,7 +8,7 @@
 # Definitions                                                      #
 ####################################################################
 
-PROJECTNAME = MBDemo
+PROJECTNAME = FMathDemo
 OBJ_DIR = build
 EXE_DIR = exe
 LST_DIR = lst
@@ -21,15 +21,15 @@ JTAGDEV = luminary-icdi
 #																   #
 # You might need to change paths/etc to match your system.         #
 # On Windows, it also depends on the make utility you are using.   #
-# The following definitins are tested with GnuWin32 make v3.8.1.   #
+# The following definitions are tested with GnuWin32 make v3.8.1.  #
 ####################################################################
 
 # CodeSourcery G++ Lite Tool setting
 
-# Windows
+# Windows specific predefined environment variable
 ifdef SystemRoot
 
-# Windows Vista or Windows 7
+# For Windows Vista or Windows 7, you can try one of these.
 # ALLUSERSAPPDATA,DEFAULTUSERPROFILE,SYSTEMPROFILE,USERSID
 ifdef USERSID
 
@@ -42,6 +42,7 @@ GDB = $(TOOLDIR)/bin/arm-none-eabi-gdb
 OBJCOPY = $(TOOLDIR)/bin/arm-none-eabi-objcopy
 RM = $(TOOLDIR)/bin/cs-rm -rf
 
+# Only XP uses backslash as a directory delimiter.
 # Windows XP
 else
 
@@ -92,8 +93,9 @@ CFLAGS += -D USE_STDPERIPH_DRIVER
 # garbage collection: this doesn't seem to work with CSLite
 CFLAGS += -ffunction-sections 
 CFLAGS += -Wl,--gc-sections
-# SD transfer mode selection
-CFLAGS += -D SD_POLLING_MODE
+# FixMath specific
+CFLAGS += -D FIXMATH_NO_CACHE
+CFLAGS += -D FIXMATH_NO_64BIT
 
 # ARM specific
 ASMFLAGS += -mthumb 
@@ -120,8 +122,8 @@ INCLUDEPATHS += -I ../../Libraries/CMSIS/CM3/CoreSupport
 INCLUDEPATHS += -I ../../Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x
 INCLUDEPATHS += -I ../../Libraries/STM32F10x_StdPeriph_Driver/inc
 INCLUDEPATHS += -I ../../Utilities/miniSTM32
+INCLUDEPATHS += -I ../../Utilities/FixMath
 INCLUDEPATHS += -I ../../Utilities/Support
-INCLUDEPATHS += -I ../../Utilities/FatFs
 
 # CSCOPE search path
 XREFSPATHS = -s .
@@ -141,7 +143,7 @@ C_SRC += ../../Libraries/CMSIS/CM3/CoreSupport/core_cm3.c
 
 # Pepheral support
 C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/misc.c
-C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_adc.c
+#C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_adc.c
 #C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_bkp.c
 #C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_can.c
 #C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_cec.c
@@ -157,7 +159,7 @@ C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_i2c.c
 #C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c
 #C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_pwr.c
 C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_rcc.c
-#C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_rtc.c
+C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_rtc.c
 C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_sdio.c
 C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_spi.c
 C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_tim.c
@@ -166,9 +168,9 @@ C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_usart.c
 
 # Board support 
 C_SRC += ../../Utilities/miniSTM32/miniSTM32.c
-C_SRC += ../../Utilities/miniSTM32/miniSTM32_sdc.c
-C_SRC += ../../Utilities/miniSTM32/miniSTM32_diskio.c
-C_SRC += ../../Utilities/miniSTM32/miniSTM32_flash.c
+#C_SRC += ../../Utilities/miniSTM32/miniSTM32_sdc.c
+#C_SRC += ../../Utilities/miniSTM32/miniSTM32_diskio.c
+#C_SRC += ../../Utilities/miniSTM32/miniSTM32_flash.c
 #C_SRC += ../../Utilities/miniSTM32/miniSTM32_lcd.c
 #C_SRC += ../../Utilities/miniSTM32/miniSTM32_tsc.c
 #C_SRC += ../../Utilities/miniSTM32/miniSTM32_sio.c
@@ -177,8 +179,17 @@ C_SRC += ../../Utilities/miniSTM32/miniSTM32_flash.c
 C_SRC += ../../Utilities/Support/syscalls.c
 C_SRC += ../../Utilities/Support/term_io.c
 C_SRC += ../../Utilities/Support/comm.c
+
 # Support functions : FatFs
-C_SRC += ../../Utilities/FatFs/ff.c
+#C_SRC += ../../Utilities/Support/ff.c
+
+# Support function : FixMath
+C_SRC += ../../Utilities/FixMath/fix16.c
+#C_SRC += ../../Utilities/FixMath/fix16_exp.c
+C_SRC += ../../Utilities/FixMath/fix16_sqrt.c
+C_SRC += ../../Utilities/FixMath/fix16_trig.c
+#C_SRC += ../../Utilities/FixMath/fract32.c
+#C_SRC += ../../Utilities/FixMath/uint32.c
 
 # Startup 
 S_SRC = ../../Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x/startup/gcc_ride7/startup_stm32f10x_hd.s

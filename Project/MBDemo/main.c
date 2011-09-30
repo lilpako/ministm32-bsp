@@ -74,8 +74,9 @@ typedef enum {
 /* sd raw access demo variables */
 uint8_t Buffer_Block_Tx[BLOCK_SIZE];
 uint8_t Buffer_Block_Rx[BLOCK_SIZE];
-uint8_t Buffer_MultiBlock_Tx[MULTI_BUFFER_SIZE];
 uint8_t Buffer_MultiBlock_Rx[MULTI_BUFFER_SIZE];
+uint8_t Buffer_MultiBlock_Tx[MULTI_BUFFER_SIZE];
+
 SD_Error Status = SD_OK;
 
 /* sd raw access demo function prototypes */
