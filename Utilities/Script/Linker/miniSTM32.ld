@@ -333,7 +333,7 @@ SECTIONS
     
     /* check that idata remains in FLASH region */
     _lastdataromaddress = ORIGIN(FLASH) + LENGTH(FLASH);
-    toobig = ( _eidata > _lastdataromaddress) ? "!!!!!!!!! FLASH IS FULL !!!!!!!!!" : 0 ;
+    toobig = ( _eidata > _lastdataromaddress) ? 1:0 ;
 
     /* uninitialized data section */
     .bss :
@@ -341,6 +341,8 @@ SECTIONS
 	    . = ALIGN(4);
         _sbss = .;
         _bss = .;
+		__bss_start = .;
+		__bss_start__ = .;
         
         *(.bss)
 		*(.bss.*)
@@ -350,7 +352,9 @@ SECTIONS
 		*(.ram.b)
         
 	    . = ALIGN(4);
-   	 	_ebss = . ;
+   	 	_ebss = .;
+		_bss_end__ = .;
+		__bss_end__ = .;
     } >RAM
     
     PROVIDE ( end = _ebss );
