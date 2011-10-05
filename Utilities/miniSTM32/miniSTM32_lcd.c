@@ -151,6 +151,9 @@ void LCD_SetColumnPageAddr(uint16_t colS, uint16_t colE, uint16_t pageS, uint16_
 
 
 
+
+
+
 typedef struct _POINT
 {
 	int x;
@@ -879,20 +882,35 @@ void LCD_DrawLineB(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
  */
 void LCD_DrawCircle(int16_t x, int16_t y, int16_t r)
 {
-	int16_t xt = -r, yt = 0, err = 2-2*r;
+	int16_t xt, yt, err, r0, r1, rx;
 
-	do{
-		LCD_DrawPixel(x - xt, y + yt);
-		LCD_DrawPixel(x - yt, y - xt);
-		LCD_DrawPixel(x + xt, y - yt);
-		LCD_DrawPixel(x + yt, y + xt);
+	r0 = r - (uPenWidth>>1);
+	r1 = r + (uPenWidth>>1);
 
-		r = err;
+	for(rx = r0; rx <= r1; rx++)
+	{
+		r = rx;
+		xt = -r;
+		yt = 0;
+		err = 2 - (r<<1);
 
-		if( r > xt ) err += ++xt*2 + 1;
-		if( r <= yt ) err += ++yt*2 + 1;
+		do{
+			/* first quadrant */
+			LCD_DrawPixel(x - xt, y + yt);
+			/* second quadrant */
+			LCD_DrawPixel(x - yt, y - xt);
+			/* third quadrant */
+			LCD_DrawPixel(x + xt, y - yt);
+			/* forth quadrant */
+			LCD_DrawPixel(x + yt, y + xt);
+
+			r = err;
+
+			if( r > xt ) err += ((++xt)<<1) + 1;
+			if( r <= yt ) err += ((++yt)<<1) + 1;
 		
-	} while(xt < 0);
+		} while(xt < 0);
+	}
 }
 
 
@@ -956,12 +974,23 @@ void LCD_DrawEllipseRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 
 uint16_t LCD_DrawTestPattern(unsigned int index)
 {
+	uint16_t i, j;
+	uint16_t retval;
 	int16_t x1, y1, x2, y2, delx, dely;
-	LCDCOLOR col;
-	unsigned i, j;
+
 	uint16_t dif_red, dif_green, dif_blue;
 	uint16_t col_red, col_green, col_blue;
-	uint16_t retval;
+
+	LCDCOLOR col;
+	LCDCOLOR colors[8]={
+		LCD_COLOR_RED,
+		LCD_COLOR_GREEN,
+		LCD_COLOR_BLUE,
+		LCD_COLOR_MAGENTA,
+		LCD_COLOR_CYAN,
+		LCD_COLOR_YELLOW,
+		LCD_COLOR_GREY,
+		LCD_COLOR_WHITE};
 
 	/* black background */
 	LCD_Clear(col_bgnd);
@@ -971,7 +1000,7 @@ uint16_t LCD_DrawTestPattern(unsigned int index)
 	uLCD_Delay = 0xFFFF;
 
 	/* draw 640 lines with Bresenham algorithm */
-	if( index == 1 )
+	if(index == 1)
 	{
 		delx = LCD_WIDTH / 16;
 		dely = LCD_HEIGHT / 8;
@@ -1018,7 +1047,7 @@ uint16_t LCD_DrawTestPattern(unsigned int index)
 		}
 	}
 	/* draw 640 lines with line segment method */
-	else if( index == 2 )
+	else if(index == 2)
 	{
 		delx = LCD_WIDTH / 16;
 		dely = LCD_HEIGHT / 8;
@@ -1063,8 +1092,8 @@ uint16_t LCD_DrawTestPattern(unsigned int index)
 			x1 += delx;
 		}
 	}
-	/* draw 128 lines with thickness 5 */
-	else if( index == 3 )
+	/* draw 256 lines with thickness 5 */
+	else if(index == 3)
 	{
 		delx = LCD_WIDTH / 8;
 		dely = LCD_HEIGHT / 8;
@@ -1112,35 +1141,96 @@ uint16_t LCD_DrawTestPattern(unsigned int index)
 
 		LCD_SetPenWidth(1);
 	}
-	/* draw circles */
-	else if( index == 4)
+	/* draw 8 rectangles with various sizes and line thickness */
+	else if(index == 4)
 	{
-		LCD_SetFGColor(LCD_COLOR_RED);
-		LCD_DrawCircle((LCD_WIDTH>>1), (LCD_HEIGHT>>1) - 1, (LCD_HEIGHT>>1) - 1);
+		delx = LCD_WIDTH>>4;
+		dely = LCD_HEIGHT>>4;
+		/* upper left corner of the first rectangle */
+		x1 = 0; y1 = 0;	
+		/* lower right corner of the first rectangle */
+		x2 = LCD_WIDTH>>1; y2 = LCD_HEIGHT>>1;
+
+		for(i = 0; i < 8; i++)
+		{
+			LCD_SetFGColor(colors[i]);
+
+			LCD_DrawRect(x1, y1, x2, y2);
+
+			uPenWidth++;
+
+			x1 += delx; x2 += delx;
+			y1 += dely; y2 += dely;
+		}
+
+		LCD_SetPenWidth(1);
 	}
-	/* draw ellipses */
-	else if( index == 5 )
+	/* draw 8 circles with various sizes and line thickness */
+	else if(index == 5)
 	{
-		LCD_SetFGColor(LCD_COLOR_GREEN);
+		dely = LCD_HEIGHT>>4;
+
+		/* center and radius */
+		x1 = LCD_WIDTH>>1;
+		y1 = LCD_HEIGHT>>1;
+		y2 = LCD_HEIGHT>>2;
+
+		for(i = 0; i < 8; i++)
+		{
+			LCD_SetFGColor(colors[i]);
+
+			LCD_DrawCircle(x1, y1, y2);
+
+			uPenWidth++;
+
+			y2 += dely;
+		}
+
+		LCD_SetPenWidth(1);
+	}
+	/* draw 8 ellipses with various sizes and line thickness */
+	else if(index == 6)
+	{
+
+		dely = LCD_HEIGHT>>4;
+
+		/* center and radius */
+		x1 = LCD_WIDTH>>1;
+		y1 = LCD_HEIGHT>>1;
+		y2 = LCD_HEIGHT>>2;
+
+		for(i = 0; i < 8; i++)
+		{
+			LCD_SetFGColor(colors[i]);
+
+			LCD_DrawCircle(x1, y1, y2);
+
+			uPenWidth++;
+
+			y2 += dely;
+		}
+
+		LCD_SetPenWidth(1);
+
 	}
 	/* draw color filled rectangles */
-	else if( index == 6 )
+	else if(index == 7)
 	{
 		LCD_SetFGColor(LCD_COLOR_BLUE);
 		LCD_DrawFillRect(0, 0, LCD_WIDTH - 1, LCD_HEIGHT - 1);
 	}
 	/* draw color filled circles */
-	else if( index == 7)
+	else if(index == 8)
 	{
 		LCD_SetFGColor(LCD_COLOR_RED);
 		LCD_DrawCircle((LCD_WIDTH>>1), (LCD_HEIGHT>>1) - 1, (LCD_HEIGHT>>1) - 1);
 	}
 	/* draw color filled ellipses */
-	else if( index == 8 )
+	else if(index == 9)
 	{
 	}
 	/* draw points */
-	else if( index == 9 )
+	else if(index == 10)
 	{
 		LCD_SetFGColor(LCD_COLOR_RED);
 
@@ -1792,151 +1882,6 @@ void SetTearingCfg(unsigned char state, unsigned char mode)
 
 
 #if 0
-void LCD_CtrlLinesConfig(void)
-{
-	GPIO_InitTypeDef GPIO_InitStructure;
-
-	/* Enable FSMC, GPIOD, GPIOE, GPIOF, GPIOG and AFIO clocks */
-	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_FSMC, ENABLE);
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | 
-						RCC_APB2Periph_GPIOB | 
-						RCC_APB2Periph_GPIOD | 
-						RCC_APB2Periph_GPIOE | 
-						RCC_APB2Periph_AFIO, ENABLE);
-
-	/* FSMC output - port D */
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 |	/* PD0  - FSMC D02 */
-								GPIO_Pin_1 |	/* PD1  - FSMC D03 */
-								GPIO_Pin_4 |	/* PD4  - FSMC nOE */
-								GPIO_Pin_5 |	/* PD5  - FSMC nWE */
-								GPIO_Pin_7 |	/* PD7  - FSMC nE1 */
-                                GPIO_Pin_8 |	/* PD8  - FSMC D13 */
-								GPIO_Pin_9 |	/* PD9  - FSMC D14 */
-								GPIO_Pin_10 |	/* PD10 - FSMC D15 */
-								GPIO_Pin_11 |	/* PD11 - FSMC A16 */
-								GPIO_Pin_14 |	/* PD14 - FSMC D00 */
-                                GPIO_Pin_15;	/* PD15 - FSMC D01 */
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-	GPIO_Init(GPIOD, &GPIO_InitStructure);
-
-	/* FSMC output - port E */
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7 |	/* PE7  - FSMC D04 */
-								GPIO_Pin_8 |	/* PE8  - FSMC D05 */
-								GPIO_Pin_9 |	/* PE9  - FSMC D06 */
-								GPIO_Pin_10 |	/* PE10 - FSMC D07 */
-								GPIO_Pin_11 |	/* PE11 - FSMC D08 */
-                                GPIO_Pin_12 |	/* PE12 - FSMC D09 */
-								GPIO_Pin_13 |	/* PE13 - FSMC D10 */
-								GPIO_Pin_14 |	/* PE14 - FSMC D11 */
-                                GPIO_Pin_15;	/* PE15 - FSMC D12 */
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-	GPIO_Init(GPIOE, &GPIO_InitStructure);
-
-	/* SPI output - port A */
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5 |	/* PA5  - SPI1 SCK  */
-								GPIO_Pin_7; 	/* PA7  - SPI1 MOSI */
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
-
-	/* SPI input - port A */
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;	/* PA6  - SPI1 MISO */
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
-
-	/* Backlight(GPIO output) - port D */
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;	/* PD13 - BACKLIGHT */
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_Init(GPIOD, &GPIO_InitStructure);
-
-	/* LCD reset(GPIO output) - port E */
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;	/* PE1  - LCD RESET */
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_Init(GPIOE, &GPIO_InitStructure);
-
-	/* ADS7843 interrupt(GPIO input) - port B */
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;	/* PB6  - TCH INTR  */
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-	GPIO_Init(GPIOB, &GPIO_InitStructure);
-
-	/* ADS7843 CS(GPIO output) - port B */
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;	/* PB7  - TCH CS    */
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_Init(GPIOB, &GPIO_InitStructure);
-}
-#endif
-
-
-#if 0
-void LCD_FSMCConfig(void)
-{
-	FSMC_NORSRAMInitTypeDef  FSMC_NORSRAMInitStructure;
-	FSMC_NORSRAMTimingInitTypeDef  p;
-
-	p.FSMC_AddressSetupTime = 0;			/* 0 - 0xF  */
-	p.FSMC_AddressHoldTime = 1;				/* 1 - 0xF  */
-	p.FSMC_DataSetupTime = 1;				/* 1 - 0xFF */
-	p.FSMC_BusTurnAroundDuration = 0;		/* 0 - 0xF  */
-	p.FSMC_CLKDivision = 1;					/* 1 - 0xF  */
-	p.FSMC_DataLatency = 0;					/* 0 - 0xF  */
-	p.FSMC_AccessMode = FSMC_AccessMode_B;	/* NOR      */
-
-	FSMC_NORSRAMInitStructure.FSMC_Bank = FSMC_Bank1_NORSRAM1;
-	FSMC_NORSRAMInitStructure.FSMC_DataAddressMux = FSMC_DataAddressMux_Disable;
-	FSMC_NORSRAMInitStructure.FSMC_MemoryType = FSMC_MemoryType_NOR;
-	FSMC_NORSRAMInitStructure.FSMC_MemoryDataWidth = FSMC_MemoryDataWidth_16b;
-	FSMC_NORSRAMInitStructure.FSMC_BurstAccessMode = FSMC_BurstAccessMode_Disable;
-	FSMC_NORSRAMInitStructure.FSMC_AsynchronousWait = FSMC_AsynchronousWait_Disable;
-	FSMC_NORSRAMInitStructure.FSMC_WaitSignalPolarity = FSMC_WaitSignalPolarity_Low;
-	FSMC_NORSRAMInitStructure.FSMC_WrapMode = FSMC_WrapMode_Disable;
-	FSMC_NORSRAMInitStructure.FSMC_WaitSignalActive = FSMC_WaitSignalActive_BeforeWaitState;
-	FSMC_NORSRAMInitStructure.FSMC_WriteOperation = FSMC_WriteOperation_Enable;
-	FSMC_NORSRAMInitStructure.FSMC_WaitSignal = FSMC_WaitSignal_Disable;
-	FSMC_NORSRAMInitStructure.FSMC_ExtendedMode = FSMC_ExtendedMode_Disable;
-	FSMC_NORSRAMInitStructure.FSMC_WriteBurst = FSMC_WriteBurst_Disable;
-	FSMC_NORSRAMInitStructure.FSMC_ReadWriteTimingStruct = &p;
-	FSMC_NORSRAMInitStructure.FSMC_WriteTimingStruct = &p;
-	FSMC_NORSRAMInit(&FSMC_NORSRAMInitStructure);  
-	
-	/* BANK 1 (of NOR/SRAM Bank) is enabled */
-	FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM1, ENABLE);
-}
-#endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#if 0
 typedef struct
 {
   __IO uint16_t LCD_REG;
@@ -1955,117 +1900,9 @@ typedef struct
 static sFONT *LCD_Currentfonts;
 /* Global variables to set the written text color */
 static  __IO uint16_t TextColor = 0x0000, BackColor = 0xFFFF;
-  
-#ifndef USE_Delay
-static void delay(vu32 nCount);
-#endif /* USE_Delay*/
 static void PutPixel(int16_t x, int16_t y);
 static void LCD_PolyLineRelativeClosed(pPoint Points, uint16_t PointCount, uint16_t Closed);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void LCD_DeInit(void)
-{ 
-  GPIO_InitTypeDef GPIO_InitStructure;
-
-  /*!< LCD Display Off */
-  LCD_DisplayOff();
-
-  /* BANK 4 (of NOR/SRAM Bank 1~4) is disabled */
-  FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM4, ENABLE);
-  
-  /*!< LCD_SPI DeInit */
-  FSMC_NORSRAMDeInit(FSMC_Bank1_NORSRAM4);
-   
-  /* Set PD.00(D2), PD.01(D3), PD.04(NOE), PD.05(NWE), PD.08(D13), PD.09(D14),
-     PD.10(D15), PD.14(D0), PD.15(D1) as input floating */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_4 | GPIO_Pin_5 |
-                                GPIO_Pin_8 | GPIO_Pin_9 | GPIO_Pin_10 | GPIO_Pin_14 | 
-                                GPIO_Pin_15;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-  GPIO_Init(GPIOD, &GPIO_InitStructure);
-  /* Set PE.07(D4), PE.08(D5), PE.09(D6), PE.10(D7), PE.11(D8), PE.12(D9), PE.13(D10),
-     PE.14(D11), PE.15(D12) as alternate function push pull */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9 | GPIO_Pin_10 | 
-                                GPIO_Pin_11 | GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_14 | 
-                                GPIO_Pin_15;
-  GPIO_Init(GPIOE, &GPIO_InitStructure);
-  /* Set PF.00(A0 (RS)) as alternate function push pull */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
-  GPIO_Init(GPIOF, &GPIO_InitStructure);
-  /* Set PG.12(NE4 (LCD/CS)) as alternate function push pull - CE3(LCD /CS) */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
-  GPIO_Init(GPIOG, &GPIO_InitStructure); 
-}
-
-
-
-
-
-
-
-
-
-
-
-/**
-  * @brief  Sets the LCD Text and Background colors.
-  * @param  _TextColor: specifies the Text Color.
-  * @param  _BackColor: specifies the Background Color.
-  * @retval None
-  */
-void LCD_SetColors(__IO uint16_t _TextColor, __IO uint16_t _BackColor)
-{
-  TextColor = _TextColor; 
-  BackColor = _BackColor;
-}
-
-/**
-  * @brief  Gets the LCD Text and Background colors.
-  * @param  _TextColor: pointer to the variable that will contain the Text 
-            Color.
-  * @param  _BackColor: pointer to the variable that will contain the Background 
-            Color.
-  * @retval None
-  */
-void LCD_GetColors(__IO uint16_t *_TextColor, __IO uint16_t *_BackColor)
-{
-  *_TextColor = TextColor; *_BackColor = BackColor;
-}
-
-/**
-  * @brief  Sets the Text color.
-  * @param  Color: specifies the Text color code RGB(5-6-5).
-  * @retval None
-  */
-void LCD_SetTextColor(__IO uint16_t Color)
-{
-  TextColor = Color;
-}
-
-
-/**
-  * @brief  Sets the Background color.
-  * @param  Color: specifies the Background color code RGB(5-6-5).
-  * @retval None
-  */
-void LCD_SetBackColor(__IO uint16_t Color)
-{
-  BackColor = Color;
-}
 
 /**
   * @brief  Sets the Text Font.
@@ -2719,129 +2556,6 @@ void LCD_FillPolyLine(pPoint Points, uint16_t PointCount)
 }
 
 
-
-
-
-
-
-
-
-
-/**
-  * @brief  Writes to the selected LCD register.
-  * @param  LCD_Reg: address of the selected register.
-  * @param  LCD_RegValue: value to write to the selected register.
-  * @retval None
-  */
-void LCD_WriteReg(uint8_t LCD_Reg, uint16_t LCD_RegValue)
-{
-  /* Write 16-bit Index, then Write Reg */
-  LCD->LCD_REG = LCD_Reg;
-  /* Write 16-bit Reg */
-  LCD->LCD_RAM = LCD_RegValue;
-}
-
-
-/**
-  * @brief  Reads the selected LCD Register.
-  * @param  LCD_Reg: address of the selected register.
-  * @retval LCD Register Value.
-  */
-uint16_t LCD_ReadReg(uint8_t LCD_Reg)
-{
-  /* Write 16-bit Index (then Read Reg) */
-  LCD->LCD_REG = LCD_Reg;
-  /* Read 16-bit Reg */
-  return (LCD->LCD_RAM);
-}
-
-
-/**
-  * @brief  Prepare to write to the LCD RAM.
-  * @param  None
-  * @retval None
-  */
-void LCD_WriteRAM_Prepare(void)
-{
-  LCD->LCD_REG = LCD_REG_34;
-}
-
-
-/**
-  * @brief  Writes to the LCD RAM.
-  * @param  RGB_Code: the pixel color in RGB mode (5-6-5).
-  * @retval None
-  */
-void LCD_WriteRAM(uint16_t RGB_Code)
-{
-  /* Write 16-bit GRAM Reg */
-  LCD->LCD_RAM = RGB_Code;
-}
-
-
-/**
-  * @brief  Reads the LCD RAM.
-  * @param  None
-  * @retval LCD RAM Value.
-  */
-uint16_t LCD_ReadRAM(void)
-{
-  /* Write 16-bit Index (then Read Reg) */
-  LCD->LCD_REG = LCD_REG_34; /* Select GRAM Reg */
-  /* Read 16-bit Reg */
-  return LCD->LCD_RAM;
-}
-
-
-/**
-  * @brief  Power on the LCD.
-  * @param  None
-  * @retval None
-  */
-void LCD_PowerOn(void)
-{
-/* Power On sequence ---------------------------------------------------------*/
-  LCD_WriteReg(LCD_REG_16, 0x0000); /* SAP, BT[3:0], AP, DSTB, SLP, STB */
-  LCD_WriteReg(LCD_REG_17, 0x0000); /* DC1[2:0], DC0[2:0], VC[2:0] */
-  LCD_WriteReg(LCD_REG_18, 0x0000); /* VREG1OUT voltage */
-  LCD_WriteReg(LCD_REG_19, 0x0000); /* VDV[4:0] for VCOM amplitude*/
-  _delay_(20);                 /* Dis-charge capacitor power voltage (200ms) */
-  LCD_WriteReg(LCD_REG_16, 0x17B0); /* SAP, BT[3:0], AP, DSTB, SLP, STB */
-  LCD_WriteReg(LCD_REG_17, 0x0137); /* DC1[2:0], DC0[2:0], VC[2:0] */
-  _delay_(5);                  /* Delay 50 ms */
-  LCD_WriteReg(LCD_REG_18, 0x0139); /* VREG1OUT voltage */
-  _delay_(5);                  /* Delay 50 ms */
-  LCD_WriteReg(LCD_REG_19, 0x1d00); /* VDV[4:0] for VCOM amplitude */
-  LCD_WriteReg(LCD_REG_41, 0x0013); /* VCM[4:0] for VCOMH */
-  _delay_(5);                  /* Delay 50 ms */
-  LCD_WriteReg(LCD_REG_7, 0x0173);  /* 262K color and display ON */
-}
-
-
-/**
-  * @brief  Enables the Display.
-  * @param  None
-  * @retval None
-  */
-void LCD_DisplayOn(void)
-{
-  /* Display On */
-  LCD_WriteReg(LCD_REG_7, 0x0173); /* 262K color and display ON */
-}
-
-
-/**
-  * @brief  Disables the Display.
-  * @param  None
-  * @retval None
-  */
-void LCD_DisplayOff(void)
-{
-  /* Display Off */
-  LCD_WriteReg(LCD_REG_7, 0x0); 
-}
-
-
 /**
   * @brief  Displays a pixel.
   * @param  x: pixel x.
@@ -2856,21 +2570,6 @@ static void PutPixel(int16_t x, int16_t y)
   }
   LCD_DrawLine(x, y, 1, LCD_DIR_HORIZONTAL);
 }
-
-#ifndef USE_Delay
-/**
-  * @brief  Inserts a delay time.
-  * @param  nCount: specifies the delay time length.
-  * @retval None
-  */
-static void delay(vu32 nCount)
-{
-  vu32 index = 0; 
-  for(index = (34000 * nCount); index != 0; index--)
-  {
-  }
-}
-#endif /* USE_Delay*/
 
 #endif
 

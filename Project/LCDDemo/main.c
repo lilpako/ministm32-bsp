@@ -75,27 +75,27 @@ int main(void)
 
 			if( u16Menu == MENU_LCD_TEST1 ) {
 				uVal = LCD_DrawTestPattern(1);
-				printf("Draw 640 lines with Bresenham algorithm: %d msec\n", uVal);
+				printf("640 lines with Bresenham algorithm: %d msec\n", uVal);
 			}
 			else if( u16Menu == MENU_LCD_TEST2 ) {
 				uVal = LCD_DrawTestPattern(2);
-				printf("Draw 640 lines with line segment method: %d msec\n", uVal);
+				printf("640 lines with line segment method: %d msec\n", uVal);
 			}
 			else if( u16Menu == MENU_LCD_TEST3 ) {
 				uVal = LCD_DrawTestPattern(3);
-				printf("Draw 128 lines with thickness 5: %d msec\n", uVal);
+				printf("Lines with line thickness 5: %d msec\n", uVal);
 			}
 			else if( u16Menu == MENU_LCD_TEST4 ) {
 				uVal = LCD_DrawTestPattern(4);
-				printf("LCD test pattern 4: %d msec\n", uVal);
+				printf("Rectangles with various line thickness: %d msec\n", uVal);
 			}
 			else if( u16Menu == MENU_LCD_TEST5 ) {
 				uVal = LCD_DrawTestPattern(5);
-				printf("LCD test pattern 5: %d msec\n", uVal);
+				printf("Circles with various line thickness: %d msec\n", uVal);
 			}
 			else if( u16Menu == MENU_LCD_TEST6 ) {
 				uVal = LCD_DrawTestPattern(6);
-				printf("LCD test pattern 6: %d msec\n", uVal);
+				printf("Ellipses with various line thickness: %d msec\n", uVal);
 			}
 			else if( u16Menu == MENU_LCD_TEST7 ) {
 				uVal = LCD_DrawTestPattern(7);
