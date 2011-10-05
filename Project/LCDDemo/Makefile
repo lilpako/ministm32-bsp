@@ -92,6 +92,12 @@ CFLAGS += -D USE_STDPERIPH_DRIVER
 # garbage collection: this doesn't seem to work with CSLite
 CFLAGS += -ffunction-sections 
 CFLAGS += -Wl,--gc-sections
+# hardware specific definitions
+CFLAGS += -D LCD_HSD043I9W
+#CFLAGS += -D LCD_AT043TN13
+#CFLAGS += -D LCD_AT070TN83
+# enable test pattern drawing function
+CFLAGS += -D LCD_TEST
 
 # ARM specific
 ASMFLAGS += -mthumb 

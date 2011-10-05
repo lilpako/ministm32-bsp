@@ -5,6 +5,20 @@
 #include "miniSTM32.h"
 #include "miniSTM32_lcd.h"
 
+/* backlight control */
+#if (defined(LCD_HSD043I9W) || defined(LCD_AT043TN13))
+	/* backlight controlled by MCU */
+	#define MCU_BLTCONTROL
+#elif defined(LCD_AT070TN83)
+	/* backlight controlled by display controller */
+	#define SSD1963_BLTCONTROL
+#endif
+
+/* MCU backlight control port */
+#define BLTCONTROL_PORT				GPIOD
+#define BLTCONTROL_PIN				GPIO_Pin_13
+
+
 /* FSMC use NOR(BANK1) interface with A16 as RS 
  * RS(A16) = 0 : register (8bit)
  * RS(A16) = 1 : data (16bit)
@@ -109,26 +123,15 @@
 #define CMD_RESERVED_5			0x00FF
 #define CMD_DUMMY				0x00A5
 
-
 /* LCD delay routine : 1 msec interval */
-#define LCD_DELAY(x)			{uLCD_Delay = x; while( uLCD_Delay);}
+#define LCD_DELAY(x)			do{uLCD_Delay = x; while( uLCD_Delay);} while(0)
+#define ABS(x)					((x) > 0 ? (x) : -(x))    
+#define INTSWAP(x,y)			do{x ^= y; y ^= x; x ^= y;} while(0)
 
-typedef struct _POINT
-{
-	int x;
-	int y;
-} POINT, *PPOINT;
-
-typedef struct _RECT
-{
- 	int left;
-	int top;
-	int right;
-	int bottom;
-} RECT, *PRECT;
-
-unsigned long color1 = 0;
-volatile uint16_t uLCD_Delay;
+volatile LCDCOLOR col_fgnd = LCD_COLOR_WHITE;
+volatile LCDCOLOR col_bgnd = LCD_COLOR_BLACK;
+volatile uint16_t uPenWidth = 1;
+volatile uint16_t uLCD_Delay = 0;
 
 void LCD_WR_REG(uint16_t command);
 void LCD_WR_Data(uint16_t val);
@@ -148,8 +151,25 @@ void LCD_SetColumnPageAddr(uint16_t colS, uint16_t colE, uint16_t pageS, uint16_
 
 
 
+typedef struct _POINT
+{
+	int x;
+	int y;
+} POINT, *PPOINT;
+
+typedef struct _RECT
+{
+ 	int left;
+	int top;
+	int right;
+	int bottom;
+} RECT, *PRECT;
 
 
+
+/*
+unsigned long color1 = 0;
+*/
 
 
 void LCD_Test(void);
@@ -161,8 +181,8 @@ unsigned char *num_pub(unsigned int a);
 void LCD_DrawCheckerPattern(short blue, short green, short red);
 void LCD_DrawBackground(short blue, short green, short red);
 void LCD_DrawRectangle(int x1, int y1, int x2, int y2, short blue, short green, short red);
-void LCD_DrawLine(int x1, int y1, int x2, int y2, int width, short red, short green, short blue);
-void LCD_DrawPixel(unsigned int a, unsigned int b, unsigned int e);
+//void LCD_DrawLine(int x1, int y1, int x2, int y2, int width, short red, short green, short blue);
+//void LCD_DrawPixel(unsigned int a, unsigned int b, unsigned int e);
 void LCD_Test_BlackToWhite(void);
 void SetLCDStartPixelLineAddress(int x1,int y1, int x2, int y2);
 
@@ -176,6 +196,22 @@ extern void Delay(__IO uint32_t nCount);
 void SetScrollArea(unsigned int top, unsigned int scroll, unsigned int bottom);
 void SetScrollStart(unsigned int line);
 void SetTearingCfg(unsigned char state, unsigned char mode);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //	Write a command to the LCD Register
@@ -552,6 +588,26 @@ void LCD_BacklightOff(void)
 #endif /* LCD_AT070TN83 */
 }
 
+//
+//	Clear the LCD display by zeroing each pixel using
+//	a double loop.
+//	The LCD is HDP+1 x VDP+1
+//
+void LCD_Clear(LCDCOLOR col)
+{
+	uint32_t index = 0;
+
+	LCD_SetColumnPageAddr(0, LCD_WIDTH-1, 0, LCD_HEIGHT-1);
+	LCD_WR_REG(CMD_WRITE_MEM_START);
+
+	while( index < (LCD_WIDTH * LCD_HEIGHT) )
+	{
+		LCD_WR_Data(col);
+		index++;
+	}
+}
+
+
 
 void LCD_DisplayOn(void)
 {
@@ -563,28 +619,651 @@ void LCD_DisplayOff(void)
 	LCD_WR_REG(CMD_SET_DISPLAY_OFF);
 }
 
-void LCD_DrawColorBars(void)
+void LCD_SetFGColor(LCDCOLOR col)
 {
+	col_fgnd = col;
 }
-//
-//	Clear the LCD display by zeroing each pixel using
-//	a double loop.
-//	The LCD is HDP+1 x VDP+1
-//
-void LCD_Clear(LCDCOLOR c)
+
+void LCD_SetBGColor(LCDCOLOR col)
 {
-	uint32_t index = 0;
+	col_bgnd = col;
+}
 
-	LCD_SetColumnPageAddr(0, LCD_WIDTH-1, 0, LCD_HEIGHT-1);
+void LCD_SetPenWidth(uint16_t w)
+{
+	uPenWidth = w;
+}
+
+uint16_t LCD_GetPenWidth(void)
+{
+	return uPenWidth;
+}
+
+void LCD_SetColors(LCDCOLOR fgcol, LCDCOLOR bgcol)
+{
+	LCD_SetFGColor(fgcol);
+	LCD_SetBGColor(bgcol);
+}
+
+void LCD_GetColors(LCDCOLOR *pfgcol, LCDCOLOR *pbgcol)
+{
+	*pfgcol = col_fgnd;
+	*pbgcol = col_bgnd;
+}
+
+void LCD_DrawPixel(int16_t x, int16_t y)
+{
+	LCD_SetColumnPageAddr(x, x, y, y);
 	LCD_WR_REG(CMD_WRITE_MEM_START);
+	LCD_WR_Data(col_fgnd);
+}
 
-	while( index < (LCD_WIDTH * LCD_HEIGHT) )
+/**
+ * @brief	Line drawing algorithm based on line segment(660 msec for 640 calls).
+ * @param	x1: specifies the point 1 x position.
+ * @param	y1: specifies the point 1 y position.
+ * @param	x2: specifies the point 2 x position.
+ * @param	y2: specifies the point 2 y position.
+ * @retval	None
+ * @brief	This algorithm assumes that the coordinate of upper left corner of
+ *			the screen is (0,0), x value increases as it goes right, and
+ *			y value increases as it goes down.
+ */
+
+void LCD_DrawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
+{
+
+	int16_t dx = x2 - x1;
+	int16_t dy = y2 - y1;
+
+	int16_t s0, s1, ln, sh, num;
+	int16_t a0 = uPenWidth>>1;
+	int16_t a1 = uPenWidth - (uPenWidth>>1) - 1;
+
+	/* 2,3,6,7 octant */
+	if( ABS(dx) > ABS(dy) )
 	{
-		LCD_WR_Data(c);
-		index++;
+		/* swapping is required */
+		if(dx < 0)
+		{
+			INTSWAP(x1, x2);
+			INTSWAP(y1, y2);
+		}
+		dx = x2 - x1;
+		dy = y2 - y1;
+
+		/* horizontal line (y1 = y2) */
+		if(dy == 0)
+		{
+			LCD_DrawFillRect(x1, y1 - a0, x2, y1 + a1);
+			return;
+		}
+		else if(dy < 0)
+		{
+			s1 = -1; 
+			sh = -dy;
+		}
+		else if(dy > 0)
+		{
+			s1 = 1;
+			sh = dy;
+		}
+
+		num = dx >> 1;
+		s0 = x1;
+
+		while(x1 < x2)
+		{
+			num += sh;
+			if(!(num < dx))
+			{
+				LCD_DrawFillRect(s0, y1 - a0, x1, y1 + a1);
+				num -= dx;
+				s0 = x1;
+				y1 += s1;
+			}
+			x1++;
+		}
+
+		/* line ending */
+//		if( s0 < x2 ) 
+			LCD_DrawFillRect(s0, y2 - a0, x2, y2 + a1);
+	}
+	/* 1,4,5,8 octant */
+	else
+	{
+		/* SWAP is required */
+		if(dy < 0)
+		{
+			INTSWAP(x1, x2);
+			INTSWAP(y1, y2);
+		}
+
+		dx = x2 - x1;
+		dy = y2 - y1;
+
+		/* vertical line (x1 = x2)*/
+		if(dx == 0)
+		{
+			LCD_DrawFillRect(x1 - a0, y1, x2 + a1, y2);
+			return;
+		}
+		else if(dx < 0)
+		{
+			s1 = -1; 
+			sh = -dx;
+		}
+		else if(dx > 0)
+		{
+			s1 = 1; 
+			sh = dx;
+		}
+
+		num = dy >> 1;
+
+		s0 = y1;
+
+		while(y1 < y2)
+		{
+			num += sh;
+			if(!(num < dy))
+			{
+				LCD_DrawFillRect(x1 - a0, s0, x1 + a1, y1);
+				num -= dy;
+				s0 = y1;
+				x1 += s1;
+			}
+			y1++;
+		}
+		/* line ending */
+//		if( s0 < y2 ) 
+			LCD_DrawFillRect(x2 - a0, s0, x2 + a1, y2);
+	}
+}
+
+#if defined(LCD_TEST)
+/* second version of Bresenham algorithm (1000 msec for 640 calls) */
+void LCD_DrawLineB(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
+{
+	int16_t dx = x2 - x1;
+	int16_t dy = y2 - y1;
+	int16_t sx1 = 0, sy1 = 0, sx2 =0, sy2 = 0;
+	int16_t ln, sh, num;
+
+	if(dx < 0) 
+	{
+		sx1 = -1; 
+		sx2 = -1;
+	} 
+	else if(dx > 0) 
+	{
+		sx1 = 1; 
+		sx2 = 1;
 	}
 
+	if(dy < 0) 
+		sy1 = -1; 
+	else if(dy > 0) 
+		sy1 = 1;
+
+	ln = ABS(dx); 
+	sh = ABS(dy);
+
+	if( !(ln > sh) )
+	{
+		ln = ABS(dy); 
+		sh = ABS(dx);
+
+		if(dy < 0) sy2 = -1; 
+		else if(dy > 0) sy2 = 1;
+
+		sx2 = 0;
+	}
+
+	num = ln >> 1;
+
+	for(dx = 0; dx <= ln; dx++)
+	{
+		LCD_DrawPixel(x1, y1);
+		num += sh;
+
+		if(!(num < ln))
+		{
+			num -= ln;
+			x1 += sx1;
+			y1 += sy1;
+		}
+		else
+		{
+			x1 += sx2;
+			y1 += sy2;
+		}
+	}
+
+#if 0
+/* first version of Bresenham algorithm */
+	int16_t dx = ABS(x2 - x1), sx = x1 < x2 ? 1 :-1;
+	int16_t dy = -ABS(y2 - y1), sy = y1 < y2 ? 1 : -1;
+	int16_t err = dx + dy, e2;
+	
+	/* FIXME : 2 vertical lines */
+	while(1)
+	{
+		LCD_DrawPixel(x1, y1);
+		if((x1 == x2) && (y1 == y2)) break;
+
+		e2 = err * 2;
+
+		if(e2 >= dy)
+		{
+			err += dy;
+			x1 += sx;
+		}
+
+		if(e2 <= dx)
+		{
+			err += dx;
+			y1 += sy;
+		}
+	}
+#endif
 }
+#endif /* LCD_TEST */
+
+/**
+ * @brief	Besenham circle drawing algorithm.
+ * @param	x: specifies the x position of the center.
+ * @param	y: specifies the y position of the center.
+ * @param	r: specifies the radius of the circle.
+ * @retval	None
+ */
+void LCD_DrawCircle(int16_t x, int16_t y, int16_t r)
+{
+	int16_t xt = -r, yt = 0, err = 2-2*r;
+
+	do{
+		LCD_DrawPixel(x - xt, y + yt);
+		LCD_DrawPixel(x - yt, y - xt);
+		LCD_DrawPixel(x + xt, y - yt);
+		LCD_DrawPixel(x + yt, y + xt);
+
+		r = err;
+
+		if( r > xt ) err += ++xt*2 + 1;
+		if( r <= yt ) err += ++yt*2 + 1;
+		
+	} while(xt < 0);
+}
+
+
+/**
+ * @brief	Besenham ellipse drawing algorithm.
+ * @param	x1: specifies the point 1 x position.
+ * @param	y1: specifies the point 1 y position.
+ * @param	x2: specifies the point 2 x position.
+ * @param	y2: specifies the point 2 y position.
+ * @retval	None
+ */
+void LCD_DrawEllipseRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
+{
+	int16_t a = ABS(x2 - x1), b = ABS(y2 - y1), b1 = b & 1;
+	int32_t dx = 4*(1 - a)*b*b, dy = 4*(b1 + 1)*a*a;
+	int32_t err = dx + dy + b1*a*a, e2;
+
+	if(x1 > x2)
+	{
+		x1 = x2;
+		x2 += a;
+	}
+	if(y1 > y2) y1 = y2;
+
+	y1 += (b + 1)/2;
+	y2 = y1 - b1;
+	a *= 8 * a;
+	b1 = 8 * b * b;
+	
+	do{
+		LCD_DrawPixel(x2, y1);
+		LCD_DrawPixel(x1, y1);
+		LCD_DrawPixel(x1, y2);
+		LCD_DrawPixel(x2, y2);
+
+		e2 = 2 * err;
+		if(e2 >= dx)
+		{
+			x1++; 
+			x2--;
+			err += dx += b1;
+		}
+		if(e2 <= dy)
+		{
+			y1++;
+			y2--;
+			err += dy += a;
+		}
+	} while(x1 <= x2);
+
+	while((y1 - y2) < b)
+	{
+		LCD_DrawPixel(x1 - 1, y1);
+		LCD_DrawPixel(x2 + 1, y1++);
+		LCD_DrawPixel(x1 - 1, y2);
+		LCD_DrawPixel(x2 + 1, y2--);
+	}
+}
+
+#if defined(LCD_TEST) 
+
+uint16_t LCD_DrawTestPattern(unsigned int index)
+{
+	int16_t x1, y1, x2, y2, delx, dely;
+	LCDCOLOR col;
+	unsigned i, j;
+	uint16_t dif_red, dif_green, dif_blue;
+	uint16_t col_red, col_green, col_blue;
+	uint16_t retval;
+
+	/* black background */
+	LCD_Clear(col_bgnd);
+	LCD_SetBGColor(LCD_COLOR_BLACK);
+
+	/* milisecond counter start */
+	uLCD_Delay = 0xFFFF;
+
+	/* draw 640 lines with Bresenham algorithm */
+	if( index == 1 )
+	{
+		delx = LCD_WIDTH / 16;
+		dely = LCD_HEIGHT / 8;
+
+		/* lines between vertical points */
+		LCD_SetFGColor(LCD_COLOR_GREEN);
+		x1 = delx;
+		x2 = LCD_WIDTH - delx;
+		y1 = dely;
+
+		for( i = 1; i < 8; i++ )
+		{
+			y2 = dely;
+
+			for( j = 1; j < 8; j++ )
+			{
+				LCD_DrawLineB(x1, y1, x2, y2);
+				LCD_DrawLineB(x2, y2, x1, y1);
+				y2 += dely;
+			}
+
+			y1 += dely;
+		}
+
+		/* lines between horizontal points */
+		LCD_SetFGColor(LCD_COLOR_BLUE);
+		y1 = dely;
+		y2 = LCD_HEIGHT - dely;
+		x1 = delx;
+
+		for( i = 1; i < 16; i++ )
+		{
+			x2 = delx;
+
+			for( j = 1; j < 16; j++ )
+			{
+				LCD_DrawLineB(x1, y1, x2, y2);
+				LCD_DrawLineB(x2, y2, x1, y1);
+				
+				x2 += delx;
+			}
+
+			x1 += delx;
+		}
+	}
+	/* draw 640 lines with line segment method */
+	else if( index == 2 )
+	{
+		delx = LCD_WIDTH / 16;
+		dely = LCD_HEIGHT / 8;
+
+		/* lines between vertical points */
+		LCD_SetFGColor(LCD_COLOR_GREEN);
+		x1 = delx;
+		x2 = LCD_WIDTH - delx;
+		y1 = dely;
+
+		for( i = 1; i < 8; i++ )
+		{
+			y2 = dely;
+
+			for( j = 1; j < 8; j++ )
+			{
+				LCD_DrawLine(x1, y1, x2, y2);
+				LCD_DrawLine(x2, y2, x1, y1);
+				y2 += dely;
+			}
+
+			y1 += dely;
+		}
+
+		/* lines between horizontal points */
+		LCD_SetFGColor(LCD_COLOR_BLUE);
+		y1 = dely;
+		y2 = LCD_HEIGHT - dely;
+		x1 = delx;
+
+		for( i = 1; i < 16; i++ )
+		{
+			x2 = delx;
+
+			for( j = 1; j < 16; j++ )
+			{
+				LCD_DrawLine(x1, y1, x2, y2);
+				LCD_DrawLine(x2, y2, x1, y1);
+				x2 += delx;
+			}
+
+			x1 += delx;
+		}
+	}
+	/* draw 128 lines with thickness 5 */
+	else if( index == 3 )
+	{
+		delx = LCD_WIDTH / 8;
+		dely = LCD_HEIGHT / 8;
+
+		LCD_SetPenWidth(5);
+		/* lines between vertical points */
+		LCD_SetFGColor(LCD_COLOR_GREEN);
+		x1 = delx;
+		x2 = LCD_WIDTH - delx;
+		y1 = dely;
+
+		for( i = 1; i < 8; i++ )
+		{
+			y2 = dely;
+
+			for( j = 1; j < 8; j++ )
+			{
+				LCD_DrawLine(x1, y1, x2, y2);
+				LCD_DrawLine(x2, y2, x1, y1);
+				y2 += dely;
+			}
+
+			y1 += dely;
+		}
+
+		/* lines between horizontal points */
+		LCD_SetFGColor(LCD_COLOR_BLUE);
+		y1 = dely;
+		y2 = LCD_HEIGHT - dely;
+		x1 = delx;
+
+		for( i = 1; i < 8; i++ )
+		{
+			x2 = delx;
+
+			for( j = 1; j < 8; j++ )
+			{
+				LCD_DrawLine(x1, y1, x2, y2);
+				LCD_DrawLine(x2, y2, x1, y1);
+				x2 += delx;
+			}
+
+			x1 += delx;
+		}
+
+		LCD_SetPenWidth(1);
+	}
+	/* draw circles */
+	else if( index == 4)
+	{
+		LCD_SetFGColor(LCD_COLOR_RED);
+		LCD_DrawCircle((LCD_WIDTH>>1), (LCD_HEIGHT>>1) - 1, (LCD_HEIGHT>>1) - 1);
+	}
+	/* draw ellipses */
+	else if( index == 5 )
+	{
+		LCD_SetFGColor(LCD_COLOR_GREEN);
+	}
+	/* draw color filled rectangles */
+	else if( index == 6 )
+	{
+		LCD_SetFGColor(LCD_COLOR_BLUE);
+		LCD_DrawFillRect(0, 0, LCD_WIDTH - 1, LCD_HEIGHT - 1);
+	}
+	/* draw color filled circles */
+	else if( index == 7)
+	{
+		LCD_SetFGColor(LCD_COLOR_RED);
+		LCD_DrawCircle((LCD_WIDTH>>1), (LCD_HEIGHT>>1) - 1, (LCD_HEIGHT>>1) - 1);
+	}
+	/* draw color filled ellipses */
+	else if( index == 8 )
+	{
+	}
+	/* draw points */
+	else if( index == 9 )
+	{
+		LCD_SetFGColor(LCD_COLOR_RED);
+
+		x1 = x2 = LCD_WIDTH / 8;
+		y1 = y2 = LCD_HEIGHT / 8;
+
+		for( i = 0; i < 7; i++)
+		{
+			x1 = x2;
+
+			for( j = 0; j < 7; j++ )
+			{
+				LCD_DrawPixel(x1, y1);
+				x1 += x2;
+			}
+
+			y1 += y2;
+		}
+
+	}
+	/* all the other case: contrast color bar(7 color bar, 32 cells each) */
+	else
+	{
+		delx = 	LCD_WIDTH / 32;
+		dely = LCD_HEIGHT / 7;
+
+		/* initial y positions */
+		y1 = 0;
+		y2 = y1 + dely;
+
+		for( i = 0; i < 7; i++ )
+		{
+			/* initial x positions */
+			x1 = 0;
+			x2 = x1 + delx;
+
+			if(i == 0)
+			{
+				/* blue color bar */
+				dif_red = 0x00;
+				dif_green = 0x00;
+				dif_blue = ((0xFF)>>5);
+			}
+			else if(i == 1)
+			{
+				/* green color bar */
+				dif_red = 0x00;
+				dif_green = ((0xFF)>>5);
+				dif_blue = 0x00;
+			}
+			else if(i == 2)
+			{
+				/* cyan color bar */
+				dif_red = 0x00;
+				dif_green = ((0xFF)>>5);
+				dif_blue = ((0xFF)>>5);
+			}
+			else if(i == 3)
+			{
+				/* red color bar */
+				dif_red = ((0xFF)>>5);
+				dif_green = 0x00;
+				dif_blue = 0x00;
+			}
+			else if(i == 4)
+			{
+				/* magenta color bar */
+				dif_red = ((0xFF)>>5);
+				dif_green = 0x00;
+				dif_blue = ((0xFF)>>5);
+			}
+			else if(i == 5)
+			{
+				/* yellow color bar */
+				dif_red = ((0xFF)>>5);
+				dif_green = ((0xFF)>>5);
+				dif_blue = 0x00;
+			}
+			else if(i == 6)
+			{
+				/* white color bar */
+				dif_red = ((0xFF)>>5);
+				dif_green = ((0xFF)>>5);
+				dif_blue = ((0xFF)>>5);
+			}
+
+			/* initial color value */
+			col_red = dif_red;
+			col_green = dif_green;
+			col_blue = dif_blue;
+
+			for( j = 0; j < 32; j++ )
+			{
+				LCD_SetFGColor(LCD_COLOR(col_red, col_green, col_blue));
+				LCD_DrawFillRect(x1, y1 , x2, y2);
+
+				/* next color value */
+				col_red += dif_red;	
+				col_green += dif_green;
+				col_blue += dif_blue;
+
+				/* next x position */
+				x1 = x2 ;
+				x2 = x1 + delx;
+
+			}
+
+			/* advance to the next y position */
+			y1 = y2;
+			y2 = y2 + dely;
+
+			/* revert x position */
+
+		}
+	}
+
+	retval = 0xFFFF - uLCD_Delay;
+	uLCD_Delay = 0;
+
+	return retval;
+}
+
+#endif /* LCD_TEST */
 
 void LCD_SetColumnPageAddr(uint16_t colS, uint16_t colE, uint16_t pageS, uint16_t pageE)
 {
@@ -608,8 +1287,32 @@ void LCD_SetColumnPageAddr(uint16_t colS, uint16_t colE, uint16_t pageS, uint16_
 }
 
 
+void LCD_DrawRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
+{
+	LCD_DrawLine(x1, y1, x1, y2);
+	LCD_DrawLine(x1, y1, x2, y1);
+	LCD_DrawLine(x2, y1, x2, y2);
+	LCD_DrawLine(x1, y2, x2, y2);
+}
 
+void LCD_DrawFillRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
+{
+	int16_t ref_x;
+	LCD_SetColumnPageAddr(x1, x2, y1, y2);
+	LCD_WR_REG(CMD_WRITE_MEM_START);
 
+	ref_x = x1;
+	while(y1 <= y2)
+	{
+		while(x1 <= x2)
+		{
+			LCD_WR_Data(col_fgnd);
+			x1++;
+		}
+		y1++;
+		x1 = ref_x;
+	}
+}
 
 
 
@@ -724,6 +1427,7 @@ void LCD_DrawCheckerPattern(short blue, short green, short red)
 // 	Draws a line from between two coordinates, using a Pen width and colour
 //	Needs to work out the addresses where the line is to be drawn. Does not 
 //	take in to account anti-aliasing
+/*
 void LCD_DrawLine(int x1, int y1, int x2, int y2, int width, short red, short green, short blue)
 {
 	// For now, just do vertical or horizongtal lines. Diagonals come later.
@@ -749,6 +1453,7 @@ void LCD_DrawLine(int x1, int y1, int x2, int y2, int width, short red, short gr
 	}
 
 }
+*/
 
 // PiXCLe command primitive PARTIALLY TESTED
 // Draws an ellipse (or circle) within the bounding rectangle. Use the trig functions to 
@@ -1814,80 +2519,6 @@ void LCD_DrawFullCircle(uint16_t Xpos, uint16_t Ypos, uint16_t Radius)
   LCD_DrawCircle(Xpos, Ypos, Radius);
 }
 
-/**
-  * @brief  Displays an uni line (between two points).
-  * @param  x1: specifies the point 1 x position.
-  * @param  y1: specifies the point 1 y position.
-  * @param  x2: specifies the point 2 x position.
-  * @param  y2: specifies the point 2 y position.
-  * @retval None
-  */
-void LCD_DrawUniLine(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
-{
-  int16_t deltax = 0, deltay = 0, x = 0, y = 0, xinc1 = 0, xinc2 = 0, 
-  yinc1 = 0, yinc2 = 0, den = 0, num = 0, numadd = 0, numpixels = 0, 
-  curpixel = 0;
-  
-  deltax = ABS(x2 - x1);        /* The difference between the x's */
-  deltay = ABS(y2 - y1);        /* The difference between the y's */
-  x = x1;                       /* Start x off at the first pixel */
-  y = y1;                       /* Start y off at the first pixel */
-  
-  if (x2 >= x1)                 /* The x-values are increasing */
-  {
-    xinc1 = 1;
-    xinc2 = 1;
-  }
-  else                          /* The x-values are decreasing */
-  {
-    xinc1 = -1;
-    xinc2 = -1;
-  }
-  
-  if (y2 >= y1)                 /* The y-values are increasing */
-  {
-    yinc1 = 1;
-    yinc2 = 1;
-  }
-  else                          /* The y-values are decreasing */
-  {
-    yinc1 = -1;
-    yinc2 = -1;
-  }
-  
-  if (deltax >= deltay)         /* There is at least one x-value for every y-value */
-  {
-    xinc1 = 0;                  /* Don't change the x when numerator >= denominator */
-    yinc2 = 0;                  /* Don't change the y for every iteration */
-    den = deltax;
-    num = deltax / 2;
-    numadd = deltay;
-    numpixels = deltax;         /* There are more x-values than y-values */
-  }
-  else                          /* There is at least one y-value for every x-value */
-  {
-    xinc2 = 0;                  /* Don't change the x for every iteration */
-    yinc1 = 0;                  /* Don't change the y when numerator >= denominator */
-    den = deltay;
-    num = deltay / 2;
-    numadd = deltax;
-    numpixels = deltay;         /* There are more y-values than x-values */
-  }
-  
-  for (curpixel = 0; curpixel <= numpixels; curpixel++)
-  {
-    PutPixel(x, y);             /* Draw the current pixel */
-    num += numadd;              /* Increase the numerator by the top of the fraction */
-    if (num >= den)             /* Check if numerator >= denominator */
-    {
-      num -= den;               /* Calculate the new numerator value */
-      x += xinc1;               /* Change the x as appropriate */
-      y += yinc1;               /* Change the y as appropriate */
-    }
-    x += xinc2;                 /* Change the x as appropriate */
-    y += yinc2;                 /* Change the y as appropriate */
-  }
-}
 
 /**
   * @brief  Displays an polyline (between many points).

@@ -13,11 +13,14 @@
 
 /* demo menu list */
 enum{
-	MENU_LED_ON = 0,
-	MENU_LED_OFF,
-	MENU_LCD_TEST1,
+	MENU_LCD_TEST1 = 0,
 	MENU_LCD_TEST2,
 	MENU_LCD_TEST3,
+	MENU_LCD_TEST4,
+	MENU_LCD_TEST5,
+	MENU_LCD_TEST6,
+	MENU_LCD_TEST7,
+	MENU_LCD_TEST8,
 	MENU_LCD_TESTX,
 	MENU_END
 };
@@ -46,6 +49,7 @@ void TestLCD(void);
 int main(void)
 {
 	uint16_t u16Menu=0;
+	uint16_t uVal;
 
 	/* Initialize SysTick - 1msec resolution */
 	SysTick_Config(SystemCoreClock / 1000);
@@ -56,7 +60,10 @@ int main(void)
 
 	/* Initialize LCD support */
 	LCD_Init();
+	LCD_Clear(LCD_COLOR_BLACK);
+	LCD_DisplayOn();
 	printf("LCD initialized\n");
+	LCD_BacklightOn();
 
 	while (1) 
 	{
@@ -66,36 +73,41 @@ int main(void)
 			/* clear button interrupt flag */
 			uIRQFlag = 0;
 
-			if( u16Menu == MENU_LED_ON ) {
-				MBD_LEDOn();
-				printf("LED1 Turned On\n");
-			}
-			else if( u16Menu == MENU_LED_OFF ) {
-				MBD_LEDOff();
-				LCD_Clear(LCD_COLOR_BLACK);
-				LCD_BacklightOn();
-				printf("LED1 Turned Off\n");
-				LCD_DisplayOn();
-			}
-			else if( u16Menu == MENU_LCD_TEST1 ) {
-//				LCD_Clear(LCD_COLOR_RED);
-				LCD_Clear(LCD_COLOR(255,0,0));
-				printf("Red\n");
+			if( u16Menu == MENU_LCD_TEST1 ) {
+				uVal = LCD_DrawTestPattern(1);
+				printf("Draw 640 lines with Bresenham algorithm: %d msec\n", uVal);
 			}
 			else if( u16Menu == MENU_LCD_TEST2 ) {
-//				LCD_Clear(LCD_COLOR_GREEN);
-				LCD_Clear(LCD_COLOR(0,255,0));
-				printf("Green\n");
+				uVal = LCD_DrawTestPattern(2);
+				printf("Draw 640 lines with line segment method: %d msec\n", uVal);
 			}
 			else if( u16Menu == MENU_LCD_TEST3 ) {
-//				LCD_Clear(LCD_COLOR_BLUE);
-				LCD_Clear(LCD_COLOR(0,0,255));
-				printf("Blue\n");
+				uVal = LCD_DrawTestPattern(3);
+				printf("Draw 128 lines with thickness 5: %d msec\n", uVal);
+			}
+			else if( u16Menu == MENU_LCD_TEST4 ) {
+				uVal = LCD_DrawTestPattern(4);
+				printf("LCD test pattern 4: %d msec\n", uVal);
+			}
+			else if( u16Menu == MENU_LCD_TEST5 ) {
+				uVal = LCD_DrawTestPattern(5);
+				printf("LCD test pattern 5: %d msec\n", uVal);
+			}
+			else if( u16Menu == MENU_LCD_TEST6 ) {
+				uVal = LCD_DrawTestPattern(6);
+				printf("LCD test pattern 6: %d msec\n", uVal);
+			}
+			else if( u16Menu == MENU_LCD_TEST7 ) {
+				uVal = LCD_DrawTestPattern(7);
+				printf("LCD test pattern 7: %d msec\n", uVal);
+			}
+			else if( u16Menu == MENU_LCD_TEST8 ) {
+				uVal = LCD_DrawTestPattern(8);
+				printf("LCD test pattern 8: %d msec\n", uVal);
 			}
 			else if( u16Menu == MENU_LCD_TESTX ) {
-				LCD_BacklightOff();
-				LCD_DisplayOff();
-				printf("LCD Off\n");
+				uVal = LCD_DrawTestPattern(0);
+				printf("LCD test pattern 0: %d msec\n", uVal);
 			}
 
 			/* at the end of menu, restart all over */

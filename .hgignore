@@ -21,6 +21,10 @@ syntax: glob
 *.swp
 *.htm
 
+# vim session data
+Session.vim
+.exrc
+
 #
 # Top-level generic files
 #
