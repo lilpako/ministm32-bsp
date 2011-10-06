@@ -95,7 +95,7 @@ int main(void)
 			}
 			else if( u16Menu == MENU_LCD_TEST6 ) {
 				uVal = LCD_DrawTestPattern(6);
-				printf("Ellipses with various line thickness: %d msec\n", uVal);
+				printf("LCD test pattern 6: %d msec\n", uVal);
 			}
 			else if( u16Menu == MENU_LCD_TEST7 ) {
 				uVal = LCD_DrawTestPattern(7);

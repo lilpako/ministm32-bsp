@@ -1,5 +1,8 @@
 /*******************************************************************************
  *
+ * @brief	Graphic routines here all assume that the coordinate of upper left 
+ *			corner of the screen is (0,0), x value increases as it goes right, 
+ *			and y value increases as it goes down.
  */ 
 
 #include "miniSTM32.h"
@@ -661,16 +664,34 @@ void LCD_DrawPixel(int16_t x, int16_t y)
 	LCD_WR_Data(col_fgnd);
 }
 
+void LCD_SetColumnPageAddr(uint16_t colS, uint16_t colE, uint16_t pageS, uint16_t pageE)
+{
+	/* set column address */
+	LCD_WR_REG(CMD_SET_COL_ADDRESS);
+	/* start column */
+	LCD_WR_Data(colS >> 8);
+	LCD_WR_Data(colS & 0x00ff);
+	/* end column */
+	LCD_WR_Data(colE >> 8);
+	LCD_WR_Data(colE & 0x00ff);
+
+	/* set page address */
+    LCD_WR_REG(CMD_SET_PAGE_ADDRESS);
+	/* start page */
+	LCD_WR_Data(pageS >> 8);
+	LCD_WR_Data(pageS & 0x00ff);
+	/* end page */
+	LCD_WR_Data(pageE >> 8); 
+	LCD_WR_Data(pageE & 0x00ff);
+}
+
 /**
- * @brief	Line drawing algorithm based on line segment(660 msec for 640 calls).
+ * @brief	Line drawing routine based on line segment(660 msec for 640 calls).
  * @param	x1: specifies the point 1 x position.
  * @param	y1: specifies the point 1 y position.
  * @param	x2: specifies the point 2 x position.
  * @param	y2: specifies the point 2 y position.
  * @retval	None
- * @brief	This algorithm assumes that the coordinate of upper left corner of
- *			the screen is (0,0), x value increases as it goes right, and
- *			y value increases as it goes down.
  */
 
 void LCD_DrawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
@@ -784,146 +805,274 @@ void LCD_DrawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 	}
 }
 
-#if defined(LCD_TEST)
-/* second version of Bresenham algorithm (1000 msec for 640 calls) */
-void LCD_DrawLineB(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
+void LCD_DrawRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 {
-	int16_t dx = x2 - x1;
-	int16_t dy = y2 - y1;
-	int16_t sx1 = 0, sy1 = 0, sx2 =0, sy2 = 0;
-	int16_t ln, sh, num;
+	int16_t del = (uPenWidth)>>1;
 
-	if(dx < 0) 
+	/* this will fix one pixel misalignment at the corner */
+	if( uPenWidth & 0x1 )
 	{
-		sx1 = -1; 
-		sx2 = -1;
-	} 
-	else if(dx > 0) 
-	{
-		sx1 = 1; 
-		sx2 = 1;
+		LCD_DrawLine(x1, y1, x2 + del, y1);
+		LCD_DrawLine(x2, y1, x2, y2 + del);
 	}
-
-	if(dy < 0) 
-		sy1 = -1; 
-	else if(dy > 0) 
-		sy1 = 1;
-
-	ln = ABS(dx); 
-	sh = ABS(dy);
-
-	if( !(ln > sh) )
+	else
 	{
-		ln = ABS(dy); 
-		sh = ABS(dx);
-
-		if(dy < 0) sy2 = -1; 
-		else if(dy > 0) sy2 = 1;
-
-		sx2 = 0;
+		LCD_DrawLine(x1, y1, x2 + del - 1, y1);
+		LCD_DrawLine(x2, y1, x2, y2 + del - 1);
 	}
-
-	num = ln >> 1;
-
-	for(dx = 0; dx <= ln; dx++)
-	{
-		LCD_DrawPixel(x1, y1);
-		num += sh;
-
-		if(!(num < ln))
-		{
-			num -= ln;
-			x1 += sx1;
-			y1 += sy1;
-		}
-		else
-		{
-			x1 += sx2;
-			y1 += sy2;
-		}
-	}
-
-#if 0
-/* first version of Bresenham algorithm */
-	int16_t dx = ABS(x2 - x1), sx = x1 < x2 ? 1 :-1;
-	int16_t dy = -ABS(y2 - y1), sy = y1 < y2 ? 1 : -1;
-	int16_t err = dx + dy, e2;
-	
-	/* FIXME : 2 vertical lines */
-	while(1)
-	{
-		LCD_DrawPixel(x1, y1);
-		if((x1 == x2) && (y1 == y2)) break;
-
-		e2 = err * 2;
-
-		if(e2 >= dy)
-		{
-			err += dy;
-			x1 += sx;
-		}
-
-		if(e2 <= dx)
-		{
-			err += dx;
-			y1 += sy;
-		}
-	}
-#endif
+	LCD_DrawLine(x2, y2, x1 - del, y2);
+	LCD_DrawLine(x1, y2, x1, y1 - del);
 }
-#endif /* LCD_TEST */
+
+void LCD_DrawFillRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
+{
+	int16_t ref_x;
+	LCD_SetColumnPageAddr(x1, x2, y1, y2);
+	LCD_WR_REG(CMD_WRITE_MEM_START);
+
+	ref_x = x1;
+	while(y1 <= y2)
+	{
+		while(x1 <= x2)
+		{
+			LCD_WR_Data(col_fgnd);
+			x1++;
+		}
+		y1++;
+		x1 = ref_x;
+	}
+}
 
 /**
- * @brief	Besenham circle drawing algorithm.
+ * @brief	Circle drawing routine.
  * @param	x: specifies the x position of the center.
  * @param	y: specifies the y position of the center.
  * @param	r: specifies the radius of the circle.
  * @retval	None
  */
+
+/*
+ * Mid point algorithm
+ */
 void LCD_DrawCircle(int16_t x, int16_t y, int16_t r)
 {
-	int16_t xt, yt, err, r0, r1, rx;
+	int16_t dx = 0, dy = r;
+	int16_t p = 1 - r;
+	int16_t dr0 = (uPenWidth)>>1;
+	int16_t dr1 = (uPenWidth - 1)>>1;
 
-	r0 = r - (uPenWidth>>1);
-	r1 = r + (uPenWidth>>1);
-
-	for(rx = r0; rx <= r1; rx++)
+	/* one pixel overlap will remove the speckles at 45 degrees */
+	while(dx <= dy)
 	{
-		r = rx;
-		xt = -r;
-		yt = 0;
-		err = 2 - (r<<1);
+		/* vertical rectangles */
+		/* 4 th octant */
+		LCD_DrawFillRect(x + dx, y + dy - dr0, x + dx, y + dy + dr1);
+		/* 5 th octant */
+		LCD_DrawFillRect(x - dx, y + dy - dr0, x - dx, y + dy + dr1);
+		/* 1 th octant */
+		LCD_DrawFillRect(x + dx, y - dy - dr0, x + dx, y - dy + dr1);
+		/* 8 th octant */
+		LCD_DrawFillRect(x - dx, y - dy - dr0, x - dx, y - dy + dr1);
 
-		do{
-			/* first quadrant */
-			LCD_DrawPixel(x - xt, y + yt);
-			/* second quadrant */
-			LCD_DrawPixel(x - yt, y - xt);
-			/* third quadrant */
-			LCD_DrawPixel(x + xt, y - yt);
-			/* forth quadrant */
-			LCD_DrawPixel(x + yt, y + xt);
+		/* horizontal rectangles */
+		/* 3 th octant */
+		LCD_DrawFillRect(x + dy - dr0, y + dx, x + dy + dr1, y + dx);
+		/* 6 th octant */
+		LCD_DrawFillRect(x - dy - dr0, y + dx, x - dy + dr1, y + dx);
+		/* 2 th octant */ 
+		LCD_DrawFillRect(x + dy - dr0, y - dx, x + dy + dr1, y - dx);
+		/* 7 th octant */
+		LCD_DrawFillRect(x - dy - dr0, y - dx, x - dy + dr1, y - dx);
 
-			r = err;
+		dx++;
 
-			if( r > xt ) err += ((++xt)<<1) + 1;
-			if( r <= yt ) err += ((++yt)<<1) + 1;
-		
-		} while(xt < 0);
+		if(p < 0)
+			p = p + (dx<<1) + 1;
+		else
+		{
+			dy--;
+			p = p + ((dx-dy)<<1) + 1;
+		}
+
+		LCD_DrawFillRect(x + dx, y + dy - dr0, x + dx, y + dy + dr1);
+		LCD_DrawFillRect(x - dx, y + dy - dr0, x - dx, y + dy + dr1);
+		LCD_DrawFillRect(x + dx, y - dy - dr0, x + dx, y - dy + dr1);
+		LCD_DrawFillRect(x - dx, y - dy - dr0, x - dx, y - dy + dr1);
+
+		LCD_DrawFillRect(x + dy - dr0, y + dx, x + dy + dr1, y + dx);
+		LCD_DrawFillRect(x - dy - dr0, y + dx, x - dy + dr1, y + dx);
+		LCD_DrawFillRect(x + dy - dr0, y - dx, x + dy + dr1, y - dx);
+		LCD_DrawFillRect(x - dy - dr0, y - dx, x - dy + dr1, y - dx);
+	}
+
+
+#if 0
+	int16_t dx = 0, dy = r;
+	int16_t p = 1 - r;
+
+	while(dx < dy)
+	{
+		LCD_DrawPixel(x + dx, y + dy);
+		LCD_DrawPixel(x - dx, y + dy);
+		LCD_DrawPixel(x + dx, y - dy);
+		LCD_DrawPixel(x - dx, y - dy);
+
+		LCD_DrawPixel(x + dy, y + dx);
+		LCD_DrawPixel(x - dy, y + dx);
+		LCD_DrawPixel(x + dy, y - dx);
+		LCD_DrawPixel(x - dy, y - dx);
+
+		dx++;
+		if(p < 0)
+			p = p + (dx<<1) + 1;
+		else
+		{
+			dy--;
+			p = p + ((dx-dy)<<1) + 1;
+		}
+
+		LCD_DrawPixel(x + dx, y + dy);
+		LCD_DrawPixel(x - dx, y + dy);
+		LCD_DrawPixel(x + dx, y - dy);
+		LCD_DrawPixel(x - dx, y - dy);
+
+		LCD_DrawPixel(x + dy, y + dx);
+		LCD_DrawPixel(x - dy, y + dx);
+		LCD_DrawPixel(x + dy, y - dx);
+		LCD_DrawPixel(x - dy, y - dx);
+	}
+#endif
+}
+
+#if 0
+/*
+ * Second version of Bresenham algorithm
+ * no noticable advantages over mid point algorithm
+ */
+void LCD_DrawCircleB(int16_t x, int16_t y, int16_t r)
+{
+	int16_t dx = 0, dy = r;
+	int16_t d = 3 - (r<<1);
+
+	while(dx < dy)
+	{
+		LCD_DrawPixel(x + dx, y + dy);
+		LCD_DrawPixel(x - dx, y + dy);
+		LCD_DrawPixel(x + dx, y - dy);
+		LCD_DrawPixel(x - dx, y - dy);
+
+		LCD_DrawPixel(x + dy, y + dx);
+		LCD_DrawPixel(x - dy, y + dx);
+		LCD_DrawPixel(x + dy, y - dx);
+		LCD_DrawPixel(x - dy, y - dx);
+
+		dx++;
+
+		if(d < 0)
+			d = d + (dx<<2) + 6;
+		else
+		{
+			dy--;
+			d = d + ((dx-dy)<<2) + 10;
+		}
+
+		LCD_DrawPixel(x + dx, y + dy);
+		LCD_DrawPixel(x - dx, y + dy);
+		LCD_DrawPixel(x + dx, y - dy);
+		LCD_DrawPixel(x - dx, y - dy);
+
+		LCD_DrawPixel(x + dy, y + dx);
+		LCD_DrawPixel(x - dy, y + dx);
+		LCD_DrawPixel(x + dy, y - dx);
+		LCD_DrawPixel(x - dy, y - dx);
 	}
 }
 
 
+#endif
+
 /**
- * @brief	Besenham ellipse drawing algorithm.
+ * @brief	Ellipse drawing routine.
  * @param	x1: specifies the point 1 x position.
  * @param	y1: specifies the point 1 y position.
  * @param	x2: specifies the point 2 x position.
  * @param	y2: specifies the point 2 y position.
  * @retval	None
  */
+void LCD_DrawEllipse(int16_t x, int16_t y, int16_t rx, int16_t ry)
+{
+	int32_t sx = rx * rx;
+	int32_t sy = ry * ry;
+
+	int32_t dx = 0, dy = ry, p;
+	int32_t px = 0, py = (sx * dy)<<1;
+
+	/* 2nd quadrant */
+	LCD_DrawPixel(x + dx, y + dy);
+	/* 3rd quadrant */
+	LCD_DrawPixel(x - dx, y + dy);
+	/* 1st quadrant */
+	LCD_DrawPixel(x + dx, y - dy);
+	/* 4th quadrant */
+	LCD_DrawPixel(x - dx, y - dy);
+
+	/* region 1 */
+	p = sy - (sx * ry) + (sx>>2);
+
+	while(px < py)
+	{
+		dx++;
+		px = px + (sy<<1);
+
+		if(p < 0)
+			p = p + sy + px;
+		else
+		{
+			dy--;
+			py = py - (sx<<1);
+			p = p + sy + px - py;
+		}
+
+		/* 4th octant */
+		LCD_DrawPixel(x + dx, y + dy);
+		/* 5th octant */
+		LCD_DrawPixel(x - dx, y + dy);
+		LCD_DrawPixel(x + dx, y - dy);
+		LCD_DrawPixel(x - dx, y - dy);
+	}
+
+	/* region 2 */
+	p = (sy * ((dx<<1) + 1) * ((dx<<1) + 1) + sx * ((dy<<1) - 2) * ((dy<<1) - 2) 
+		- ((sx * sy)<<2))>>2;
+
+	while(dy > 0)
+	{
+		dy--;
+		py = py - (sx<<1);
+
+		if(p > 0)
+			p = p + sx - py;
+		else
+		{
+			dx++;
+			px = px + (sy<<1);
+			p = p + sx - py + px;
+		}
+
+		LCD_DrawPixel(x + dx, y + dy);
+		LCD_DrawPixel(x - dx, y + dy);
+		LCD_DrawPixel(x + dx, y - dy);
+		LCD_DrawPixel(x - dx, y - dy);
+	}
+}
+
+
+/* first version of Bresenham algorithm
+ * not working properly
+ */
 void LCD_DrawEllipseRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 {
+	/* FIXME: something wrong with this algorithm */
 	int16_t a = ABS(x2 - x1), b = ABS(y2 - y1), b1 = b & 1;
 	int32_t dx = 4*(1 - a)*b*b, dy = 4*(b1 + 1)*a*a;
 	int32_t err = dx + dy + b1*a*a, e2;
@@ -1191,27 +1340,29 @@ uint16_t LCD_DrawTestPattern(unsigned int index)
 	/* draw 8 ellipses with various sizes and line thickness */
 	else if(index == 6)
 	{
-
-		dely = LCD_HEIGHT>>4;
+		delx = (LCD_WIDTH>>4) - 8;
+		dely = (LCD_HEIGHT>>4) - 5;
 
 		/* center and radius */
 		x1 = LCD_WIDTH>>1;
 		y1 = LCD_HEIGHT>>1;
-		y2 = LCD_HEIGHT>>2;
+
+		x2 = LCD_WIDTH>>3;
+		y2 = LCD_HEIGHT>>3;
 
 		for(i = 0; i < 8; i++)
 		{
 			LCD_SetFGColor(colors[i]);
 
-			LCD_DrawCircle(x1, y1, y2);
+			LCD_DrawEllipse(x1, y1, x2, y2);
 
 			uPenWidth++;
 
+			x2 += delx;
 			y2 += dely;
 		}
 
 		LCD_SetPenWidth(1);
-
 	}
 	/* draw color filled rectangles */
 	else if(index == 7)
@@ -1353,56 +1504,94 @@ uint16_t LCD_DrawTestPattern(unsigned int index)
 	return retval;
 }
 
-#endif /* LCD_TEST */
-
-void LCD_SetColumnPageAddr(uint16_t colS, uint16_t colE, uint16_t pageS, uint16_t pageE)
+/* second version of Bresenham algorithm (1000 msec for 640 calls) 
+ * slow and not easy to extend for multi-pixel thickness
+ */
+void LCD_DrawLineB(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 {
-	/* set column address */
-	LCD_WR_REG(CMD_SET_COL_ADDRESS);
-	/* start column */
-	LCD_WR_Data(colS >> 8);
-	LCD_WR_Data(colS & 0x00ff);
-	/* end column */
-	LCD_WR_Data(colE >> 8);
-	LCD_WR_Data(colE & 0x00ff);
+	int16_t dx = x2 - x1;
+	int16_t dy = y2 - y1;
+	int16_t sx1 = 0, sy1 = 0, sx2 =0, sy2 = 0;
+	int16_t ln, sh, num;
 
-	/* set page address */
-    LCD_WR_REG(CMD_SET_PAGE_ADDRESS);
-	/* start page */
-	LCD_WR_Data(pageS >> 8);
-	LCD_WR_Data(pageS & 0x00ff);
-	/* end page */
-	LCD_WR_Data(pageE >> 8); 
-	LCD_WR_Data(pageE & 0x00ff);
-}
-
-
-void LCD_DrawRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
-{
-	LCD_DrawLine(x1, y1, x1, y2);
-	LCD_DrawLine(x1, y1, x2, y1);
-	LCD_DrawLine(x2, y1, x2, y2);
-	LCD_DrawLine(x1, y2, x2, y2);
-}
-
-void LCD_DrawFillRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
-{
-	int16_t ref_x;
-	LCD_SetColumnPageAddr(x1, x2, y1, y2);
-	LCD_WR_REG(CMD_WRITE_MEM_START);
-
-	ref_x = x1;
-	while(y1 <= y2)
+	if(dx < 0) 
 	{
-		while(x1 <= x2)
-		{
-			LCD_WR_Data(col_fgnd);
-			x1++;
-		}
-		y1++;
-		x1 = ref_x;
+		sx1 = -1; 
+		sx2 = -1;
+	} 
+	else if(dx > 0) 
+	{
+		sx1 = 1; 
+		sx2 = 1;
 	}
+
+	if(dy < 0) 
+		sy1 = -1; 
+	else if(dy > 0) 
+		sy1 = 1;
+
+	ln = ABS(dx); 
+	sh = ABS(dy);
+
+	if( !(ln > sh) )
+	{
+		ln = ABS(dy); 
+		sh = ABS(dx);
+
+		if(dy < 0) sy2 = -1; 
+		else if(dy > 0) sy2 = 1;
+
+		sx2 = 0;
+	}
+
+	num = ln >> 1;
+
+	for(dx = 0; dx <= ln; dx++)
+	{
+		LCD_DrawPixel(x1, y1);
+		num += sh;
+
+		if(!(num < ln))
+		{
+			num -= ln;
+			x1 += sx1;
+			y1 += sy1;
+		}
+		else
+		{
+			x1 += sx2;
+			y1 += sy2;
+		}
+	}
+
+#if 0
+/* first version of Bresenham algorithm */
+	int16_t dx = ABS(x2 - x1), sx = x1 < x2 ? 1 :-1;
+	int16_t dy = -ABS(y2 - y1), sy = y1 < y2 ? 1 : -1;
+	int16_t err = dx + dy, e2;
+	
+	while(1)
+	{
+		LCD_DrawPixel(x1, y1);
+		if((x1 == x2) && (y1 == y2)) break;
+
+		e2 = err * 2;
+
+		if(e2 >= dy)
+		{
+			err += dy;
+			x1 += sx;
+		}
+
+		if(e2 <= dx)
+		{
+			err += dx;
+			y1 += sy;
+		}
+	}
+#endif
 }
+#endif /* LCD_TEST */
 
 
 
@@ -1555,7 +1744,7 @@ void LCD_DrawLine(int x1, int y1, int x2, int y2, int width, short red, short gr
 // y0 = (y1+y2) / 2
 // a = (x2-x1) / 2
 // b = (y2-y1) / 2
-
+/*
 void LCD_DrawEllipse(int x1, int y1, int x2, int y2, short red, short green, short blue)
 {  	
 
@@ -1599,9 +1788,8 @@ void LCD_DrawEllipse(int x1, int y1, int x2, int y2, short red, short green, sho
 			}
 		}
 	}
-
 }
-
+*/
 // PiXCLe command primitive PARTIALLY TESTED
 void LCD_DrawRectangle(int x1, int y1, int x2, int y2, short red, short green, short blue)
 {
