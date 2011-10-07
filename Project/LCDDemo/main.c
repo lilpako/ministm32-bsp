@@ -21,6 +21,7 @@ enum{
 	MENU_LCD_TEST6,
 	MENU_LCD_TEST7,
 	MENU_LCD_TEST8,
+	MENU_LCD_TEST9,
 	MENU_LCD_TESTX,
 	MENU_END
 };
@@ -29,17 +30,9 @@ enum{
 extern volatile uint16_t uIRQFlag;
 
 
-/* delay parameters */
-#define VERYSHORT_DELAY	50
-#define SHORT_DELAY		100
-#define MEDIUM_DELAY	500
-#define LONG_DELAY		1000
-
-/* define LCD panel */
-#define LCD_HSD043I9W	1		
-
-
+#if 0 /* OBSOLETE */
 void TestLCD(void);
+#endif
 
 /**
  * @brief	Main program
@@ -56,14 +49,15 @@ int main(void)
 
 	/* Initialize main board peripherals */
 	MBD_Init();
-	printf("miniSTM32 mainboard initialized\n");
+	printf("miniSTM32 mainboard initialized.\n");
 
 	/* Initialize LCD support */
 	LCD_Init();
 	LCD_Clear(LCD_COLOR_BLACK);
 	LCD_DisplayOn();
-	printf("LCD initialized\n");
+	printf("LCD initialized.\n");
 	LCD_BacklightOn();
+	printf("\n\nPress the button to start demo.\n\n");
 
 	while (1) 
 	{
@@ -74,49 +68,56 @@ int main(void)
 			uIRQFlag = 0;
 
 			if( u16Menu == MENU_LCD_TEST1 ) {
-				uVal = LCD_DrawTestPattern(1);
-				printf("640 lines with Bresenham algorithm: %d msec\n", uVal);
+				printf("Drawing 640 lines                          ---> %d msec\n",
+					LCD_DrawTestPattern(1));
 			}
 			else if( u16Menu == MENU_LCD_TEST2 ) {
-				uVal = LCD_DrawTestPattern(2);
-				printf("640 lines with line segment method: %d msec\n", uVal);
+				printf("Drawing 256 lines(pen width 5)             ---> %d msec\n",
+					LCD_DrawTestPattern(2));
 			}
 			else if( u16Menu == MENU_LCD_TEST3 ) {
-				uVal = LCD_DrawTestPattern(3);
-				printf("Lines with line thickness 5: %d msec\n", uVal);
+				printf("Drawing 8 rectangles(various pen width)    ---> %d msec\n",
+					LCD_DrawTestPattern(3));
 			}
 			else if( u16Menu == MENU_LCD_TEST4 ) {
-				uVal = LCD_DrawTestPattern(4);
-				printf("Rectangles with various line thickness: %d msec\n", uVal);
+				printf("Drawing 8 circles(various pen width)       ---> %d msec\n",
+					LCD_DrawTestPattern(4));
 			}
 			else if( u16Menu == MENU_LCD_TEST5 ) {
-				uVal = LCD_DrawTestPattern(5);
-				printf("Circles with various line thickness: %d msec\n", uVal);
+				printf("Drawing 8 ellipses(various pen width)      ---> %d msec\n",
+					LCD_DrawTestPattern(5));
 			}
 			else if( u16Menu == MENU_LCD_TEST6 ) {
-				uVal = LCD_DrawTestPattern(6);
-				printf("LCD test pattern 6: %d msec\n", uVal);
+				printf("Drawing circles with ellipse routine       ---> %d msec\n",
+					LCD_DrawTestPattern(6));
 			}
 			else if( u16Menu == MENU_LCD_TEST7 ) {
-				uVal = LCD_DrawTestPattern(7);
-				printf("LCD test pattern 7: %d msec\n", uVal);
+				printf("Drawing 8 solid rectangles                 ---> %d msec\n",
+					LCD_DrawTestPattern(7));
 			}
 			else if( u16Menu == MENU_LCD_TEST8 ) {
-				uVal = LCD_DrawTestPattern(8);
-				printf("LCD test pattern 8: %d msec\n", uVal);
+				printf("Drawing 8 solid circles                    ---> %d msec\n",
+					LCD_DrawTestPattern(8));
+			}
+			else if( u16Menu == MENU_LCD_TEST9 ) {
+				printf("Drawing solid circles with ellipse routine ---> %d msec\n",
+					LCD_DrawTestPattern(9));
 			}
 			else if( u16Menu == MENU_LCD_TESTX ) {
-				uVal = LCD_DrawTestPattern(0);
-				printf("LCD test pattern 0: %d msec\n", uVal);
+				printf("Drawing color contrast bars                ---> %d msec\n",
+					LCD_DrawTestPattern(0));
 			}
 
 			/* at the end of menu, restart all over */
 			if( ++u16Menu == MENU_END )
+			{
+				printf("\n\nEnd of Demo: Press the button to restart... \n\n\n");
 				u16Menu = 0;
+			}
 
 		}
 
-		/* usual household routines here */
+		/* usual household routine goes here */
 		{
 		}
 	}
@@ -127,6 +128,15 @@ int main(void)
  * @param	None
  * @retval	None
  */
+
+#if 0
+
+/* delay parameters */
+#define VERYSHORT_DELAY	50
+#define SHORT_DELAY		100
+#define MEDIUM_DELAY	500
+#define LONG_DELAY		1000
+
 void TestLCD(void)
 {
 
@@ -138,9 +148,8 @@ void TestLCD(void)
 	LCD_DisplayOn();
 	LCD_BacklightOn();
 
- 	LCD_Test(active);
+// 	LCD_Test(active);
 
-#if 0
 	//Delay(0xaffff);
 	//Delay(0xafffff);
 	//Delay(0xafffff);
@@ -410,7 +419,6 @@ void TestLCD(void)
 //		MSecTimer(VERYSHORT_DELAY);
 	} 
 
-#endif
 
 	LCD_BacklightOff();
 	LCD_DisplayOff();
@@ -418,6 +426,7 @@ void TestLCD(void)
   	// End test code
 }
 
+#endif
 
 
 #ifdef  USE_FULL_ASSERT

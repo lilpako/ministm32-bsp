@@ -29,7 +29,6 @@
 #define Bank1_LCD_Ctrl			((uint32_t)0x60000000) 
 #define Bank1_LCD_Data			((uint32_t)0x60020000)
 
-
 /* SSD 1963 Command Code */
 
 #define CMD_NOP 				0x0000
@@ -865,23 +864,23 @@ void LCD_DrawCircle(int16_t x, int16_t y, int16_t r)
 	while(dx <= dy)
 	{
 		/* vertical rectangles */
-		/* 4 th octant */
+		/* 4th octant */
 		LCD_DrawFillRect(x + dx, y + dy - dr0, x + dx, y + dy + dr1);
-		/* 5 th octant */
+		/* 5th octant */
 		LCD_DrawFillRect(x - dx, y + dy - dr0, x - dx, y + dy + dr1);
-		/* 1 th octant */
+		/* 1th octant */
 		LCD_DrawFillRect(x + dx, y - dy - dr0, x + dx, y - dy + dr1);
-		/* 8 th octant */
+		/* 8th octant */
 		LCD_DrawFillRect(x - dx, y - dy - dr0, x - dx, y - dy + dr1);
 
 		/* horizontal rectangles */
-		/* 3 th octant */
+		/* 3th octant */
 		LCD_DrawFillRect(x + dy - dr0, y + dx, x + dy + dr1, y + dx);
-		/* 6 th octant */
+		/* 6th octant */
 		LCD_DrawFillRect(x - dy - dr0, y + dx, x - dy + dr1, y + dx);
-		/* 2 th octant */ 
+		/* 2th octant */ 
 		LCD_DrawFillRect(x + dy - dr0, y - dx, x + dy + dr1, y - dx);
-		/* 7 th octant */
+		/* 7th octant */
 		LCD_DrawFillRect(x - dy - dr0, y - dx, x - dy + dr1, y - dx);
 
 		dx++;
@@ -907,6 +906,7 @@ void LCD_DrawCircle(int16_t x, int16_t y, int16_t r)
 
 
 #if 0
+	/* save the original code for future reference */
 	int16_t dx = 0, dy = r;
 	int16_t p = 1 - r;
 
@@ -943,6 +943,44 @@ void LCD_DrawCircle(int16_t x, int16_t y, int16_t r)
 	}
 #endif
 }
+
+
+void LCD_DrawFillCircle(int16_t x, int16_t y, int16_t r)
+{
+	int16_t dx = 0, dy = r;
+	int16_t p = 1 - r;
+
+	while(dx < dy)
+	{
+		/* vertical filling */
+
+		/* from 1th to 4th octant */
+		LCD_DrawFillRect(x + dx, y - dy, x + dx, y + dy);
+		/* from 8th to 5th octant */
+		LCD_DrawFillRect(x - dx, y - dy, x - dx, y + dy);
+
+		/* from 2th to 3th octant */
+		LCD_DrawFillRect(x + dy, y - dx, x + dy, y + dx);
+		/* from 7th to 6th octant */
+		LCD_DrawFillRect(x - dy, y - dx, x - dy, y + dx);
+
+		dx++;
+		if(p < 0)
+			p = p + (dx<<1) + 1;
+		else
+		{
+			dy--;
+			p = p + ((dx-dy)<<1) + 1;
+		}
+
+		LCD_DrawFillRect(x + dx, y - dy, x + dx, y + dy);
+		LCD_DrawFillRect(x - dx, y - dy, x - dx, y + dy);
+
+		LCD_DrawFillRect(x + dy, y - dx, x + dy, y + dx);
+		LCD_DrawFillRect(x - dy, y - dx, x - dy, y + dx);
+	}
+}
+
 
 #if 0
 /*
@@ -1001,6 +1039,100 @@ void LCD_DrawCircleB(int16_t x, int16_t y, int16_t r)
  */
 void LCD_DrawEllipse(int16_t x, int16_t y, int16_t rx, int16_t ry)
 {
+
+	int32_t sx = rx * rx;
+	int32_t sy = ry * ry;
+
+	int32_t dx = 0, dy = ry, p;
+	int32_t px = 0, py = (sx * dy)<<1;
+
+	int32_t dr0 = (uPenWidth)>>1;
+	int32_t dr1 = (uPenWidth - 1)>>1;
+
+	/* vertical rectangles */
+	/* 2nd quadrant starting point */
+	LCD_DrawFillRect(x + dx, y + dy - dr0, x + dx, y + dy + dr1);
+	/* 3rd quadrant starting point */
+	LCD_DrawFillRect(x - dx, y + dy - dr0, x - dx, y + dy + dr1);
+	/* 1st quadrant starting point */
+	LCD_DrawFillRect(x + dx, y - dy - dr0, x + dx, y - dy + dr1);
+	/* 4th quadrant starting point */
+	LCD_DrawFillRect(x - dx, y - dy - dr0, x - dx, y - dy + dr1);
+
+	/* FIXME : missing pixels between region 1 and region 2 */
+	/* region 1 */
+	p = sy - (sx * ry) + (sx>>2);
+
+	while(px < py)
+	{
+		dx++;
+		px = px + (sy<<1);
+
+		if(p < 0)
+			p = p + sy + px;
+		else
+		{
+			dy--;
+			py = py - (sx<<1);
+			p = p + sy + px - py;
+		}
+
+		/* vertical rectangles */
+		/* 4th octant */
+		LCD_DrawFillRect(x + dx, y + dy - dr0, x + dx, y + dy + dr1);
+		/* 5th octant */
+		LCD_DrawFillRect(x - dx, y + dy - dr0, x - dx, y + dy + dr1);
+		/* 1st octant */
+		LCD_DrawFillRect(x + dx, y - dy - dr0, x + dx, y - dy + dr1);
+		/* 8th octant */
+		LCD_DrawFillRect(x - dx, y - dy - dr0, x - dx, y - dy + dr1);
+	}
+
+	/* region 2 */
+	p = (sy * ((dx<<1) + 1) * ((dx<<1) + 1) + sx * ((dy<<1) - 2) * ((dy<<1) - 2) 
+		- ((sx * sy)<<2))>>2;
+
+	/* WARINING: using rx as a temporary variable here */
+	rx = 0;
+
+	while(dy > 0)
+	{
+		dy--;
+		py = py - (sx<<1);
+
+		if(p > 0)
+			p = p + sx - py;
+		else
+		{
+			dx++;
+			px = px + (sy<<1);
+			p = p + sx - py + px;
+		}
+	
+		/* horizontal rectangles */
+		/* 3rd octant */
+		LCD_DrawFillRect(x + dx - dr0, y + dy, x + dx + dr1, y + dy);
+		/* 6th octant */
+		LCD_DrawFillRect(x - dx - dr0, y + dy, x - dx + dr1, y + dy);
+		/* 2nd octant */
+		LCD_DrawFillRect(x + dx - dr0, y - dy, x + dx + dr1, y - dy);
+		/* 7th octant */
+		LCD_DrawFillRect(x - dx - dr0, y - dy, x - dx + dr1, y - dy);
+
+
+		/* this part of code is for filling small gaps between two sections */
+		if( rx < dr0 )
+		{
+			LCD_DrawFillRect(x + dx, y + dy - dr0, x + dx, y + dy + dr1);
+			LCD_DrawFillRect(x - dx, y + dy - dr0, x - dx, y + dy + dr1);
+			LCD_DrawFillRect(x + dx, y - dy - dr0, x + dx, y - dy + dr1);
+			LCD_DrawFillRect(x - dx, y - dy - dr0, x - dx, y - dy + dr1);
+			rx++;
+		}
+	}
+
+#if 0
+	/* save the original code for future reference */
 	int32_t sx = rx * rx;
 	int32_t sy = ry * ry;
 
@@ -1033,9 +1165,7 @@ void LCD_DrawEllipse(int16_t x, int16_t y, int16_t rx, int16_t ry)
 			p = p + sy + px - py;
 		}
 
-		/* 4th octant */
 		LCD_DrawPixel(x + dx, y + dy);
-		/* 5th octant */
 		LCD_DrawPixel(x - dx, y + dy);
 		LCD_DrawPixel(x + dx, y - dy);
 		LCD_DrawPixel(x - dx, y - dy);
@@ -1058,66 +1188,76 @@ void LCD_DrawEllipse(int16_t x, int16_t y, int16_t rx, int16_t ry)
 			px = px + (sy<<1);
 			p = p + sx - py + px;
 		}
-
+	
 		LCD_DrawPixel(x + dx, y + dy);
 		LCD_DrawPixel(x - dx, y + dy);
 		LCD_DrawPixel(x + dx, y - dy);
 		LCD_DrawPixel(x - dx, y - dy);
 	}
+
+#endif
+
 }
 
-
-/* first version of Bresenham algorithm
- * not working properly
- */
-void LCD_DrawEllipseRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
+void LCD_DrawFillEllipse(int16_t x, int16_t y, int16_t rx, int16_t ry)
 {
-	/* FIXME: something wrong with this algorithm */
-	int16_t a = ABS(x2 - x1), b = ABS(y2 - y1), b1 = b & 1;
-	int32_t dx = 4*(1 - a)*b*b, dy = 4*(b1 + 1)*a*a;
-	int32_t err = dx + dy + b1*a*a, e2;
+	int32_t sx = rx * rx;
+	int32_t sy = ry * ry;
 
-	if(x1 > x2)
+	int32_t dx = 0, dy = ry, p;
+	int32_t px = 0, py = (sx * dy)<<1;
+
+	/* vertical filling */
+
+	/* from 1st to 2nd quadrant */
+	LCD_DrawFillRect(x + dx, y - dy, x + dx, y + dy);
+	/* from 4th to 3rd quadrant */
+	LCD_DrawFillRect(x - dx, y - dy, x - dx, y + dy);
+
+	/* region 1 */
+	p = sy - (sx * ry) + (sx>>2);
+
+	while(px < py)
 	{
-		x1 = x2;
-		x2 += a;
+		dx++;
+		px = px + (sy<<1);
+
+		if(p < 0)
+			p = p + sy + px;
+		else
+		{
+			dy--;
+			py = py - (sx<<1);
+			p = p + sy + px - py;
+		}
+
+		LCD_DrawFillRect(x + dx, y - dy, x + dx, y + dy);
+		LCD_DrawFillRect(x - dx, y - dy, x - dx, y + dy);
 	}
-	if(y1 > y2) y1 = y2;
 
-	y1 += (b + 1)/2;
-	y2 = y1 - b1;
-	a *= 8 * a;
-	b1 = 8 * b * b;
-	
-	do{
-		LCD_DrawPixel(x2, y1);
-		LCD_DrawPixel(x1, y1);
-		LCD_DrawPixel(x1, y2);
-		LCD_DrawPixel(x2, y2);
+	/* region 2 */
+	p = (sy * ((dx<<1) + 1) * ((dx<<1) + 1) + sx * ((dy<<1) - 2) * ((dy<<1) - 2) 
+		- ((sx * sy)<<2))>>2;
 
-		e2 = 2 * err;
-		if(e2 >= dx)
-		{
-			x1++; 
-			x2--;
-			err += dx += b1;
-		}
-		if(e2 <= dy)
-		{
-			y1++;
-			y2--;
-			err += dy += a;
-		}
-	} while(x1 <= x2);
-
-	while((y1 - y2) < b)
+	while(dy > 0)
 	{
-		LCD_DrawPixel(x1 - 1, y1);
-		LCD_DrawPixel(x2 + 1, y1++);
-		LCD_DrawPixel(x1 - 1, y2);
-		LCD_DrawPixel(x2 + 1, y2--);
+		dy--;
+		py = py - (sx<<1);
+
+		if(p > 0)
+			p = p + sx - py;
+		else
+		{
+			dx++;
+			px = px + (sy<<1);
+			p = p + sx - py + px;
+		}
+	
+		LCD_DrawFillRect(x + dx, y - dy, x + dx, y + dy);
+		LCD_DrawFillRect(x - dx, y - dy, x - dx, y + dy);
 	}
 }
+
 
 #if defined(LCD_TEST) 
 
@@ -1148,8 +1288,11 @@ uint16_t LCD_DrawTestPattern(unsigned int index)
 	/* milisecond counter start */
 	uLCD_Delay = 0xFFFF;
 
-	/* draw 640 lines with Bresenham algorithm */
-	if(index == 1)
+#if 0
+	/* Draw 640 lines with Bresenham algorithm. This is for comparision
+	 * purpose only
+	 */
+	if(index == 0)
 	{
 		delx = LCD_WIDTH / 16;
 		dely = LCD_HEIGHT / 8;
@@ -1195,8 +1338,12 @@ uint16_t LCD_DrawTestPattern(unsigned int index)
 			x1 += delx;
 		}
 	}
-	/* draw 640 lines with line segment method */
-	else if(index == 2)
+#endif
+
+	/* 
+	 * SINGLE PIXEL WIDTH LINES: 640 lines with line segment method 
+	 */
+	if(index == 1)
 	{
 		delx = LCD_WIDTH / 16;
 		dely = LCD_HEIGHT / 8;
@@ -1241,13 +1388,16 @@ uint16_t LCD_DrawTestPattern(unsigned int index)
 			x1 += delx;
 		}
 	}
-	/* draw 256 lines with thickness 5 */
-	else if(index == 3)
+	/* 
+	 * MULTIPIXEL WIDTH LINES: 256 (thickness 5) lines 
+	 */
+	else if(index == 2)
 	{
 		delx = LCD_WIDTH / 8;
 		dely = LCD_HEIGHT / 8;
 
 		LCD_SetPenWidth(5);
+
 		/* lines between vertical points */
 		LCD_SetFGColor(LCD_COLOR_GREEN);
 		x1 = delx;
@@ -1290,11 +1440,14 @@ uint16_t LCD_DrawTestPattern(unsigned int index)
 
 		LCD_SetPenWidth(1);
 	}
-	/* draw 8 rectangles with various sizes and line thickness */
-	else if(index == 4)
+	/* 
+	 * HOLLOW RECTANGLES : 8 rectangles with various sizes and line thickness 
+	 */
+	else if(index == 3)
 	{
 		delx = LCD_WIDTH>>4;
 		dely = LCD_HEIGHT>>4;
+
 		/* upper left corner of the first rectangle */
 		x1 = 0; y1 = 0;	
 		/* lower right corner of the first rectangle */
@@ -1314,8 +1467,10 @@ uint16_t LCD_DrawTestPattern(unsigned int index)
 
 		LCD_SetPenWidth(1);
 	}
-	/* draw 8 circles with various sizes and line thickness */
-	else if(index == 5)
+	/* 
+	 * HOLLOW CIRCLES : 8 circles with various sizes and line thickness 
+	 */
+	else if(index == 4)
 	{
 		dely = LCD_HEIGHT>>4;
 
@@ -1337,8 +1492,10 @@ uint16_t LCD_DrawTestPattern(unsigned int index)
 
 		LCD_SetPenWidth(1);
 	}
-	/* draw 8 ellipses with various sizes and line thickness */
-	else if(index == 6)
+	/*  
+	 * HOLLOW ELLIPSES : 8 ellipses with various sizes and line thickness 
+	 */
+	else if(index == 5)
 	{
 		delx = (LCD_WIDTH>>4) - 8;
 		dely = (LCD_HEIGHT>>4) - 5;
@@ -1364,24 +1521,106 @@ uint16_t LCD_DrawTestPattern(unsigned int index)
 
 		LCD_SetPenWidth(1);
 	}
-	/* draw color filled rectangles */
+	/* 
+	 * CIRCLES WITH ELLIPSE ROUINE : This is for comparison purpose only.
+	 * It is not recommended to use ellipse routine for drawing circles for now.
+	 */
+	else if(index == 6)
+	{
+		dely = (LCD_HEIGHT>>4);
+
+		/* center and radius */
+		x1 = LCD_WIDTH>>1;
+		y1 = LCD_HEIGHT>>1;
+		y2 = LCD_HEIGHT>>2;
+
+		for(i = 0; i < 8; i++)
+		{
+			LCD_SetFGColor(colors[i]);
+
+			LCD_DrawEllipse(x1, y1, y2, y2);
+
+			uPenWidth++;
+
+			y2 += dely;
+		}
+
+		LCD_SetPenWidth(1);
+	}
+	/* 
+	 * SOLID RECTANGLES : 8 color filled rectangles 
+	 */
 	else if(index == 7)
 	{
-		LCD_SetFGColor(LCD_COLOR_BLUE);
-		LCD_DrawFillRect(0, 0, LCD_WIDTH - 1, LCD_HEIGHT - 1);
+		delx = LCD_WIDTH>>4;
+		dely = LCD_HEIGHT>>4;
+
+		/* upper left corner of the first rectangle */
+		x1 = 0; y1 = 0;	
+		/* lower right corner of the first rectangle */
+		x2 = LCD_WIDTH>>1; y2 = LCD_HEIGHT>>1;
+
+		for(i = 0; i < 8; i++)
+		{
+			LCD_SetFGColor(colors[i]);
+
+			LCD_DrawFillRect(x1, y1, x2, y2);
+
+			x1 += delx; x2 += delx;
+			y1 += dely; y2 += dely;
+		}
+
 	}
-	/* draw color filled circles */
+	/* 
+	 * SOLID CIRCLES : 8 color filled circles 
+	 */
 	else if(index == 8)
 	{
-		LCD_SetFGColor(LCD_COLOR_RED);
-		LCD_DrawCircle((LCD_WIDTH>>1), (LCD_HEIGHT>>1) - 1, (LCD_HEIGHT>>1) - 1);
+		delx = LCD_HEIGHT>>3;
+		dely = LCD_HEIGHT>>4;
+
+		/* center and radius */
+		x1 = LCD_HEIGHT>>1;
+		y1 = LCD_HEIGHT>>1;
+		y2 = LCD_HEIGHT>>1;
+
+		for(i = 0; i < 8; i++)
+		{
+			LCD_SetFGColor(colors[i]);
+
+			LCD_DrawFillCircle(x1, y1, y2);
+
+			x1 += delx;
+			y2 -= dely;
+		}
 	}
-	/* draw color filled ellipses */
+	/* 
+	 * SOLID CIRCLES WITH ELLIPSE ROUTINE : 8 color filled ellipses 
+	 */
 	else if(index == 9)
 	{
+		delx = LCD_HEIGHT>>3;
+		dely = LCD_HEIGHT>>4;
+
+		/* center and radius */
+		x1 = LCD_HEIGHT>>1;
+		y1 = LCD_HEIGHT>>1;
+		y2 = LCD_HEIGHT>>1;
+
+		for(i = 0; i < 8; i++)
+		{
+			LCD_SetFGColor(colors[i]);
+
+			LCD_DrawFillEllipse(x1, y1, y2, y2);
+
+			x1 += delx;
+			y2 -= dely;
+		}
 	}
-	/* draw points */
-	else if(index == 10)
+	/* 
+	 * POINTS : Draw points 
+	 */
+	else if(index == 99)
 	{
 		LCD_SetFGColor(LCD_COLOR_RED);
 
@@ -1400,24 +1639,25 @@ uint16_t LCD_DrawTestPattern(unsigned int index)
 
 			y1 += y2;
 		}
-
 	}
-	/* all the other case: contrast color bar(7 color bar, 32 cells each) */
+
+	/* All the other case: Draw contrast color bar(7 color bar, 32 cells each) */
 	else
 	{
-		delx = 	LCD_WIDTH / 32;
+		delx = LCD_WIDTH / 32;
 		dely = LCD_HEIGHT / 7;
 
 		/* initial y positions */
 		y1 = 0;
-		y2 = y1 + dely;
+		y2 = y1 + dely - 1;
 
 		for( i = 0; i < 7; i++ )
 		{
 			/* initial x positions */
 			x1 = 0;
-			x2 = x1 + delx;
+			x2 = x1 + delx - 1;
 
+			/* prepare color bars */
 			if(i == 0)
 			{
 				/* blue color bar */
@@ -1484,14 +1724,14 @@ uint16_t LCD_DrawTestPattern(unsigned int index)
 				col_blue += dif_blue;
 
 				/* next x position */
-				x1 = x2 ;
-				x2 = x1 + delx;
+				x1 = x2 + 1;
+				x2 = x1 + delx - 1;
 
 			}
 
 			/* advance to the next y position */
-			y1 = y2;
-			y2 = y2 + dely;
+			y1 = y2 + 2;
+			y2 = y1 + dely -1;
 
 			/* revert x position */
 
@@ -1590,18 +1830,10 @@ void LCD_DrawLineB(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 		}
 	}
 #endif
+
 }
+
 #endif /* LCD_TEST */
-
-
-
-
-
-
-
-
-
-
 
 
 
