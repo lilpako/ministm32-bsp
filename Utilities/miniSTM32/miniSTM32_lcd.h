@@ -10,6 +10,7 @@
 #endif 
 
 #include "stm32f10x.h"
+#include "fonts.h"
 
 /* LCD type definition (default) */
 #if (!defined(LCD_HSD043I9W) && !defined(LCD_AT043TN13) && !defined(LCD_AT070TN83))
@@ -68,19 +69,31 @@ void LCD_DrawFillRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2);
 void LCD_DrawFillCircle(int16_t x, int16_t y, int16_t r);
 void LCD_DrawFillEllipse(int16_t x, int16_t y, int16_t rx, int16_t ry);
 
+/* functions from STM32 peripheral library */
+void LCD_SetFont(sFONT *pFont);
+sFONT* LCD_GetFont(void);
+void LCD_DrawChar(int16_t x, int16_t y, const uint16_t *ch);
+void LCD_DisplayChar(int16_t x, int16_t y, uint8_t asc);
+void LCD_DisplayStringLine(int16_t x, int16_t y, uint8_t *pstr);
+void LCD_WriteBMP(int16_t x, int16_t y, uint32_t BmpAddress);
+
 #if defined(LCD_TEST)
 uint16_t LCD_DrawTestPattern(unsigned int index);
 /* Bresenham algorithm for speed comparision */
 void LCD_DrawLineB(int16_t x1, int16_t y1, int16_t x2, int16_t y2);
 #endif /* LCD_TEST */
 
-/* functions and definitions for stm32 gui lib compatibility */
+
+
+/* functions and definitions for STM32 gui library compatibility */
+#if defined(STM32_GL_COMPATIBILITY)
 #define LCD_DIR_HORIZONTAL			0x0000
 #define LCD_DIR_VERTICAL			0x0001
 #define GL_SetTextColor				LCD_SetFGColor
 #define GL_SetBackColor				LCD_SetBGColor
 #define GL_Clear					LCD_Clear
 #define GL_LCD_Init					LCD_Init
+#endif /* STM32_GL_COMPATIBILITY */
 
 
 #ifdef __cplusplus

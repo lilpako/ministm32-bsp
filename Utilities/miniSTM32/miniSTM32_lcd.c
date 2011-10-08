@@ -134,95 +134,31 @@ volatile LCDCOLOR col_fgnd = LCD_COLOR_WHITE;
 volatile LCDCOLOR col_bgnd = LCD_COLOR_BLACK;
 volatile uint16_t uPenWidth = 1;
 volatile uint16_t uLCD_Delay = 0;
+static sFONT *sLCDFont;
 
-void LCD_WR_REG(uint16_t command);
-void LCD_WR_Data(uint16_t val);
+/* register control functions */
+inline void LCD_WR_REG(uint16_t command);
+inline void LCD_WR_Data(uint16_t val);
 uint16_t LCD_RD_REG(uint16_t command);
 uint16_t LCD_RD_Data(void);
 void LCD_SetColumnPageAddr(uint16_t colS, uint16_t colE, uint16_t pageS, uint16_t pageE);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-typedef struct _POINT
-{
-	int x;
-	int y;
-} POINT, *PPOINT;
-
-typedef struct _RECT
-{
- 	int left;
-	int top;
-	int right;
-	int bottom;
-} RECT, *PRECT;
-
-
-
-/*
-unsigned long color1 = 0;
-*/
-
-
-void LCD_Test(void);
-
-void lcd_wr_pixel(unsigned int a, unsigned int b, unsigned int e);
-unsigned char *num_pub(unsigned int a);
-
-// PiXCLe Primitives Declarations
-void LCD_DrawCheckerPattern(short blue, short green, short red);
-void LCD_DrawBackground(short blue, short green, short red);
-void LCD_DrawRectangle(int x1, int y1, int x2, int y2, short blue, short green, short red);
-//void LCD_DrawLine(int x1, int y1, int x2, int y2, int width, short red, short green, short blue);
-//void LCD_DrawPixel(unsigned int a, unsigned int b, unsigned int e);
-void LCD_Test_BlackToWhite(void);
-void SetLCDStartPixelLineAddress(int x1,int y1, int x2, int y2);
-
-
-// TODO update colour array comments and names
-unsigned int color[] = {0xf800,0x07e0,0x001f,0xffe0,0x0000,0xffff,0x07ff,0xf81f};
-
-unsigned int LCD_RD_data(void);
-extern void Delay(__IO uint32_t nCount);
-
-void SetScrollArea(unsigned int top, unsigned int scroll, unsigned int bottom);
-void SetScrollStart(unsigned int line);
-void SetTearingCfg(unsigned char state, unsigned char mode);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+/* functions not used for now */
+void LCD_SetScrollArea(uint16_t top, uint16_t scroll, uint16_t bottom);
+void LCD_SetScrollStart(uint16_t line);
+void LCD_SetTearingCfg(unsigned char state, unsigned char mode);
 
 //	Write a command to the LCD Register
-void LCD_WR_REG(uint16_t command)
+inline void LCD_WR_REG(uint16_t command)
 {
 	*(__IO uint16_t *) (Bank1_LCD_Ctrl) =  command;
+}
+
+//	Write a pixel in the display. The address counter is incremented by
+// 	this command.
+inline void LCD_WR_Data(uint16_t val)
+{   
+	*(__IO uint16_t *) (Bank1_LCD_Data) =  val; 	
 }
 
 // 	Read a value from an LCD Register
@@ -232,7 +168,6 @@ uint16_t LCD_RD_REG(uint16_t command)
 
 	return *(__IO uint16_t *) (Bank1_LCD_Data);
 }
-
 
 uint16_t LCD_RD_Data(void)
 {
@@ -244,14 +179,6 @@ uint16_t LCD_RD_Data(void)
 
 	return(a);	
 }
-
-//	Write a pixel in the display. The address counter is incremented by
-// 	this command.
-void LCD_WR_Data(uint16_t val)
-{   
-	*(__IO uint16_t *) (Bank1_LCD_Data) =  val; 	
-}
-
 
 // 	Initialize the SSD1963 LCD
 // 	PLL == Phase Lock Loop
@@ -611,8 +538,6 @@ void LCD_Clear(LCDCOLOR col)
 		index++;
 	}
 }
-
-
 
 void LCD_DisplayOn(void)
 {
@@ -1059,7 +984,6 @@ void LCD_DrawEllipse(int16_t x, int16_t y, int16_t rx, int16_t ry)
 	/* 4th quadrant starting point */
 	LCD_DrawFillRect(x - dx, y - dy - dr0, x - dx, y - dy + dr1);
 
-	/* FIXME : missing pixels between region 1 and region 2 */
 	/* region 1 */
 	p = sy - (sx * ry) + (sx>>2);
 
@@ -1120,7 +1044,7 @@ void LCD_DrawEllipse(int16_t x, int16_t y, int16_t rx, int16_t ry)
 		LCD_DrawFillRect(x - dx - dr0, y - dy, x - dx + dr1, y - dy);
 
 
-		/* this part of code is for filling small gaps between two sections */
+		/* this part of code is for filling small gaps between two regions */
 		if( rx < dr0 )
 		{
 			LCD_DrawFillRect(x + dx, y + dy - dr0, x + dx, y + dy + dr1);
@@ -1618,6 +1542,40 @@ uint16_t LCD_DrawTestPattern(unsigned int index)
 		}
 	}
 	/* 
+	 * FONTS HANDLING: Draw fonts, text
+	 */
+	else if(index == 10)
+	{
+		i = 0; 
+		x1 = LCD_WIDTH>>3;
+		y1 = LCD_HEIGHT>>2;
+
+		LCD_SetFont(&Font8x8);
+		LCD_SetBGColor(colors[i]);
+		LCD_SetFGColor(colors[++i]);
+		LCD_DisplayStringLine(x1, y1, "8x8 The quick brown fox");
+
+		y1 += 16;
+		LCD_SetFont(&Font8x12);
+		LCD_SetBGColor(colors[i]);
+		LCD_SetFGColor(colors[++i]);
+		LCD_DisplayStringLine(x1, y1, "8x12 The quick brown fox");
+
+		y1 += 24;
+		LCD_SetFont(&Font12x12);
+		LCD_SetBGColor(colors[i]);
+		LCD_SetFGColor(colors[++i]);
+		LCD_DisplayStringLine(x1, y1, "12x12 The quick brown fox");
+
+		y1 += 24;
+		LCD_SetFont(&Font16x24);
+		LCD_SetBGColor(colors[i]);
+		LCD_SetFGColor(colors[++i]);
+		LCD_DisplayStringLine(x1, y1, "16X24 The quick brown fox");
+
+		LCD_SetBGColor(LCD_COLOR_BLACK);
+	}
+	/* 
 	 * POINTS : Draw points 
 	 */
 	else if(index == 99)
@@ -1640,8 +1598,10 @@ uint16_t LCD_DrawTestPattern(unsigned int index)
 			y1 += y2;
 		}
 	}
-
-	/* All the other case: Draw contrast color bar(7 color bar, 32 cells each) */
+	/* 
+	 * COLOR CONTRAST BARS: All the other case, draw contrast color bars
+	 * (7 color bar, 32 cells each) 
+	 */
 	else
 	{
 		delx = LCD_WIDTH / 32;
@@ -1836,366 +1796,8 @@ void LCD_DrawLineB(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 #endif /* LCD_TEST */
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-//	Set the LCD start line and pixel rectangular region for writing
-//	Note the alignment of the 4.3" display on the STM32 board results
-//	in the display being inverted. Hence the coordinates are inverted and flipped.
-//	so (0,0) is the TLCorner.
-//
-void SetLCDStartPixelLineAddress(int pixel_x1, int line_y1, int pixel_x2, int line_y2)
-{
-	// Invert and flip the coordinates
-	//pixel_x1 = HDP + pixel_x1 - pixel_x2;
-	//pixel_x2 = HDP - pixel_x1;
-
-	//line_y1 = VDP - line_y1 - line_y2;
-	//line_y2 = VDP - line_y1;
-				  	
-   	// Set the start column and page addresses. These are written as four
-	// sequential 8 bit values. 
-	LCD_WR_REG(CMD_SET_COL_ADDRESS); // Manual p.29	
-	LCD_WR_Data(pixel_x1 >> 8);	// start column high byte    
-	LCD_WR_Data(pixel_x1 & 0x00ff);	// start column low byte
-
-	// HDP = horizontal data pixel eg 479.
-	LCD_WR_Data(pixel_x2 >> 8);  	// end column # high byte	    
-	LCD_WR_Data(pixel_x2 & 0x00ff); // end column # low byte
-
-    LCD_WR_REG(CMD_SET_PAGE_ADDRESS); // Manual p.29	
-	LCD_WR_Data(line_y1 >> 8);	// start row high byte     
-	LCD_WR_Data(line_y1 & 0x00ff);	// start row low byte
-
-	// VDP = vertical data pixel eg 271
-	LCD_WR_Data(line_y2 >> 8);  	// end row high byte	    
-	LCD_WR_Data(line_y2 & 0x00ff);  // end row low byte
-
-	// Set writing to commence
-	LCD_WR_REG(CMD_WRITE_MEM_START);
-
-	return;
-} 
-
-
-//
-//	Display LCD Test utility function
-// 
-// 	Check the LCD dimensions and draw colour | Inverse colour checker
-// 	board pattern.
-//
-void LCD_DrawCheckerPattern(short blue, short green, short red)
-{
-    unsigned int lineWidth = LCD_WIDTH,height = LCD_HEIGHT, w;
-	unsigned short rgb666_1  =  0;
-	unsigned short rgb666_2  =  0;
-	int check_x = 10;
-	int check_y = 8;
-
-	// Convert the R,G,B values into RGB666
-	rgb666_1  =  red<<12;
-	rgb666_1 |=  green<<6;
-	rgb666_1 |=  blue;
-
-	rgb666_2 = !rgb666_1;
-
-
-	SetLCDStartPixelLineAddress(0,0,lineWidth-1,height-1);
-
-	while(lineWidth--)
-	{
-	    for(w  =  0;w < height;w++)
-		{    
-          	LCD_WR_Data(rgb666_1);
-		}
-	}
-
-}
-
-
-
-//	PiXCLe command primitive PARTIALLY TESTED
-// 	Draws a line from between two coordinates, using a Pen width and colour
-//	Needs to work out the addresses where the line is to be drawn. Does not 
-//	take in to account anti-aliasing
-/*
-void LCD_DrawLine(int x1, int y1, int x2, int y2, int width, short red, short green, short blue)
-{
-	// For now, just do vertical or horizongtal lines. Diagonals come later.
- 	int lineWidth  =  x2 - x1 + 1, w;
-	int height  =  y2 - y1 + 1 + width;
-	unsigned short rgb666  =  0;
-
-	// Convert the R,G,B values into RGB666
-	rgb666  =  red<<12;
-	rgb666 |=  green<<6;
-	rgb666 |=  blue;
-
-	SetLCDStartPixelLineAddress(x1,y1,x2,y2);
-
-	// TODO: sort code to draw diagonals, of required width, and anti-aliased.
-
-	while(lineWidth--)
-	{
-	    for(w = 0;w < height;w++)
-		{   
-          	LCD_WR_Data(rgb666);
-		}
-	}
-
-}
-*/
-
-// PiXCLe command primitive PARTIALLY TESTED
-// Draws an ellipse (or circle) within the bounding rectangle. Use the trig functions to 
-// decide if a rectangle coord is within the ellipse or not. Look at the distance from
-// the center to the coord.
-// if Sqr((x-x0)/a) + Sqr((y-y0)/b) <=1 then (x,y) point lies inside ellipse
-// if ellipse is defined by bounding rectangle, then
-// x0 = (x1+x2) / 2
-// y0 = (y1+y2) / 2
-// a = (x2-x1) / 2
-// b = (y2-y1) / 2
-/*
-void LCD_DrawEllipse(int x1, int y1, int x2, int y2, short red, short green, short blue)
-{  	
-
-	double x0, y0, a,b, dtest;
-	int x, y, dummy;
- 	int lineWidth;
-	int height;
-	unsigned short rgb666  =  0;
-
-	lineWidth  =  x2 - x1 + 1;
-	height  =  y2 - y1 + 1;
-
-
-	// Convert the R,G,B values into RGB666
-	rgb666  =  red<<12;
-	rgb666 |=  green<<6;
-	rgb666 |=  blue;
-
-
-	SetLCDStartPixelLineAddress(x1,y1,x2,y2);
-
-	// This is drawing in the [x1,y1] to [x2,y2] region
-	x0 = (x1+x2) / 2;
-	y0 = (y1+y2) / 2;
-	a = (x2-x1) / 2;
-	b = (y2-y1) / 2;
-	a = a*a;
-	b = b*b;
-
-	for(y = y1;y < y1 + height; y++)
-	{
-		for(x = x1; x < x1 + lineWidth; x++)
-		{   
-			// Test if the point is in the ellipse and draw it
-			dtest =	((x-x0)*(x-x0)/a + (y-y0)*(y-y0)/b);
-			if (1.0 > dtest)
-          		LCD_WR_Data(rgb666);
-			else // increment the counter without writing
-			{	
-				LCD_WR_Data(0); // TODO: just incr the counter
-			}
-		}
-	}
-}
-*/
-// PiXCLe command primitive PARTIALLY TESTED
-void LCD_DrawRectangle(int x1, int y1, int x2, int y2, short red, short green, short blue)
-{
-	int lineWidth  =  x2 - x1 + 1, w;
-	int height  =  y2 - y1 + 1;
-	unsigned short rgb666  =  0;
-
-	// Convert the R,G,B values into RGB666
-	rgb666  =  red<<12;
-	rgb666 |=  green<<6;
-	rgb666 |=  blue;
-
-
-	SetLCDStartPixelLineAddress(x1,y1,x2,y2);
-
-	// The 4.3" LCD is 480x272. The 7.0" LCD is 800x480. 
-	// Clip the rectangle to the screen.
-	while(lineWidth--)
-	{
-	    for(w = 0;w < height;w++)
-		{   
-          	LCD_WR_Data(rgb666);
-		}
-	}
-
-}
-
-// PiXCLe command primitive
-void LCD_Test_BlackToWhite(void)
-{
-    unsigned int lineWidth  =  LCD_WIDTH,height  =  LCD_HEIGHT, w;
-	unsigned short rgb888  =  0;
-	unsigned int width = LCD_WIDTH, counter = 0;
-
-	// Write the whole screen
-	SetLCDStartPixelLineAddress(0,0,lineWidth-1,height-1);
-
-	// This double loop writes the vertical pixels, not lines at a time.
-	// The address register increments on each call to LCD_WR_Data 
-	while(lineWidth--)
-	{
-	    for(w = 0;w < height;w++)
-		{   
-			// Write a single 24 bit RGB pixel. The pixel address counter updates.
-          	LCD_WR_Data(rgb888);
-			if (0 == ++counter%width)
-				rgb888 += 64;
-				
-		}
-	}
-}
-
-// PiXCLe command primitive
-void LCD_DrawBackground(short blue, short green, short red)
-{
-    unsigned int lineWidth  =  LCD_WIDTH,height  =  LCD_HEIGHT, w;
-	unsigned short rgb666  =  0;
-
-	SetLCDStartPixelLineAddress(0,0,lineWidth-1,height-1);
-	
-	// Convert the R,G,B values into RGB666
-	rgb666  =  blue<<12;
-	rgb666 |=  green<<6;
-	rgb666 |=  red;
-	// The 4.3" LCD is 480x272
-	while(lineWidth--)
-	{
-	    for(w = 0;w < height;w++)
-		{   
-			// Write a single pixel.
-          	LCD_WR_Data(rgb666);
-		}
-	}
-}
-
-//	Tests the LCD
-void LCD_Test(void)
-{
-	unsigned int  temp = 0;
-	//unsigned char *p;
-	unsigned long n;
-	//	unsigned int line = 0;
-    
-
-
-	//LCD_WR_REG(CMD_SET_PLL); // irrelevent here
-	n = 0;
-	
-#if 0
-
-	LCD_WR_REG(CMD_SET_COL_ADDRESS);	
-	LCD_WR_Data(0);	    
-	LCD_WR_Data(0);
-	LCD_WR_Data(HDP>>8);	    
-	LCD_WR_Data(HDP&0x00ff);
-
-	LCD_WR_REG(CMD_SET_PAGE_ADDRESS);	
-	LCD_WR_Data(0);	    
-	LCD_WR_Data(0);
-	LCD_WR_Data(VDP>>8);	    
-	LCD_WR_Data(VDP&0x00ff);
-	LCD_WR_REG(0x002c);
-	
-#endif
-	
-	while(n<261120)
-	{
-		     //while(1){
-
-		//	temp = (uint16_t)( a2[n]<<8)+a2[n+1];
-			temp = 0xf800;
-			  //temp++;	
-			LCD_WR_Data(temp);
-		//	if(n<125000)
-		//	LCD_WR_Data(0x07e0);
-		//	else
-		//	 LCD_WR_Data(0x001f);
-		
-			n = n+2;
-			// }
-			 //LCD_WR_Data(color1);
- 	}
-
-	
-  // SetScrollArea(0,480,0);
-  // for(line = 0;line<480;line++) 
-  // {
-  // SetScrollStart(line);
-  // Delay(0xffff);
-  // }
-
-
-	//Delay(0xafffff);
-	/*
-    lcd_wr_zf(0,0,239,319,870,color1,1,&zf3[0]);  
-	p = num_pub((color1/10000));
-	lcd_wr_zf(0,30,23,61,96,color1,0,p);  
-	
-	p = num_pub((color1%10000)/1000);
-	lcd_wr_zf(24,30,47,61,96,color1,0,p);
-	
-	p = num_pub(((color1%10000)%1000)/100);
-	lcd_wr_zf(48,30,71,61,96,color1,0,p);
-
-	p = num_pub((((color1%10000)%1000)%100)/10);
-	lcd_wr_zf(72,30,95,61,96,color1,0,p);
-
-	p = num_pub((color1%10));
-	lcd_wr_zf(96,30,119,61,96,color1,0,p);
-
-	color1++; 
-	if(color1 = =65536) color1 = 0; */ 
-	//Delay(0xaffff);			
-}
-
-/*
- * Brian : comment out for now
-//
-//	Delay for specified period.
-//	All this does run two loops that increment their counters.
-//	The 'a' loop increments to 1000, suggesting this is us or 
-//	clock cycles. The ARM apparently uses mostly 1 clock per instruction.
-void delay_time(unsigned int i)
-{
-    unsigned int a;
-    unsigned int b;
-    for(b = 0;b<i;b++)
-    	for(a = 0;a<1000;a++);
-
-}
-*/
-
 /*********************************************************************
-* Function:  SetScrollArea(SHORT top, SHORT scroll, SHORT bottom)
+* Function:  LCD_SetScrollArea(SHORT top, SHORT scroll, SHORT bottom)
 *
 * PreCondition: none
 *
@@ -2212,59 +1814,48 @@ void delay_time(unsigned int i)
 *
 * Note: Reference: section 9.22 Set Scroll Area, SSD1963 datasheet Rev0.20
 ********************************************************************/
-void SetScrollArea(unsigned int top, unsigned int scroll, unsigned int bottom)
+void LCD_SetScrollArea(uint16_t top, uint16_t scroll, uint16_t bottom)
 {
-
-
-//	WriteCommand(CMD_SET_SCROLL_AREA);
-//	CS_LAT_BIT  =  0;
-	LCD_WR_REG(0x33);
+	LCD_WR_REG(CMD_SET_SCROLL_AREA);
 	LCD_WR_Data(top>>8);
 	LCD_WR_Data(top);
 	LCD_WR_Data(scroll>>8);
 	LCD_WR_Data(scroll);
 	LCD_WR_Data(bottom>>8);
 	LCD_WR_Data(bottom);
-//	CS_LAT_BIT  =  1;	
 }
 
 /*********************************************************************
-* Function:  void  SetScrollStart(SHORT line)
+* Function:  void  LCD_SetScrollStart(SHORT line)
 *
-* Overview: First, we need to define the scrolling area by SetScrollArea()
+* Overview: First, we need to define the scrolling area by LCD_SetScrollArea()
 *			before using this function. 
 *
-* PreCondition: SetScrollArea(SHORT top, SHORT scroll, SHORT bottom)
+* PreCondition: LCD_SetScrollArea(SHORT top, SHORT scroll, SHORT bottom)
 *
 * Input: line - Vertical scrolling pointer (in number of lines) as 
-*		 the first display line from the Top Fixed Area defined in SetScrollArea()
+*		 the first display line from the Top Fixed Area defined in LCD_SetScrollArea()
 *
 * Output: none
 *
 * Note: Example -
 *
 *		SHORT line = 0;
-*		SetScrollArea(0,272,0);
-*		for(line = 0;line<272;line++) {SetScrollStart(line);DelayMs(100);}
+*		LCD_SetScrollArea(0,272,0);
+*		for(line = 0;line<272;line++) {LCD_SetScrollStart(line);DelayMs(100);}
 *		
 *		Code above scrolls the whole page upwards in 100ms interval 
 *		with page 2 replacing the first page in scrolling
 ********************************************************************/
-void SetScrollStart(unsigned int line)
+void LCD_SetScrollStart(uint16_t line)
 {
-
-//	LCD_WR_REG(0x002A);	
-//    LCD_WR_Data(0);	  
-//	LCD_WR_REG(CMD_SET_SCROLL_START);
-	LCD_WR_REG(0x37);
-//	CS_LAT_BIT  =  0;
+	LCD_WR_REG(CMD_SET_SCROLL_START);
 	LCD_WR_Data(line>>8);
 	LCD_WR_Data(line);	
-//	CS_LAT_BIT  =  1;
 }
 
 /*********************************************************************
-* Function:  void  SetTearingCfg(BOOL state, BOOL mode)
+* Function:  void  LCD_SetTearingCfg(BOOL state, BOOL mode)
 *
 * Overview: This function enable/disable tearing effect
 *
@@ -2280,121 +1871,38 @@ void SetScrollStart(unsigned int line)
 *
 * Note:
 ********************************************************************/
-void SetTearingCfg(unsigned char state, unsigned char mode)
+void LCD_SetTearingCfg(unsigned char state, unsigned char mode)
 {
-
-
 	if(state  == 1)
 	{
-		LCD_WR_REG(0x35);
-		//CS_LAT_BIT  =  0;
+		LCD_WR_REG(CMD_SET_TEAR_ON);
 		LCD_WR_Data(mode&0x01);
-		//CS_LAT_BIT  =  1;
 	}
 	else
 	{
-		LCD_WR_REG(0x34);
+		LCD_WR_REG(CMD_SET_TEAR_OFF);
 	}
-
-
-}
-
-
-
-#if 0
-typedef struct
-{
-  __IO uint16_t LCD_REG;
-  __IO uint16_t LCD_RAM;
-} LCD_TypeDef;
-
-/* Note: LCD /CS is CE1 - Bank 1 of NOR/SRAM Bank 1~4 */
-#define LCD_BASE           ((uint32_t)(0x60000000 | 0x00000000))
-#define LCD                ((LCD_TypeDef *) LCD_BASE)
-
-#define MAX_POLY_CORNERS   200
-#define POLY_Y(Z)          ((int32_t)((Points + Z)->X))
-#define POLY_X(Z)          ((int32_t)((Points + Z)->Y))                                
-#define ABS(X)  ((X) > 0 ? (X) : -(X))    
-
-static sFONT *LCD_Currentfonts;
-/* Global variables to set the written text color */
-static  __IO uint16_t TextColor = 0x0000, BackColor = 0xFFFF;
-static void PutPixel(int16_t x, int16_t y);
-static void LCD_PolyLineRelativeClosed(pPoint Points, uint16_t PointCount, uint16_t Closed);
-
-
-/**
-  * @brief  Sets the Text Font.
-  * @param  fonts: specifies the font to be used.
-  * @retval None
-  */
-void LCD_SetFont(sFONT *fonts)
-{
-  LCD_Currentfonts = fonts;
 }
 
 /**
-  * @brief  Gets the Text Font.
-  * @param  None.
-  * @retval the used font.
-  */
+ * @brief	Sets the Text Font.
+ * @param	fonts: specifies the font to be used.
+ * @retval	None
+ */
+void LCD_SetFont(sFONT *pFont)
+{
+	sLCDFont = pFont;
+}
+
+/**
+ * @brief	Gets the Text Font.
+ * @param	None.
+ * @retval	the used font.
+ */
 sFONT *LCD_GetFont(void)
 {
-  return LCD_Currentfonts;
+	return sLCDFont;
 }
-
-/**
-  * @brief  Clears the selected line.
-  * @param  Line: the Line to be cleared.
-  *   This parameter can be one of the following values:
-  *     @arg Linex: where x can be 0..n
-  * @retval None
-  */
-void LCD_ClearLine(uint8_t Line)
-{
-  uint16_t refcolumn = LCD_PIXEL_WIDTH - 1;
-  /* Send the string character by character on lCD */
-  while (((refcolumn + 1)&0xFFFF) >= LCD_Currentfonts->Width)
-  {
-    /* Display one character on LCD */
-    LCD_DisplayChar(Line, refcolumn, ' ');
-    /* Decrement the column position by 16 */
-    refcolumn -= LCD_Currentfonts->Width;
-  }
-}
-
-
-/**
-  * @brief  Clears the hole LCD.
-  * @param  Color: the color of the background.
-  * @retval None
-  */
-void LCD_Clear(uint16_t Color)
-{
-  uint32_t index = 0;
-  
-  LCD_SetCursor(0x00, 0x013F); 
-  LCD_WriteRAM_Prepare(); /* Prepare to write GRAM */
-  for(index = 0; index < 76800; index++)
-  {
-    LCD->LCD_RAM = Color;
-  }  
-}
-
-
-/**
-  * @brief  Sets the cursor position.
-  * @param  Xpos: specifies the X position.
-  * @param  Ypos: specifies the Y position. 
-  * @retval None
-  */
-void LCD_SetCursor(uint8_t Xpos, uint16_t Ypos)
-{
-  LCD_WriteReg(LCD_REG_32, Xpos);
-  LCD_WriteReg(LCD_REG_33, Ypos);
-}
-
 
 /**
   * @brief  Draws a character on LCD.
@@ -2403,34 +1911,30 @@ void LCD_SetCursor(uint8_t Xpos, uint16_t Ypos)
   * @param  c: pointer to the character data.
   * @retval None
   */
-void LCD_DrawChar(uint8_t Xpos, uint16_t Ypos, const uint16_t *c)
+void LCD_DrawChar(int16_t x, int16_t y, const uint16_t *ch)
 {
-  uint32_t index = 0, i = 0;
-  uint8_t Xaddress = 0;
-   
-  Xaddress = Xpos;
-  
-  LCD_SetCursor(Xaddress, Ypos);
-  
-  for(index = 0; index < LCD_Currentfonts->Height; index++)
-  {
-    LCD_WriteRAM_Prepare(); /* Prepare to write GRAM */
-    for(i = 0; i < LCD_Currentfonts->Width; i++)
-    {
-      if((((c[index] & ((0x80 << ((LCD_Currentfonts->Width / 12 ) * 8 ) ) >> i)) == 0x00) &&(LCD_Currentfonts->Width <= 12))||
-        (((c[index] & (0x1 << i)) == 0x00)&&(LCD_Currentfonts->Width > 12 )))
+	uint16_t i, j, flag = 1;
 
-      {
-        LCD_WriteRAM(BackColor);
-      }
-      else
-      {
-        LCD_WriteRAM(TextColor);
-      }
-    }
-    Xaddress++;
-    LCD_SetCursor(Xaddress, Ypos);
-  }
+	/* set column page address */
+	LCD_SetColumnPageAddr(x, x + sLCDFont->Width - 1, y, 
+		y + sLCDFont->Height - 1);
+
+	/* start data transfer */
+	LCD_WR_REG(CMD_WRITE_MEM_START);
+
+	i = 0;
+	while( i < sLCDFont->Height )
+	{
+		j = 0;
+		while( j < sLCDFont->Width  )
+		{
+			if((ch[i]>>(j)) & 0x1) LCD_WR_Data(col_fgnd);
+			else LCD_WR_Data(col_bgnd);
+
+			j++;
+		}
+		i++;
+	}
 }
 
 
@@ -2443,10 +1947,18 @@ void LCD_DrawChar(uint8_t Xpos, uint16_t Ypos, const uint16_t *c)
   * @param  Ascii: character ascii code, must be between 0x20 and 0x7E.
   * @retval None
   */
-void LCD_DisplayChar(uint8_t Line, uint16_t Column, uint8_t Ascii)
+void LCD_DisplayChar(int16_t x, int16_t y, uint8_t asc)
 {
-  Ascii -= 32;
-  LCD_DrawChar(Line, Column, &LCD_Currentfonts->table[Ascii * LCD_Currentfonts->Height]);
+	uint16_t index = 0;
+	asc -= 32;
+
+	// find the font data location
+	while( asc > 0 )
+	{
+		index += sLCDFont->Height;
+		asc--;
+	}
+	LCD_DrawChar(x, y, &sLCDFont->table[index]);
 }
 
 
@@ -2458,205 +1970,20 @@ void LCD_DisplayChar(uint8_t Line, uint16_t Column, uint8_t Ascii)
   * @param  *ptr: pointer to string to display on LCD.
   * @retval None
   */
-void LCD_DisplayStringLine(uint8_t Line, uint8_t *ptr)
+void LCD_DisplayStringLine(int16_t x, int16_t y, uint8_t *pstr)
 {
-  uint16_t refcolumn = LCD_PIXEL_WIDTH - 1;
+	/* Send the string character by character on lCD */
+	while ((*pstr != 0) )
+	{
+		/* Display one character on LCD */
+		LCD_DisplayChar(x, y, *pstr);
 
-  /* Send the string character by character on lCD */
-  while ((*ptr != 0) & (((refcolumn + 1) & 0xFFFF) >= LCD_Currentfonts->Width))
-  {
-    /* Display one character on LCD */
-    LCD_DisplayChar(Line, refcolumn, *ptr);
-    /* Decrement the column position by 16 */
-    refcolumn -= LCD_Currentfonts->Width;
-    /* Point on the next character */
-    ptr++;
-  }
-}
+		/* proceed to next character position */
+		x += sLCDFont->Width;
 
-
-/**
-  * @brief  Sets a display window
-  * @param  Xpos: specifies the X buttom left position.
-  * @param  Ypos: specifies the Y buttom left position.
-  * @param  Height: display window height.
-  * @param  Width: display window width.
-  * @retval None
-  */
-void LCD_SetDisplayWindow(uint8_t Xpos, uint16_t Ypos, uint8_t Height, uint16_t Width)
-{
-  /* Horizontal GRAM Start Address */
-  if(Xpos >= Height)
-  {
-    LCD_WriteReg(LCD_REG_80, (Xpos - Height + 1));
-  }
-  else
-  {
-    LCD_WriteReg(LCD_REG_80, 0);
-  }
-  /* Horizontal GRAM End Address */
-  LCD_WriteReg(LCD_REG_81, Xpos);
-  /* Vertical GRAM Start Address */
-  if(Ypos >= Width)
-  {
-    LCD_WriteReg(LCD_REG_82, (Ypos - Width + 1));
-  }  
-  else
-  {
-    LCD_WriteReg(LCD_REG_82, 0);
-  }
-  /* Vertical GRAM End Address */
-  LCD_WriteReg(LCD_REG_83, Ypos);
-  LCD_SetCursor(Xpos, Ypos);
-}
-
-
-/**
-  * @brief  Disables LCD Window mode.
-  * @param  None
-  * @retval None
-  */
-void LCD_WindowModeDisable(void)
-{
-  LCD_SetDisplayWindow(239, 0x13F, 240, 320);
-  LCD_WriteReg(LCD_REG_3, 0x1018);    
-}
-
-
-/**
-  * @brief  Displays a line.
-  * @param Xpos: specifies the X position.
-  * @param Ypos: specifies the Y position.
-  * @param Length: line length.
-  * @param Direction: line direction.
-  *   This parameter can be one of the following values: Vertical or Horizontal.
-  * @retval None
-  */
-void LCD_DrawLine(uint8_t Xpos, uint16_t Ypos, uint16_t Length, uint8_t Direction)
-{
-  uint32_t i = 0;
-  
-  LCD_SetCursor(Xpos, Ypos);
-  if(Direction == LCD_DIR_HORIZONTAL)
-  {
-    LCD_WriteRAM_Prepare(); /* Prepare to write GRAM */
-    for(i = 0; i < Length; i++)
-    {
-      LCD_WriteRAM(TextColor);
-    }
-  }
-  else
-  {
-    for(i = 0; i < Length; i++)
-    {
-      LCD_WriteRAM_Prepare(); /* Prepare to write GRAM */
-      LCD_WriteRAM(TextColor);
-      Xpos++;
-      LCD_SetCursor(Xpos, Ypos);
-    }
-  }
-}
-
-
-/**
-  * @brief  Displays a rectangle.
-  * @param  Xpos: specifies the X position.
-  * @param  Ypos: specifies the Y position.
-  * @param  Height: display rectangle height.
-  * @param  Width: display rectangle width.
-  * @retval None
-  */
-void LCD_DrawRect(uint8_t Xpos, uint16_t Ypos, uint8_t Height, uint16_t Width)
-{
-  LCD_DrawLine(Xpos, Ypos, Width, LCD_DIR_HORIZONTAL);
-  LCD_DrawLine((Xpos + Height), Ypos, Width, LCD_DIR_HORIZONTAL);
-  
-  LCD_DrawLine(Xpos, Ypos, Height, LCD_DIR_VERTICAL);
-  LCD_DrawLine(Xpos, (Ypos - Width + 1), Height, LCD_DIR_VERTICAL);
-}
-
-
-/**
-  * @brief  Displays a circle.
-  * @param  Xpos: specifies the X position.
-  * @param  Ypos: specifies the Y position.
-  * @param  Radius
-  * @retval None
-  */
-void LCD_DrawCircle(uint8_t Xpos, uint16_t Ypos, uint16_t Radius)
-{
-  int32_t  D;/* Decision Variable */ 
-  uint32_t  CurX;/* Current X Value */
-  uint32_t  CurY;/* Current Y Value */ 
-  
-  D = 3 - (Radius << 1);
-  CurX = 0;
-  CurY = Radius;
-  
-  while (CurX <= CurY)
-  {
-    LCD_SetCursor(Xpos + CurX, Ypos + CurY);
-    LCD_WriteRAM_Prepare(); /* Prepare to write GRAM */
-    LCD_WriteRAM(TextColor);
-    LCD_SetCursor(Xpos + CurX, Ypos - CurY);
-    LCD_WriteRAM_Prepare(); /* Prepare to write GRAM */
-    LCD_WriteRAM(TextColor);
-    LCD_SetCursor(Xpos - CurX, Ypos + CurY);
-    LCD_WriteRAM_Prepare(); /* Prepare to write GRAM */
-    LCD_WriteRAM(TextColor);
-    LCD_SetCursor(Xpos - CurX, Ypos - CurY);
-    LCD_WriteRAM_Prepare(); /* Prepare to write GRAM */
-    LCD_WriteRAM(TextColor);
-    LCD_SetCursor(Xpos + CurY, Ypos + CurX);
-    LCD_WriteRAM_Prepare(); /* Prepare to write GRAM */
-    LCD_WriteRAM(TextColor);
-    LCD_SetCursor(Xpos + CurY, Ypos - CurX);
-    LCD_WriteRAM_Prepare(); /* Prepare to write GRAM */
-    LCD_WriteRAM(TextColor);
-    LCD_SetCursor(Xpos - CurY, Ypos + CurX);
-    LCD_WriteRAM_Prepare(); /* Prepare to write GRAM */
-    LCD_WriteRAM(TextColor);
-    LCD_SetCursor(Xpos - CurY, Ypos - CurX);
-    LCD_WriteRAM_Prepare(); /* Prepare to write GRAM */
-    LCD_WriteRAM(TextColor);
-    if (D < 0)
-    { 
-      D += (CurX << 2) + 6;
-    }
-    else
-    {
-      D += ((CurX - CurY) << 2) + 10;
-      CurY--;
-    }
-    CurX++;
-  }
-}
-
-
-/**
-  * @brief  Displays a monocolor picture.
-  * @param  Pict: pointer to the picture array.
-  * @retval None
-  */
-void LCD_DrawMonoPict(const uint32_t *Pict)
-{
-  uint32_t index = 0, i = 0;
-  LCD_SetCursor(0, (LCD_PIXEL_WIDTH - 1));
-  LCD_WriteRAM_Prepare(); /* Prepare to write GRAM */
-  for(index = 0; index < 2400; index++)
-  {
-    for(i = 0; i < 32; i++)
-    {
-      if((Pict[index] & (1 << i)) == 0x00)
-      {
-        LCD_WriteRAM(BackColor);
-      }
-      else
-      {
-        LCD_WriteRAM(TextColor);
-      }
-    }
-  }
+		/* point on the next character */
+		pstr++;
+	}
 }
 
 
@@ -2665,6 +1992,45 @@ void LCD_DrawMonoPict(const uint32_t *Pict)
   * @param  BmpAddress: Bmp picture address in the internal Flash.
   * @retval None
   */
+void LCD_WriteBMP(int16_t x, int16_t y, uint32_t BmpAddress)
+{
+	uint32_t index, width, height;
+	uint32_t i,j;
+
+	/* Get bitmap data address offset */
+	index = *(__IO uint16_t *) (BmpAddress + 10);
+	index |= (*(__IO uint16_t *) (BmpAddress + 12)) << 16;
+
+	BmpAddress += index;
+
+	/* Get bitmap width and height */
+	width = *(__IO uint16_t *) (BmpAddress + 18);
+	width |= (*(__IO uint16_t *) (BmpAddress + 20)) << 16;
+	height = *(__IO uint16_t *) (BmpAddress + 22);
+	height |= (*(__IO uint16_t *) (BmpAddress + 24)) << 16;
+
+	/* use index as end of line padding counter */
+	index = (width & 1);
+
+	/* TODO: check the size of bitmap here */
+	LCD_SetColumnPageAddr(x, x + width, y, y + height);
+
+	LCD_WR_REG(CMD_WRITE_MEM_START);
+
+	for(i = 0; i < height; i++)
+	{
+		for(j = 0; j < width; j++)
+		{
+			LCD_WR_Data(*(__IO uint16_t *)BmpAddress);
+			BmpAddress += 2;
+		}
+
+		/* there are padding bytes at the end of the line */
+		if(index) BmpAddress += 2;
+	}
+}
+
+#if 0
 void LCD_WriteBMP(uint32_t BmpAddress)
 {
   uint32_t index = 0, size = 0;
@@ -2694,303 +2060,6 @@ void LCD_WriteBMP(uint32_t BmpAddress)
   /* AM = 1 (address is updated in vertical writing direction) */
   LCD_WriteReg(LCD_REG_3, 0x1018);
 }
-
-/**
-  * @brief  Displays a full rectangle.
-  * @param  Xpos: specifies the X position.
-  * @param  Ypos: specifies the Y position.
-  * @param  Height: rectangle height.
-  * @param  Width: rectangle width.
-  * @retval None
-  */
-void LCD_DrawFullRect(uint16_t Xpos, uint16_t Ypos, uint16_t Width, uint16_t Height)
-{
-  LCD_SetTextColor(TextColor);
-
-  LCD_DrawLine(Xpos, Ypos, Width, LCD_DIR_HORIZONTAL);
-  LCD_DrawLine((Xpos + Height), Ypos, Width, LCD_DIR_HORIZONTAL);
-  
-  LCD_DrawLine(Xpos, Ypos, Height, LCD_DIR_VERTICAL);
-  LCD_DrawLine(Xpos, (Ypos - Width + 1), Height, LCD_DIR_VERTICAL);
-
-  Width -= 2;
-  Height--;
-  Ypos--;
-
-  LCD_SetTextColor(BackColor);
-
-  while(Height--)
-  {
-    LCD_DrawLine(++Xpos, Ypos, Width, LCD_DIR_HORIZONTAL);    
-  }
-
-  LCD_SetTextColor(TextColor);
-}
-
-/**
-  * @brief  Displays a full circle.
-  * @param  Xpos: specifies the X position.
-  * @param  Ypos: specifies the Y position.
-  * @param  Radius
-  * @retval None
-  */
-void LCD_DrawFullCircle(uint16_t Xpos, uint16_t Ypos, uint16_t Radius)
-{
-  int32_t  D;    /* Decision Variable */ 
-  uint32_t  CurX;/* Current X Value */
-  uint32_t  CurY;/* Current Y Value */ 
-  
-  D = 3 - (Radius << 1);
-
-  CurX = 0;
-  CurY = Radius;
-  
-  LCD_SetTextColor(BackColor);
-
-  while (CurX <= CurY)
-  {
-    if(CurY > 0) 
-    {
-      LCD_DrawLine(Xpos - CurX, Ypos + CurY, 2*CurY, LCD_DIR_HORIZONTAL);
-      LCD_DrawLine(Xpos + CurX, Ypos + CurY, 2*CurY, LCD_DIR_HORIZONTAL);
-    }
-
-    if(CurX > 0) 
-    {
-      LCD_DrawLine(Xpos - CurY, Ypos + CurX, 2*CurX, LCD_DIR_HORIZONTAL);
-      LCD_DrawLine(Xpos + CurY, Ypos + CurX, 2*CurX, LCD_DIR_HORIZONTAL);
-    }
-    if (D < 0)
-    { 
-      D += (CurX << 2) + 6;
-    }
-    else
-    {
-      D += ((CurX - CurY) << 2) + 10;
-      CurY--;
-    }
-    CurX++;
-  }
-
-  LCD_SetTextColor(TextColor);
-  LCD_DrawCircle(Xpos, Ypos, Radius);
-}
-
-
-/**
-  * @brief  Displays an polyline (between many points).
-  * @param  Points: pointer to the points array.
-  * @param  PointCount: Number of points.
-  * @retval None
-  */
-void LCD_PolyLine(pPoint Points, uint16_t PointCount)
-{
-  int16_t X = 0, Y = 0;
-
-  if(PointCount < 2)
-  {
-    return;
-  }
-
-  while(--PointCount)
-  {
-    X = Points->X;
-    Y = Points->Y;
-    Points++;
-    LCD_DrawUniLine(X, Y, Points->X, Points->Y);
-  }
-}
-
-/**
-  * @brief  Displays an relative polyline (between many points).
-  * @param  Points: pointer to the points array.
-  * @param  PointCount: Number of points.
-  * @param  Closed: specifies if the draw is closed or not.
-  *           1: closed, 0 : not closed.
-  * @retval None
-  */
-static void LCD_PolyLineRelativeClosed(pPoint Points, uint16_t PointCount, uint16_t Closed)
-{
-  int16_t X = 0, Y = 0;
-  pPoint First = Points;
-
-  if(PointCount < 2)
-  {
-    return;
-  }  
-  X = Points->X;
-  Y = Points->Y;
-  while(--PointCount)
-  {
-    Points++;
-    LCD_DrawUniLine(X, Y, X + Points->X, Y + Points->Y);
-    X = X + Points->X;
-    Y = Y + Points->Y;
-  }
-  if(Closed)
-  {
-    LCD_DrawUniLine(First->X, First->Y, X, Y);
-  }  
-}
-
-/**
-  * @brief  Displays a closed polyline (between many points).
-  * @param  Points: pointer to the points array.
-  * @param  PointCount: Number of points.
-  * @retval None
-  */
-void LCD_ClosedPolyLine(pPoint Points, uint16_t PointCount)
-{
-  LCD_PolyLine(Points, PointCount);
-  LCD_DrawUniLine(Points->X, Points->Y, (Points+PointCount-1)->X, (Points+PointCount-1)->Y);
-}
-
-/**
-  * @brief  Displays a relative polyline (between many points).
-  * @param  Points: pointer to the points array.
-  * @param  PointCount: Number of points.
-  * @retval None
-  */
-void LCD_PolyLineRelative(pPoint Points, uint16_t PointCount)
-{
-  LCD_PolyLineRelativeClosed(Points, PointCount, 0);
-}
-
-/**
-  * @brief  Displays a closed relative polyline (between many points).
-  * @param  Points: pointer to the points array.
-  * @param  PointCount: Number of points.
-  * @retval None
-  */
-void LCD_ClosedPolyLineRelative(pPoint Points, uint16_t PointCount)
-{
-  LCD_PolyLineRelativeClosed(Points, PointCount, 1);
-}
-
-
-/**
-  * @brief  Displays a  full polyline (between many points).
-  * @param  Points: pointer to the points array.
-  * @param  PointCount: Number of points.
-  * @retval None
-  */
-void LCD_FillPolyLine(pPoint Points, uint16_t PointCount)
-{
-  /*  public-domain code by Darel Rex Finley, 2007 */
-  uint16_t  nodes = 0, nodeX[MAX_POLY_CORNERS], pixelX = 0, pixelY = 0, i = 0,
-  j = 0, swap = 0;
-  uint16_t  IMAGE_LEFT = 0, IMAGE_RIGHT = 0, IMAGE_TOP = 0, IMAGE_BOTTOM = 0;
-
-  IMAGE_LEFT = IMAGE_RIGHT = Points->X;
-  IMAGE_TOP= IMAGE_BOTTOM = Points->Y;
-
-  for(i = 1; i < PointCount; i++)
-  {
-    pixelX = POLY_X(i);
-    if(pixelX < IMAGE_LEFT)
-    {
-      IMAGE_LEFT = pixelX;
-    }
-    if(pixelX > IMAGE_RIGHT)
-    {
-      IMAGE_RIGHT = pixelX;
-    }
-    
-    pixelY = POLY_Y(i);
-    if(pixelY < IMAGE_TOP)
-    { 
-      IMAGE_TOP = pixelY;
-    }
-    if(pixelY > IMAGE_BOTTOM)
-    {
-      IMAGE_BOTTOM = pixelY;
-    }
-  }
-  
-  LCD_SetTextColor(BackColor);  
-
-  /*  Loop through the rows of the image. */
-  for (pixelY = IMAGE_TOP; pixelY < IMAGE_BOTTOM; pixelY++) 
-  {  
-    /* Build a list of nodes. */
-    nodes = 0; j = PointCount-1;
-
-    for (i = 0; i < PointCount; i++) 
-    {
-      if (POLY_Y(i)<(double) pixelY && POLY_Y(j)>=(double) pixelY || POLY_Y(j)<(double) pixelY && POLY_Y(i)>=(double) pixelY) 
-      {
-        nodeX[nodes++]=(int) (POLY_X(i)+((pixelY-POLY_Y(i))*(POLY_X(j)-POLY_X(i)))/(POLY_Y(j)-POLY_Y(i))); 
-      }
-      j = i; 
-    }
-  
-    /* Sort the nodes, via a simple "Bubble" sort. */
-    i = 0;
-    while (i < nodes-1) 
-    {
-      if (nodeX[i]>nodeX[i+1]) 
-      {
-        swap = nodeX[i]; 
-        nodeX[i] = nodeX[i+1]; 
-        nodeX[i+1] = swap; 
-        if(i)
-        {
-          i--; 
-        }
-      }
-      else 
-      {
-        i++;
-      }
-    }
-  
-    /*  Fill the pixels between node pairs. */
-    for (i = 0; i < nodes; i+=2) 
-    {
-      if(nodeX[i] >= IMAGE_RIGHT) 
-      {
-        break;
-      }
-      if(nodeX[i+1] > IMAGE_LEFT) 
-      {
-        if (nodeX[i] < IMAGE_LEFT)
-        {
-          nodeX[i]=IMAGE_LEFT;
-        }
-        if(nodeX[i+1] > IMAGE_RIGHT)
-        {
-          nodeX[i+1] = IMAGE_RIGHT;
-        }
-        LCD_SetTextColor(BackColor);
-        LCD_DrawLine(pixelY, nodeX[i+1], nodeX[i+1] - nodeX[i], LCD_DIR_HORIZONTAL);
-        LCD_SetTextColor(TextColor);
-        PutPixel(pixelY, nodeX[i+1]);
-        PutPixel(pixelY, nodeX[i]);
-        /* for (j=nodeX[i]; j<nodeX[i+1]; j++) PutPixel(j,pixelY); */
-      }
-    }
-  } 
-
-  /* draw the edges */
-  LCD_SetTextColor(TextColor);
-}
-
-
-/**
-  * @brief  Displays a pixel.
-  * @param  x: pixel x.
-  * @param  y: pixel y.  
-  * @retval None
-  */
-static void PutPixel(int16_t x, int16_t y)
-{ 
-  if(x < 0 || x > 239 || y < 0 || y > 319)
-  {
-    return;  
-  }
-  LCD_DrawLine(x, y, 1, LCD_DIR_HORIZONTAL);
-}
-
 #endif
 
 /*****END OF FILE****/

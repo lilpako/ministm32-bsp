@@ -124,6 +124,7 @@ INCLUDEPATHS += -I ../../Libraries/CMSIS/CM3/CoreSupport
 INCLUDEPATHS += -I ../../Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x
 INCLUDEPATHS += -I ../../Libraries/STM32F10x_StdPeriph_Driver/inc
 INCLUDEPATHS += -I ../../Utilities/miniSTM32
+INCLUDEPATHS += -I ../../Utilities/FatFs
 INCLUDEPATHS += -I ../../Utilities/Support
 
 # CSCOPE search path
@@ -181,7 +182,9 @@ C_SRC += ../../Utilities/Support/syscalls.c
 C_SRC += ../../Utilities/Support/term_io.c
 C_SRC += ../../Utilities/Support/comm.c
 # Support functions : FAT
-#C_SRC += ../../Utilities/Support/ff.c
+#C_SRC += ../../Utilities/FatFs/ff.c
+# Support functions : Font
+C_SRC += ../../Utilities/Support/fonts.c
 
 # Startup 
 S_SRC = ../../Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x/startup/gcc_ride7/startup_stm32f10x_hd.s
