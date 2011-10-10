@@ -20,13 +20,6 @@ volatile uint16_t uIRQFlag = 0;
 volatile uint16_t uKeyDebouncer = 0;		/* key debouncer timer */
 
 
-/* Private typedef -----------------------------------------------------------*/
-/* Private define ------------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
-/* Private function prototypes -----------------------------------------------*/
-/* Private functions ---------------------------------------------------------*/
-
 /******************************************************************************/
 /*            Cortex-M3 Processor Exceptions Handlers                         */
 /******************************************************************************/
@@ -140,11 +133,10 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief  This function handles PPP interrupt request.
-  * @param  None
-  * @retval None
-  */
-
+ * @brief  This function handles EXTI10 - EXTI15 interrupt request
+ * @param  None
+ * @retval None
+ */
 void EXTI15_10_IRQHandler(void)
 {
 	if(EXTI_GetITStatus(MAIN_BTN_EXTI_LINE)) {

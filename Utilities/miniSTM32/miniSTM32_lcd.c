@@ -141,7 +141,7 @@ inline void LCD_WR_REG(uint16_t command);
 inline void LCD_WR_Data(uint16_t val);
 uint16_t LCD_RD_REG(uint16_t command);
 uint16_t LCD_RD_Data(void);
-void LCD_SetColumnPageAddr(uint16_t colS, uint16_t colE, uint16_t pageS, uint16_t pageE);
+void LCD_SetColumnPageAddr(int16_t colS, int16_t colE, int16_t pagS, int16_t pagE);
 
 /* functions not used for now */
 void LCD_SetScrollArea(uint16_t top, uint16_t scroll, uint16_t bottom);
@@ -588,7 +588,7 @@ void LCD_DrawPixel(int16_t x, int16_t y)
 	LCD_WR_Data(col_fgnd);
 }
 
-void LCD_SetColumnPageAddr(uint16_t colS, uint16_t colE, uint16_t pageS, uint16_t pageE)
+void LCD_SetColumnPageAddr(int16_t colS, int16_t colE, int16_t pagS, int16_t pagE)
 {
 	/* set column address */
 	LCD_WR_REG(CMD_SET_COL_ADDRESS);
@@ -602,11 +602,11 @@ void LCD_SetColumnPageAddr(uint16_t colS, uint16_t colE, uint16_t pageS, uint16_
 	/* set page address */
     LCD_WR_REG(CMD_SET_PAGE_ADDRESS);
 	/* start page */
-	LCD_WR_Data(pageS >> 8);
-	LCD_WR_Data(pageS & 0x00ff);
+	LCD_WR_Data(pagS >> 8);
+	LCD_WR_Data(pagS & 0x00ff);
 	/* end page */
-	LCD_WR_Data(pageE >> 8); 
-	LCD_WR_Data(pageE & 0x00ff);
+	LCD_WR_Data(pagE >> 8); 
+	LCD_WR_Data(pagE & 0x00ff);
 }
 
 /**
@@ -1182,6 +1182,25 @@ void LCD_DrawFillEllipse(int16_t x, int16_t y, int16_t rx, int16_t ry)
 	}
 }
 
+void LCD_DrawRawImage(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t *ptr)
+{
+	int16_t y0 = y1;
+
+	LCD_SetColumnPageAddr(x1, x2, y1, y2);
+	LCD_WR_REG(CMD_WRITE_MEM_START);
+	
+	while(x1 <= x2)
+	{
+		y1 = y0;
+
+		while(y1 <= y2)
+		{
+			LCD_WR_Data(*ptr++);
+			y1++;
+		}
+		x1++;
+	}
+}
 
 #if defined(LCD_TEST) 
 
@@ -1987,6 +2006,7 @@ void LCD_DisplayStringLine(int16_t x, int16_t y, uint8_t *pstr)
 }
 
 
+#if defined(STM32_GL_COMPATIBILITY)
 /**
   * @brief  Displays a bitmap picture loaded in the internal Flash.
   * @param  BmpAddress: Bmp picture address in the internal Flash.
@@ -2029,6 +2049,7 @@ void LCD_WriteBMP(int16_t x, int16_t y, uint32_t BmpAddress)
 		if(index) BmpAddress += 2;
 	}
 }
+#endif /* STM32_GL_COMPATIBILITY */
 
 #if 0
 void LCD_WriteBMP(uint32_t BmpAddress)

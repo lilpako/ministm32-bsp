@@ -68,6 +68,7 @@ void LCD_DrawEllipse(int16_t x, int16_t y, int16_t rx, int16_t ry);
 void LCD_DrawFillRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2);
 void LCD_DrawFillCircle(int16_t x, int16_t y, int16_t r);
 void LCD_DrawFillEllipse(int16_t x, int16_t y, int16_t rx, int16_t ry);
+void LCD_DrawRawImage(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t *ptr);
 
 /* functions from STM32 peripheral library */
 void LCD_SetFont(sFONT *pFont);
@@ -75,7 +76,6 @@ sFONT* LCD_GetFont(void);
 void LCD_DrawChar(int16_t x, int16_t y, const uint16_t *ch);
 void LCD_DisplayChar(int16_t x, int16_t y, uint8_t asc);
 void LCD_DisplayStringLine(int16_t x, int16_t y, uint8_t *pstr);
-void LCD_WriteBMP(int16_t x, int16_t y, uint32_t BmpAddress);
 
 #if defined(LCD_TEST)
 uint16_t LCD_DrawTestPattern(unsigned int index);
@@ -93,6 +93,7 @@ void LCD_DrawLineB(int16_t x1, int16_t y1, int16_t x2, int16_t y2);
 #define GL_SetBackColor				LCD_SetBGColor
 #define GL_Clear					LCD_Clear
 #define GL_LCD_Init					LCD_Init
+void LCD_WriteBMP(int16_t x, int16_t y, uint32_t BmpAddress);
 #endif /* STM32_GL_COMPATIBILITY */
 
 
