@@ -1942,14 +1942,24 @@ void LCD_DrawChar(int16_t x, int16_t y, const uint16_t *ch)
 	LCD_WR_REG(CMD_WRITE_MEM_START);
 
 	i = 0;
-	while( i < sLCDFont->Height )
+	while(i < sLCDFont->Height)
 	{
 		j = 0;
-		while( j < sLCDFont->Width  )
+		while(j < sLCDFont->Width)
 		{
-			if((ch[i]>>(j)) & 0x1) LCD_WR_Data(col_fgnd);
-			else LCD_WR_Data(col_bgnd);
-
+				/* 8x8 and 8x12 fonts */
+			if( ((sLCDFont->Width < 12)  && (ch[i] & (0x0080 >> j))) || 
+				/* 12x12 fonts */
+				((sLCDFont->Width == 12) && (ch[i] & (0x8000 >> j))) || 
+				/* 16x24 fonts */
+				((sLCDFont->Width > 12)  && (ch[i] & (0x0001 << j))) )
+			{
+				LCD_WR_Data(col_fgnd);
+			}
+			else
+			{
+				LCD_WR_Data(col_bgnd);
+			}
 			j++;
 		}
 		i++;
