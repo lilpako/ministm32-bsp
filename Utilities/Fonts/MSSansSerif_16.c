@@ -1,14 +1,15 @@
 /*******************************************************************************
- * @file    MSSansSerif-16.c
- * @author  Brian
- * @version V0.1.0
- * @date    21-Oct-2011
- * @brief   Microsoft bitmap font - MS Sans Serif 16 point (15x20)
- *			FBB: 15, 20, 0, -4
+ * @file	MSSansSerif_16.c
+ * @author	Brian
+ * @version	V0.1.0
+ * @date	21-Oct-2011
+ * @brief	MS Sans Serif 16 point (15x20)
  */
+
 #include "lcdfonts.h"
 
 const uint8_t MSSansSerif_16_Table [] = {
+
 /* ' ' */
 0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 /* '!' */
@@ -202,8 +203,8 @@ const uint8_t MSSansSerif_16_Table [] = {
 };
 
 LCDFONT MSSansSerif_16 = {
-	2,						/* widthbytes */
-	20,						/* fontheight */
+	2,			/* widthbytes */
+	20,			/* fontheight */
 	MSSansSerif_16_Table
 };
 

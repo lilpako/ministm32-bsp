@@ -3,13 +3,13 @@
  * @author	Brian
  * @version	V0.1.0
  * @date	21-Oct-2011
- * @brief	Microsoft MS Serif 13 point (13x16)
- *			FBB: 13, 16, 0, -3
+ * @brief	MS Serif 13 point (13x16)
  */
 
 #include "lcdfonts.h"
 
 const uint8_t MSSerif_13_Table [] = {
+
 /* ' ' */
 0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 /* '!' */
@@ -203,8 +203,8 @@ const uint8_t MSSerif_13_Table [] = {
 };
 
 LCDFONT MSSerif_13 = {
-	2,						/* widthbytes */
-	16,						/* fontheight */
+	2,			/* widthbytes */
+	16,			/* fontheight */
 	MSSerif_13_Table
 };
 

@@ -3,13 +3,13 @@
  * @author	Brian
  * @version	V0.1.0
  * @date	21-Oct-2011
- * @brief	Microsoft Terminal 16 point (8x18)
- *			FBB: 8, 18, 0, -2
+ * @brief	Terminal 16 point (8x18)
  */
 
 #include "lcdfonts.h"
 
 const uint8_t Terminal_16_Table [] = {
+
 /* ' ' */
 0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 /* '!' */
@@ -203,8 +203,8 @@ const uint8_t Terminal_16_Table [] = {
 };
 
 LCDFONT Terminal_16 = {
-	1,						/* widthbytes */
-	18,						/* fontheight */
+	1,			/* widthbytes */
+	18,			/* fontheight */
 	Terminal_16_Table
 };
 

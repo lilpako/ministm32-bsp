@@ -1,15 +1,15 @@
 /*******************************************************************************
- * @file    MSSansSerif-11.c
- * @author  Brian
- * @version V0.1.0
- * @date    21-Oct-2011
- * @brief   Microsoft bitmap font - MS Sans Serif 11 point (11x13)
- *			FBB: 11, 13, 0, -2
+ * @file	MSSansSerif_11.c
+ * @author	Brian
+ * @version	V0.1.0
+ * @date	21-Oct-2011
+ * @brief	MS Sans Serif 11 point (11x13)
  */
 
 #include "lcdfonts.h"
 
 const uint8_t MSSansSerif_11_Table [] = {
+
 /* ' ' */
 0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 /* '!' */
@@ -203,8 +203,8 @@ const uint8_t MSSansSerif_11_Table [] = {
 };
 
 LCDFONT MSSansSerif_11 = {
-	2,						/* widthbytes */
-	13,						/* fontheight */
+	2,			/* widthbytes */
+	13,			/* fontheight */
 	MSSansSerif_11_Table
 };
 

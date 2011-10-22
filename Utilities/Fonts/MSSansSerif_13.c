@@ -1,15 +1,15 @@
 /*******************************************************************************
- * @file    MSSansSerif-13.c
- * @author  Brian
- * @version V0.1.0
- * @date    21-Oct-2011
- * @brief   Microsoft bitmap font - MS Sans Serif 13 point (13x16)
- *			FBB: 13, 16, 0, -3
+ * @file	MSSansSerif_13.c
+ * @author	Brian
+ * @version	V0.1.0
+ * @date	21-Oct-2011
+ * @brief	MS Sans Serif 13 point (13x16)
  */
 
 #include "lcdfonts.h"
 
 const uint8_t MSSansSerif_13_Table [] = {
+
 /* ' ' */
 0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 /* '!' */
@@ -203,8 +203,8 @@ const uint8_t MSSansSerif_13_Table [] = {
 };
 
 LCDFONT MSSansSerif_13 = {
-	2,						/* widthbytes */
-	16,						/* fontheight */
+	2,			/* widthbytes */
+	16,			/* fontheight */
 	MSSansSerif_13_Table
 };
 

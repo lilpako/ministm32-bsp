@@ -3,13 +3,13 @@
  * @author	Brian
  * @version	V0.1.0
  * @date	21-Oct-2011
- * @brief	Microsoft MS Serif 11 point (10x13)
- *			FBB: 10, 13, 0, -2
+ * @brief	MS Serif 11 point (10x13)
  */
 
 #include "lcdfonts.h"
 
 const uint8_t MSSerif_11_Table [] = {
+
 /* ' ' */
 0x02,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 /* '!' */
@@ -203,8 +203,8 @@ const uint8_t MSSerif_11_Table [] = {
 };
 
 LCDFONT MSSerif_11 = {
-	2,						/* widthbytes */
-	13,						/* fontheight */
+	2,			/* widthbytes */
+	13,			/* fontheight */
 	MSSerif_11_Table
 };
 
