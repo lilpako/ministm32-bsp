@@ -10,7 +10,11 @@
 #endif 
 
 #include "stm32f10x.h"
-#include "fonts.h"
+#include "lcdfonts.h"
+
+#if 0	/* obsolete */
+#include "stfonts.h"
+#endif 
 
 /* LCD type definition (default) */
 #if (!defined(LCD_HSD043I9W) && !defined(LCD_AT043TN13) && !defined(LCD_AT070TN83))
@@ -43,6 +47,10 @@
 									(((G) & 0x00FC) << 3) | \
 									(((B) & 0x00F8) >> 3))  
 
+#ifndef LCD_COLOR_TRANSPARENT
+#define LCD_COLOR_TRANSPARENT		LCD_COLOR(1,1,1)
+#endif
+
 typedef uint16_t LCDCOLOR;
 
 void LCD_Init(void);
@@ -70,11 +78,16 @@ void LCD_DrawFillCircle(int16_t x, int16_t y, int16_t r);
 void LCD_DrawFillEllipse(int16_t x, int16_t y, int16_t rx, int16_t ry);
 void LCD_DrawRawImage(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t *ptr);
 
-/* functions from STM32 peripheral library */
+void LCD_SetFont(LCDFONT *pFont);
+LCDFONT* LCD_GetFont(void);
+
+#if 0 /* obsolete : STM32 font compatibility */
 void LCD_SetFont(sFONT *pFont);
 sFONT* LCD_GetFont(void);
-void LCD_DrawChar(int16_t x, int16_t y, const uint16_t *ch);
-void LCD_DisplayChar(int16_t x, int16_t y, uint8_t asc);
+#endif
+
+unsigned int LCD_DrawChar(int16_t x, int16_t y, const uint8_t *ch);
+unsigned int LCD_DisplayChar(int16_t x, int16_t y, uint8_t asc);
 void LCD_DisplayStringLine(int16_t x, int16_t y, uint8_t *pstr);
 
 #if defined(LCD_TEST)
@@ -82,7 +95,6 @@ uint16_t LCD_DrawTestPattern(unsigned int index);
 /* Bresenham algorithm for speed comparision */
 void LCD_DrawLineB(int16_t x1, int16_t y1, int16_t x2, int16_t y2);
 #endif /* LCD_TEST */
-
 
 
 /* functions and definitions for STM32 gui library compatibility */
@@ -93,6 +105,7 @@ void LCD_DrawLineB(int16_t x1, int16_t y1, int16_t x2, int16_t y2);
 #define GL_SetBackColor				LCD_SetBGColor
 #define GL_Clear					LCD_Clear
 #define GL_LCD_Init					LCD_Init
+
 void LCD_WriteBMP(int16_t x, int16_t y, uint32_t BmpAddress);
 #endif /* STM32_GL_COMPATIBILITY */
 

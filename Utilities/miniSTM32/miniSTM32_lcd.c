@@ -134,7 +134,11 @@ volatile LCDCOLOR col_fgnd = LCD_COLOR_WHITE;
 volatile LCDCOLOR col_bgnd = LCD_COLOR_BLACK;
 volatile uint16_t uPenWidth = 1;
 volatile uint16_t uLCD_Delay = 0;
+static LCDFONT *sLCDFont;
+
+#if 0 /* obsolete */
 static sFONT *sLCDFont;
+#endif
 
 /* register control functions */
 inline void LCD_WR_REG(uint16_t command);
@@ -310,6 +314,12 @@ void LCD_Init(void)
 	LCD_WR_Data(0x00);
 	LCD_WR_Data(0x00);
 
+	/* set address mode 
+	 * flip vertical, flip horizontal
+	 */
+	LCD_WR_REG(CMD_SET_ADDRESS_MODE);
+	LCD_WR_Data(0x03);
+
 #elif defined(LCD_AT043TN13)
 
 	/* Innolux AT043TN13 */
@@ -380,6 +390,12 @@ void LCD_Init(void)
 	LCD_WR_Data(0x09);
 	LCD_WR_Data(0x00);
 	LCD_WR_Data(0x00);
+
+	/* set address mode 
+	 * flip vertical, flip horizontal
+	 */
+	LCD_WR_REG(CMD_SET_ADDRESS_MODE);
+	LCD_WR_Data(0x03);
 
 #elif defined(LCD_AT070TN83)
 
@@ -452,11 +468,11 @@ void LCD_Init(void)
 	LCD_WR_Data(0x00);
 	LCD_WR_Data(0x00);
 
-#endif /* LCD_AT070TN83 */
-
 	/* set address mode */
 	LCD_WR_REG(CMD_SET_ADDRESS_MODE);
 	LCD_WR_Data(0x00);
+
+#endif /* LCD_AT070TN83 */
 
 	/* clear lcd */
 	LCD_Clear(LCD_COLOR_BLACK);
@@ -1561,40 +1577,6 @@ uint16_t LCD_DrawTestPattern(unsigned int index)
 		}
 	}
 	/* 
-	 * FONTS HANDLING: Draw fonts, text
-	 */
-	else if(index == 10)
-	{
-		i = 0; 
-		x1 = LCD_WIDTH>>3;
-		y1 = LCD_HEIGHT>>2;
-
-		LCD_SetFont(&Font8x8);
-		LCD_SetBGColor(colors[i]);
-		LCD_SetFGColor(colors[++i]);
-		LCD_DisplayStringLine(x1, y1, "8x8 The quick brown fox");
-
-		y1 += 16;
-		LCD_SetFont(&Font8x12);
-		LCD_SetBGColor(colors[i]);
-		LCD_SetFGColor(colors[++i]);
-		LCD_DisplayStringLine(x1, y1, "8x12 The quick brown fox");
-
-		y1 += 24;
-		LCD_SetFont(&Font12x12);
-		LCD_SetBGColor(colors[i]);
-		LCD_SetFGColor(colors[++i]);
-		LCD_DisplayStringLine(x1, y1, "12x12 The quick brown fox");
-
-		y1 += 24;
-		LCD_SetFont(&Font16x24);
-		LCD_SetBGColor(colors[i]);
-		LCD_SetFGColor(colors[++i]);
-		LCD_DisplayStringLine(x1, y1, "16X24 The quick brown fox");
-
-		LCD_SetBGColor(LCD_COLOR_BLACK);
-	}
-	/* 
 	 * POINTS : Draw points 
 	 */
 	else if(index == 99)
@@ -1903,6 +1885,146 @@ void LCD_SetTearingCfg(unsigned char state, unsigned char mode)
 	}
 }
 
+
+void LCD_SetFont(LCDFONT *pFont)
+{
+	sLCDFont = pFont;
+}
+
+LCDFONT *LCD_GetFont(void)
+{
+	return sLCDFont;
+}
+
+/**
+  * @brief  Draws a character on LCD.
+  * @param  Xpos: the Line where to display the character shape.
+  * @param  Ypos: start column address.
+  * @param  c: pointer to the character data.
+  * @retval None
+  */
+unsigned int LCD_DrawChar(int16_t x, int16_t y, const uint8_t *ch)
+{
+	unsigned int i, column, k, width, line;
+	uint8_t chbyte;
+	
+	/* font width in pixel */
+	width = ch[0];
+
+	/* pixel by pixel drawing */
+	if( LCD_COLOR_TRANSPARENT == col_bgnd )
+	{
+		i = 1;
+		line = 0;
+		while(line < sLCDFont->Height)
+		{
+			/* one line of glyph */
+			column = 0;
+			while(column < width)
+			{
+				if(column < 8)
+				{
+					chbyte = ch[i];	
+					k = column;
+				}
+				else if(column < 16)
+				{
+					chbyte = ch[i+1];
+					k = column - 8;
+				}
+				else if(column < 24)
+				{
+					chbyte = ch[i+2];
+					k = column - 16;
+				}
+				else if(column < 32)
+				{
+					chbyte = ch[i+3];
+					k = column - 24;
+				}
+				/* font data error */
+				else
+				{
+				}
+				
+				if(chbyte & (0x80 >> k))
+				{
+					LCD_SetColumnPageAddr(x+column, x+column, y+line, y+line);
+					LCD_WR_REG(CMD_WRITE_MEM_START);
+					LCD_WR_Data(col_fgnd);
+				}
+
+				column++;
+			}
+			i = i+ sLCDFont->WidthBytes;
+			line++;
+		}
+	}
+	/* block drawing */
+	else
+	{
+		/* set column page address */
+		LCD_SetColumnPageAddr(x, x + width - 1, y, y + sLCDFont->Height - 1);
+
+		/* start data transfer */
+		LCD_WR_REG(CMD_WRITE_MEM_START);
+
+		i = 1;
+		line = 0;
+
+		while(line < sLCDFont->Height)
+		{
+			column = 0;
+
+			while(column < width)
+			{
+				if(column < 8)
+				{
+					chbyte = ch[i];	
+					k = column;
+				}
+				else if(column < 16)
+				{
+					chbyte = ch[i+1];
+					k = column - 8;
+				}
+				else if(column < 24)
+				{
+					chbyte = ch[i+2];
+					k = column - 16;
+				}
+				else if(column < 32)
+				{
+					chbyte = ch[i+3];
+					k = column - 24;
+				}
+				/* font data error */
+				else
+				{
+				}
+				
+				if(chbyte & (0x80 >> k))
+				{
+					LCD_WR_Data(col_fgnd);
+				}
+				else
+				{
+					LCD_WR_Data(col_bgnd);
+				}
+
+				column++;
+			}
+
+			i = i + sLCDFont->WidthBytes;
+			line++;
+		}
+	}
+
+	return width;
+}
+
+
+#if 0
 /**
  * @brief	Sets the Text Font.
  * @param	fonts: specifies the font to be used.
@@ -1930,9 +2052,16 @@ sFONT *LCD_GetFont(void)
   * @param  c: pointer to the character data.
   * @retval None
   */
-void LCD_DrawChar(int16_t x, int16_t y, const uint16_t *ch)
+unsigned int LCD_DrawChar(int16_t x, int16_t y, const uint16_t *ch)
 {
-	uint16_t i, j, flag = 1;
+	unsigned int i, j, width, flag = 1;
+	
+	/* fixed pitch font */
+	if(sLCDFont->Width)
+		width = sLCDFont->Width;
+	/* proportional pitch font */
+	else
+		width = ch[0];
 
 	/* set column page address */
 	LCD_SetColumnPageAddr(x, x + sLCDFont->Width - 1, y, 
@@ -1945,7 +2074,7 @@ void LCD_DrawChar(int16_t x, int16_t y, const uint16_t *ch)
 	while(i < sLCDFont->Height)
 	{
 		j = 0;
-		while(j < sLCDFont->Width)
+		while(j < width)
 		{
 				/* 8x8 and 8x12 fonts */
 			if( ((sLCDFont->Width < 12)  && (ch[i] & (0x0080 >> j))) || 
@@ -1964,7 +2093,10 @@ void LCD_DrawChar(int16_t x, int16_t y, const uint16_t *ch)
 		}
 		i++;
 	}
+
+	return width;
 }
+#endif
 
 
 /**
@@ -1976,18 +2108,19 @@ void LCD_DrawChar(int16_t x, int16_t y, const uint16_t *ch)
   * @param  Ascii: character ascii code, must be between 0x20 and 0x7E.
   * @retval None
   */
-void LCD_DisplayChar(int16_t x, int16_t y, uint8_t asc)
+unsigned int LCD_DisplayChar(int16_t x, int16_t y, uint8_t asc)
 {
-	uint16_t index = 0;
+	unsigned int index = 0;
 	asc -= 32;
 
 	// find the font data location
 	while( asc > 0 )
 	{
-		index += sLCDFont->Height;
+		index += (sLCDFont->Height)*(sLCDFont->WidthBytes) + 1;
 		asc--;
 	}
-	LCD_DrawChar(x, y, &sLCDFont->table[index]);
+
+	return LCD_DrawChar(x, y, &sLCDFont->table[index]);
 }
 
 
@@ -2001,14 +2134,16 @@ void LCD_DisplayChar(int16_t x, int16_t y, uint8_t asc)
   */
 void LCD_DisplayStringLine(int16_t x, int16_t y, uint8_t *pstr)
 {
+	unsigned int width;
+
 	/* Send the string character by character on lCD */
 	while ((*pstr != 0) )
 	{
 		/* Display one character on LCD */
-		LCD_DisplayChar(x, y, *pstr);
+		width = LCD_DisplayChar(x, y, *pstr);
 
 		/* proceed to next character position */
-		x += sLCDFont->Width;
+		x += width;
 
 		/* point on the next character */
 		pstr++;

@@ -22,7 +22,6 @@ enum{
 	MENU_LCD_TEST7,
 	MENU_LCD_TEST8,
 	MENU_LCD_TEST9,
-	MENU_LCD_TEST10,
 	MENU_LCD_TESTX,
 	MENU_END
 };
@@ -103,10 +102,6 @@ int main(void)
 			else if( u16Menu == MENU_LCD_TEST9 ) {
 				printf("Drawing solid circles with ellipse routine ---> %d msec\n",
 					LCD_DrawTestPattern(9));
-			}
-			else if( u16Menu == MENU_LCD_TEST10 ) {
-				printf("Drawing text with various fonts            ---> %d msec\n",
-					LCD_DrawTestPattern(10));
 			}
 			else if( u16Menu == MENU_LCD_TESTX ) {
 				printf("Drawing color contrast bars                ---> %d msec\n",

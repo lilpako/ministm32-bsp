@@ -29,22 +29,6 @@ JTAGDEV = luminary-icdi
 # Windows
 ifdef SystemRoot
 
-# Windows Vista or Windows 7
-# ALLUSERSAPPDATA,DEFAULTUSERPROFILE,SYSTEMPROFILE,USERSID
-ifdef USERSID
-
-TOOLDIR = "C:/Program Files/CodeSourcery/Sourcery G++ Lite"
-GCCVERSION = "4.5.2"
-CC = $(TOOLDIR)/bin/arm-none-eabi-gcc
-LD = $(TOOLDIR)/bin/arm-none-eabi-ld
-AR = $(TOOLDIR)/bin/arm-none-eabi-ar
-GDB = $(TOOLDIR)/bin/arm-none-eabi-gdb
-OBJCOPY = $(TOOLDIR)/bin/arm-none-eabi-objcopy
-RM = $(TOOLDIR)/bin/cs-rm -rf
-
-# Windows XP
-else
-
 TOOLDIR = "C:\Program Files\CodeSourcery\Sourcery G++ Lite"
 GCCVERSION = "4.5.2"
 CC = $(TOOLDIR)\bin\arm-none-eabi-gcc
@@ -53,8 +37,6 @@ AR = $(TOOLDIR)\bin\arm-none-eabi-ar
 GDB = $(TOOLDIR)\bin\arm-none-eabi-gdb
 OBJCOPY = $(TOOLDIR)\bin\arm-none-eabi-objcopy
 RM = $(TOOLDIR)\bin\cs-rm -rf
-
-endif
 
 # Linux
 else
@@ -76,33 +58,42 @@ endif
 
 # C Dialect
 CFLAGS += -fsigned-char 
+
 # ARM specific
 CFLAGS += -mthumb 
 CFLAGS += -mcpu=cortex-m3
 CFLAGS += -mlittle-endian
+
 # Gdb support
 CFLAGS += -g 
+
 # Optimization
 CFLAGS += -Os 
+
 # preprocessor
 CFLAGS += -MD 
+
 # stm32f10x.h specific
 CFLAGS += -D STM32F10X_HD
 CFLAGS += -D USE_STDPERIPH_DRIVER 
+
 # garbage collection: this doesn't seem to work with CSLite
 CFLAGS += -ffunction-sections 
 CFLAGS += -Wl,--gc-sections
+
 # hardware specific definitions
 CFLAGS += -D LCD_HSD043I9W
 #CFLAGS += -D LCD_AT043TN13
 #CFLAGS += -D LCD_AT070TN83
-# enable test pattern drawing function
-CFLAGS += -D LCD_TEST
+
+# enable LCD test pattern drawing functions
+#CFLAGS += -D LCD_TEST
 
 # ARM specific
 ASMFLAGS += -mthumb 
 ASMFLAGS += -mcpu=cortex-m3
 ASMFLAGS += -mlittle-endian
+
 # Passing options to assembler
 ASMFLAGS += -Wa,-EL 
 
@@ -125,8 +116,8 @@ INCLUDEPATHS += -I ../../Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x
 INCLUDEPATHS += -I ../../Libraries/STM32F10x_StdPeriph_Driver/inc
 INCLUDEPATHS += -I ../../Utilities/miniSTM32
 INCLUDEPATHS += -I ../../Utilities/FatFs
-INCLUDEPATHS += -I ../../Utilities/Fonts
 INCLUDEPATHS += -I ../../Utilities/Support
+INCLUDEPATHS += -I ../../Utilities/Fonts
 
 # CSCOPE search path
 XREFSPATHS = -s .
@@ -182,10 +173,28 @@ C_SRC += ../../Utilities/miniSTM32/miniSTM32_lcd.c
 C_SRC += ../../Utilities/Support/syscalls.c
 C_SRC += ../../Utilities/Support/term_io.c
 C_SRC += ../../Utilities/Support/comm.c
+
 # Support functions : FAT
 #C_SRC += ../../Utilities/FatFs/ff.c
-# Support functions : Font
-C_SRC += ../../Utilities/Support/fonts.c
+
+# Support functions : Fonts
+#C_SRC += ../../Utilities/Support/fonts.c
+C_SRC += ../../Utilities/Fonts/MSSansSerif_11.c
+C_SRC += ../../Utilities/Fonts/MSSansSerif_13.c
+C_SRC += ../../Utilities/Fonts/MSSansSerif_16.c
+C_SRC += ../../Utilities/Fonts/MSSansSerif_19.c
+C_SRC += ../../Utilities/Fonts/MSSansSerif_24.c
+C_SRC += ../../Utilities/Fonts/MSSansSerif_32.c
+C_SRC += ../../Utilities/Fonts/MSSerif_11.c
+C_SRC += ../../Utilities/Fonts/MSSerif_13.c
+C_SRC += ../../Utilities/Fonts/MSSerif_16.c
+C_SRC += ../../Utilities/Fonts/MSSerif_19.c
+C_SRC += ../../Utilities/Fonts/MSSerif_24.c
+C_SRC += ../../Utilities/Fonts/MSSerif_32.c
+C_SRC += ../../Utilities/Fonts/Terminal_12.c
+C_SRC += ../../Utilities/Fonts/Terminal_16.c
+C_SRC += ../../Utilities/Fonts/Terminal_20.c
+C_SRC += ../../Utilities/Fonts/Terminal_23.c
 
 # Startup 
 S_SRC = ../../Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x/startup/gcc_ride7/startup_stm32f10x_hd.s
