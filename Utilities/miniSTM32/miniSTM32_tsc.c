@@ -251,9 +251,9 @@ void TSC_Calibration(void)
 	/* center */
 
 	LCD_DrawLine((LCD_WIDTH/2) - CURSOR_SIZE, (LCD_HEIGHT/2), \
-		(LCD_WIDTH/2) + CURSOR_SIZE, (LCD_HEIGHT/2), 5, 255,150,40);
+		(LCD_WIDTH/2) + CURSOR_SIZE, (LCD_HEIGHT/2));
 	LCD_DrawLine((LCD_WIDTH/2), (LCD_HEIGHT/2) - CURSOR_SIZE, \
-		(LCD_WIDTH/2), (LCD_HEIGHT/2) + CURSOR_SIZE, 5, 255,150,40);
+		(LCD_WIDTH/2), (LCD_HEIGHT/2) + CURSOR_SIZE);
 
 	TSC_WaitForTouch();
 
@@ -265,9 +265,9 @@ void TSC_Calibration(void)
 	/* upper left corner */
 	
 	LCD_DrawLine((LCD_WIDTH/5) - CURSOR_SIZE, (LCD_HEIGHT/5), \
-		(LCD_WIDTH/5) + CURSOR_SIZE, (LCD_HEIGHT/5), 5, 255,150,40);
+		(LCD_WIDTH/5) + CURSOR_SIZE, (LCD_HEIGHT/5));
 	LCD_DrawLine((LCD_WIDTH/5), (LCD_HEIGHT/5) - CURSOR_SIZE, \
-		(LCD_WIDTH/5), (LCD_HEIGHT/5) + CURSOR_SIZE, 5, 255,150,40);
+		(LCD_WIDTH/5), (LCD_HEIGHT/5) + CURSOR_SIZE);
 
 	TSC_WaitForTouch();
 
@@ -279,9 +279,9 @@ void TSC_Calibration(void)
 	/* upper right corner*/
 	
 	LCD_DrawLine((4*LCD_WIDTH/5) - CURSOR_SIZE, (LCD_HEIGHT/5), \
-		(4*LCD_WIDTH/5) + CURSOR_SIZE, (LCD_HEIGHT/5), 5, 255,150,40);
+		(4*LCD_WIDTH/5) + CURSOR_SIZE, (LCD_HEIGHT/5));
 	LCD_DrawLine((4*LCD_WIDTH/5), (LCD_HEIGHT/5) - CURSOR_SIZE, \
-		(4*LCD_WIDTH/5), (LCD_HEIGHT/5) + CURSOR_SIZE, 5, 255,150,40);
+		(4*LCD_WIDTH/5), (LCD_HEIGHT/5) + CURSOR_SIZE);
 
 	TSC_WaitForTouch();
 
@@ -293,9 +293,9 @@ void TSC_Calibration(void)
 	/* lower right corner */
 	
 	LCD_DrawLine((4*LCD_WIDTH/5) - CURSOR_SIZE, (4*LCD_HEIGHT/5), \
-		(4*LCD_WIDTH/5) + CURSOR_SIZE, (4*LCD_HEIGHT/5), 5, 255,150,40);
+		(4*LCD_WIDTH/5) + CURSOR_SIZE, (4*LCD_HEIGHT/5));
 	LCD_DrawLine((4*LCD_WIDTH/5), (4*LCD_HEIGHT/5) - CURSOR_SIZE, \
-		(4*LCD_WIDTH/5), (4*LCD_HEIGHT/5) + CURSOR_SIZE, 5, 255,150,40);
+		(4*LCD_WIDTH/5), (4*LCD_HEIGHT/5) + CURSOR_SIZE);
 
 	TSC_WaitForTouch();
 
@@ -307,9 +307,9 @@ void TSC_Calibration(void)
 	/* lower left corner */
 	
 	LCD_DrawLine((LCD_WIDTH/5) - CURSOR_SIZE, (4*LCD_HEIGHT/5), \
-		(LCD_WIDTH/5) + CURSOR_SIZE, (4*LCD_HEIGHT/5), 5, 255,150,40);
+		(LCD_WIDTH/5) + CURSOR_SIZE, (4*LCD_HEIGHT/5));
 	LCD_DrawLine((LCD_WIDTH/5), (4*LCD_HEIGHT/5) - CURSOR_SIZE, \
-		(LCD_WIDTH/5), (4*LCD_HEIGHT/5) + CURSOR_SIZE, 5, 255,150,40);
+		(LCD_WIDTH/5), (4*LCD_HEIGHT/5) + CURSOR_SIZE);
 
 	TSC_WaitForTouch();
 

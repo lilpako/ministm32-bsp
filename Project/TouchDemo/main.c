@@ -97,8 +97,8 @@ void Touch_Demo(void)
 		u16X = TSC_GetDisplayX(uTSC_ValueX, uTSC_ValueY);
 		u16Y = TSC_GetDisplayY(uTSC_ValueX, uTSC_ValueY);
 
-		LCD_DrawLine(u16X - 5, u16Y, u16X + 5, u16Y, 5, 50, 200, 50);
-		LCD_DrawLine(u16X, u16Y - 5, u16X, u16Y +5, 5, 50, 200, 50);
+		LCD_DrawLine(u16X - 5, u16Y, u16X + 5, u16Y);
+		LCD_DrawLine(u16X, u16Y - 5, u16X, u16Y +5);
 
 		u16Count++;
 	}

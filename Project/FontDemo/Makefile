@@ -8,7 +8,7 @@
 # Definitions                                                      #
 ####################################################################
 
-PROJECTNAME = LCDDemo
+PROJECTNAME = FontDemo
 OBJ_DIR = build
 EXE_DIR = exe
 LST_DIR = lst
@@ -82,8 +82,9 @@ CFLAGS += -ffunction-sections
 CFLAGS += -Wl,--gc-sections
 
 # hardware specific definitions
-CFLAGS += -D LCD_HSD043I9W
-#CFLAGS += -D LCD_AT043TN13
+#CFLAGS += -D LCD_KWH024Q04
+#CFLAGS += -D LCD_HSD043I9W
+CFLAGS += -D LCD_AT043TN13
 #CFLAGS += -D LCD_AT070TN83
 
 # enable LCD test pattern drawing functions
@@ -116,8 +117,8 @@ INCLUDEPATHS += -I ../../Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x
 INCLUDEPATHS += -I ../../Libraries/STM32F10x_StdPeriph_Driver/inc
 INCLUDEPATHS += -I ../../Utilities/miniSTM32
 INCLUDEPATHS += -I ../../Utilities/FatFs
-INCLUDEPATHS += -I ../../Utilities/Support
 INCLUDEPATHS += -I ../../Utilities/Fonts
+INCLUDEPATHS += -I ../../Utilities/Support
 
 # CSCOPE search path
 XREFSPATHS = -s .
@@ -178,7 +179,6 @@ C_SRC += ../../Utilities/Support/comm.c
 #C_SRC += ../../Utilities/FatFs/ff.c
 
 # Support functions : Fonts
-#C_SRC += ../../Utilities/Support/fonts.c
 C_SRC += ../../Utilities/Fonts/MSSansSerif_11.c
 C_SRC += ../../Utilities/Fonts/MSSansSerif_13.c
 C_SRC += ../../Utilities/Fonts/MSSansSerif_16.c

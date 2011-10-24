@@ -29,23 +29,6 @@ JTAGDEV = luminary-icdi
 # Windows specific predefined environment variable
 ifdef SystemRoot
 
-# For Windows Vista or Windows 7, you can try one of these.
-# ALLUSERSAPPDATA,DEFAULTUSERPROFILE,SYSTEMPROFILE,USERSID
-ifdef USERSID
-
-TOOLDIR = "C:/Program Files/CodeSourcery/Sourcery G++ Lite"
-GCCVERSION = "4.5.2"
-CC = $(TOOLDIR)/bin/arm-none-eabi-gcc
-LD = $(TOOLDIR)/bin/arm-none-eabi-ld
-AR = $(TOOLDIR)/bin/arm-none-eabi-ar
-GDB = $(TOOLDIR)/bin/arm-none-eabi-gdb
-OBJCOPY = $(TOOLDIR)/bin/arm-none-eabi-objcopy
-RM = $(TOOLDIR)/bin/cs-rm -rf
-
-# Only XP uses backslash as a directory delimiter.
-# Windows XP
-else
-
 TOOLDIR = "C:\Program Files\CodeSourcery\Sourcery G++ Lite"
 GCCVERSION = "4.5.2"
 CC = $(TOOLDIR)\bin\arm-none-eabi-gcc
@@ -54,8 +37,6 @@ AR = $(TOOLDIR)\bin\arm-none-eabi-ar
 GDB = $(TOOLDIR)\bin\arm-none-eabi-gdb
 OBJCOPY = $(TOOLDIR)\bin\arm-none-eabi-objcopy
 RM = $(TOOLDIR)\bin\cs-rm -rf
-
-endif
 
 # Linux
 else
@@ -123,6 +104,8 @@ INCLUDEPATHS += -I ../../Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x
 INCLUDEPATHS += -I ../../Libraries/STM32F10x_StdPeriph_Driver/inc
 INCLUDEPATHS += -I ../../Utilities/miniSTM32
 INCLUDEPATHS += -I ../../Utilities/FixMath
+INCLUDEPATHS += -I ../../Utilities/FatFs
+INCLUDEPATHS += -I ../../Utilities/Fonts
 INCLUDEPATHS += -I ../../Utilities/Support
 
 # CSCOPE search path
@@ -190,6 +173,24 @@ C_SRC += ../../Utilities/FixMath/fix16_sqrt.c
 C_SRC += ../../Utilities/FixMath/fix16_trig.c
 #C_SRC += ../../Utilities/FixMath/fract32.c
 #C_SRC += ../../Utilities/FixMath/uint32.c
+
+# Support functions : Fonts
+#C_SRC += ../../Utilities/Fonts/MSSansSerif_11.c
+#C_SRC += ../../Utilities/Fonts/MSSansSerif_13.c
+#C_SRC += ../../Utilities/Fonts/MSSansSerif_16.c
+#C_SRC += ../../Utilities/Fonts/MSSansSerif_19.c
+#C_SRC += ../../Utilities/Fonts/MSSansSerif_24.c
+#C_SRC += ../../Utilities/Fonts/MSSansSerif_32.c
+#C_SRC += ../../Utilities/Fonts/MSSerif_11.c
+#C_SRC += ../../Utilities/Fonts/MSSerif_13.c
+#C_SRC += ../../Utilities/Fonts/MSSerif_16.c
+#C_SRC += ../../Utilities/Fonts/MSSerif_19.c
+#C_SRC += ../../Utilities/Fonts/MSSerif_24.c
+#C_SRC += ../../Utilities/Fonts/MSSerif_32.c
+#C_SRC += ../../Utilities/Fonts/Terminal_12.c
+#C_SRC += ../../Utilities/Fonts/Terminal_16.c
+#C_SRC += ../../Utilities/Fonts/Terminal_20.c
+#C_SRC += ../../Utilities/Fonts/Terminal_23.c
 
 # Startup 
 S_SRC = ../../Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x/startup/gcc_ride7/startup_stm32f10x_hd.s

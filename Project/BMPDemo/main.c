@@ -134,7 +134,7 @@ void DisplayBMPFile(void)
 						DrawFile(fno.fname);
 
 						/* print file name */
-						LCD_SetFont(&Font16x24);
+						LCD_SetFont(&MSSerif_19);
 						LCD_SetFGColor(LCD_COLOR_RED);
 						LCD_SetBGColor(LCD_COLOR_YELLOW);
 						LCD_DisplayStringLine(x, y,fno.fname);

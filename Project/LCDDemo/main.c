@@ -30,10 +30,6 @@ enum{
 extern volatile uint16_t uIRQFlag;
 
 
-#if 0 /* OBSOLETE */
-void TestLCD(void);
-#endif
-
 /**
  * @brief	Main program
  * @param	None

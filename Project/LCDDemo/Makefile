@@ -29,22 +29,6 @@ JTAGDEV = luminary-icdi
 # Windows
 ifdef SystemRoot
 
-# Windows Vista or Windows 7
-# ALLUSERSAPPDATA,DEFAULTUSERPROFILE,SYSTEMPROFILE,USERSID
-ifdef USERSID
-
-TOOLDIR = "C:/Program Files/CodeSourcery/Sourcery G++ Lite"
-GCCVERSION = "4.5.2"
-CC = $(TOOLDIR)/bin/arm-none-eabi-gcc
-LD = $(TOOLDIR)/bin/arm-none-eabi-ld
-AR = $(TOOLDIR)/bin/arm-none-eabi-ar
-GDB = $(TOOLDIR)/bin/arm-none-eabi-gdb
-OBJCOPY = $(TOOLDIR)/bin/arm-none-eabi-objcopy
-RM = $(TOOLDIR)/bin/cs-rm -rf
-
-# Windows XP
-else
-
 TOOLDIR = "C:\Program Files\CodeSourcery\Sourcery G++ Lite"
 GCCVERSION = "4.5.2"
 CC = $(TOOLDIR)\bin\arm-none-eabi-gcc
@@ -53,8 +37,6 @@ AR = $(TOOLDIR)\bin\arm-none-eabi-ar
 GDB = $(TOOLDIR)\bin\arm-none-eabi-gdb
 OBJCOPY = $(TOOLDIR)\bin\arm-none-eabi-objcopy
 RM = $(TOOLDIR)\bin\cs-rm -rf
-
-endif
 
 # Linux
 else
@@ -93,8 +75,9 @@ CFLAGS += -D USE_STDPERIPH_DRIVER
 CFLAGS += -ffunction-sections 
 CFLAGS += -Wl,--gc-sections
 # hardware specific definitions
-CFLAGS += -D LCD_HSD043I9W
-#CFLAGS += -D LCD_AT043TN13
+#CFLAGS += -D LCD_KWH024Q04
+#CFLAGS += -D LCD_HSD043I9W
+CFLAGS += -D LCD_AT043TN13
 #CFLAGS += -D LCD_AT070TN83
 # enable test pattern drawing function
 CFLAGS += -D LCD_TEST
@@ -182,10 +165,27 @@ C_SRC += ../../Utilities/miniSTM32/miniSTM32_lcd.c
 C_SRC += ../../Utilities/Support/syscalls.c
 C_SRC += ../../Utilities/Support/term_io.c
 C_SRC += ../../Utilities/Support/comm.c
+
 # Support functions : FAT
 #C_SRC += ../../Utilities/FatFs/ff.c
+
 # Support functions : Font
-C_SRC += ../../Utilities/Support/fonts.c
+#C_SRC += ../../Utilities/Fonts/MSSansSerif_11.c
+#C_SRC += ../../Utilities/Fonts/MSSansSerif_13.c
+#C_SRC += ../../Utilities/Fonts/MSSansSerif_16.c
+#C_SRC += ../../Utilities/Fonts/MSSansSerif_19.c
+#C_SRC += ../../Utilities/Fonts/MSSansSerif_24.c
+#C_SRC += ../../Utilities/Fonts/MSSansSerif_32.c
+#C_SRC += ../../Utilities/Fonts/MSSerif_11.c
+#C_SRC += ../../Utilities/Fonts/MSSerif_13.c
+#C_SRC += ../../Utilities/Fonts/MSSerif_16.c
+#C_SRC += ../../Utilities/Fonts/MSSerif_19.c
+#C_SRC += ../../Utilities/Fonts/MSSerif_24.c
+#C_SRC += ../../Utilities/Fonts/MSSerif_32.c
+#C_SRC += ../../Utilities/Fonts/Terminal_12.c
+#C_SRC += ../../Utilities/Fonts/Terminal_16.c
+#C_SRC += ../../Utilities/Fonts/Terminal_20.c
+#C_SRC += ../../Utilities/Fonts/Terminal_23.c
 
 # Startup 
 S_SRC = ../../Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x/startup/gcc_ride7/startup_stm32f10x_hd.s
