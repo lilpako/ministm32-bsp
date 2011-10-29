@@ -79,6 +79,21 @@ int main(void)
 				uVal += MSSansSerif_13.Height + LINE_SEP;
 				LCD_DisplayStringLine(START_X, uVal, "Microsoft Sans Serif 16 point");
 
+			#if defined(LCD_QD024CPS25)
+				/* 2.4inch LCD has not enough space to draw long string */
+				LCD_SetFont(&MSSansSerif_19);
+				uVal += MSSansSerif_16.Height + LINE_SEP;
+				LCD_DisplayStringLine(START_X, uVal, "Microsoft Sans Serif 19");
+
+				LCD_SetFont(&MSSansSerif_24);
+				uVal += MSSansSerif_19.Height + LINE_SEP;
+				LCD_DisplayStringLine(START_X, uVal, "Microsoft SSerif 24");
+
+				LCD_SetFont(&MSSansSerif_32);
+				uVal += MSSansSerif_24.Height + LINE_SEP;
+				LCD_DisplayStringLine(START_X, uVal, "MS SSerif 32");
+
+			#else
 				LCD_SetFont(&MSSansSerif_19);
 				uVal += MSSansSerif_16.Height + LINE_SEP;
 				LCD_DisplayStringLine(START_X, uVal, "Microsoft Sans Serif 19 point");
@@ -90,6 +105,7 @@ int main(void)
 				LCD_SetFont(&MSSansSerif_32);
 				uVal += MSSansSerif_24.Height + LINE_SEP;
 				LCD_DisplayStringLine(START_X, uVal, "Microsoft Sans Serif 32 point");
+			#endif
 			}
 			else if( u16Menu == MENU_FONT_TEST2 ) {
 				uVal = START_Y;
@@ -113,6 +129,16 @@ int main(void)
 				uVal += MSSerif_16.Height + LINE_SEP;
 				LCD_DisplayStringLine(START_X, uVal, "Microsoft Serif 19 point");
 
+			#if defined(LCD_QD024CPS25)
+				/* 2.4inch LCD has not enough space to draw long string */
+				LCD_SetFont(&MSSerif_24);
+				uVal += MSSerif_19.Height + LINE_SEP;
+				LCD_DisplayStringLine(START_X, uVal, "Microsoft Serif 24");
+
+				LCD_SetFont(&MSSerif_32);
+				uVal += MSSerif_24.Height + LINE_SEP;
+				LCD_DisplayStringLine(START_X, uVal, "Microsoft S 32");
+			#else
 				LCD_SetFont(&MSSerif_24);
 				uVal += MSSerif_19.Height + LINE_SEP;
 				LCD_DisplayStringLine(START_X, uVal, "Microsoft Serif 24 point");
@@ -120,6 +146,7 @@ int main(void)
 				LCD_SetFont(&MSSerif_32);
 				uVal += MSSerif_24.Height + LINE_SEP;
 				LCD_DisplayStringLine(START_X, uVal, "Microsoft Serif 32 point");
+			#endif
 			}
 			else if( u16Menu == MENU_FONT_TEST3 ) {
 				uVal = START_Y;
@@ -131,6 +158,20 @@ int main(void)
 
 				LCD_DisplayStringLine(START_X, uVal, "Microsoft Terminal 12 point");
 
+			#if defined(LCD_QD024CPS25)
+				/* 2.4inch LCD has not enough space to draw long string */
+				LCD_SetFont(&Terminal_16); 
+				uVal += Terminal_12.Height + LINE_SEP;
+				LCD_DisplayStringLine(START_X, uVal, "Microsoft Terminal 16");
+
+				LCD_SetFont(&Terminal_20);
+				uVal += Terminal_16.Height + LINE_SEP;
+				LCD_DisplayStringLine(START_X, uVal, "Microsoft T 20");
+
+				LCD_SetFont(&Terminal_23);
+				uVal += Terminal_20.Height + LINE_SEP;
+				LCD_DisplayStringLine(START_X, uVal, "MS Terminal 23");
+			#else
 				LCD_SetFont(&Terminal_16); 
 				uVal += Terminal_12.Height + LINE_SEP;
 				LCD_DisplayStringLine(START_X, uVal, "Microsoft Terminal 16 point");
@@ -142,6 +183,7 @@ int main(void)
 				LCD_SetFont(&Terminal_23);
 				uVal += Terminal_20.Height + LINE_SEP;
 				LCD_DisplayStringLine(START_X, uVal, "Microsoft Terminal 23 point");
+			#endif
 			}
 
 			/* at the end of menu, restart all over */

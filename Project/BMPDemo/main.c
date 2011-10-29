@@ -96,8 +96,9 @@ void DisplayBMPFile(void)
 	FILINFO fno;			/* File information object */
 
 	uint16_t i;
-	uint16_t x = 150;
-	uint16_t y = LCD_HEIGHT - 60;
+
+	uint16_t x = LCD_WIDTH>>3;
+	uint16_t y = LCD_HEIGHT - (LCD_HEIGHT>>4);
 
 	/* Register volume work area (never fails) */
 	f_mount(0, &fatfs);		
@@ -155,7 +156,7 @@ void DisplayBMPFile(void)
  * Usually these functions are not exposed for public use. But in some cases,
  * you can make your code more efficient with these low level functions.
  */
-extern inline void LCD_WR_REG(uint16_t command);
+extern inline void LCD_WR_Control(uint16_t command);
 extern inline void LCD_WR_Data(uint16_t val);
 extern void LCD_SetColumnPageAddr(int16_t cS, int16_t cE, int16_t pS, int16_t pE);
 
@@ -277,8 +278,12 @@ void DrawFile(TCHAR *fname)
 	size += (buff[i++]<<16);
 	size += (buff[i]<<24);
 
+#if defined(LCD_QD024CPS25)
+	/* TODO: put something here */
+
+#else
 	/* bitmap orientation */
-	LCD_WR_REG(0x0036);		/* CMD_SET_ADDRESS_MODE */
+	LCD_WR_Control(0x0036);		/* CMD_SET_ADDRESS_MODE */
 
 	/* bottom-up bitmap */
 	if( height > 0 )
@@ -290,13 +295,14 @@ void DrawFile(TCHAR *fname)
 	{
 		LCD_WR_Data(0x00);
 	}
+#endif
 
 	width = ABS(width);
 	height = ABS(height);
 
 	if((width > LCD_WIDTH) || (height > LCD_HEIGHT))
 	{
-		printf(" --- image size exceed %d x %d\n", LCD_WIDTH, LCD_HEIGHT);
+		printf(" --- image size exceeds limit: %d x %d pixels\n", LCD_WIDTH, LCD_HEIGHT);
 		goto end;
 	}
 
@@ -308,7 +314,11 @@ void DrawFile(TCHAR *fname)
 	LCD_SetColumnPageAddr(x, x + width - 1, y, y + height - 1 );
 
 	/* start data transfer */
-	LCD_WR_REG(0x002C); /* CMD_WRITE_MEM_START */
+#if defined(LCD_QD024CPS25)
+	LCD_WR_Control(0x0022); /* CTR_WRITE_DATA */
+#else
+	LCD_WR_Control(0x002C); /* CMD_WRITE_MEM_START */
+#endif
 
 	/* calculate image data width in bytes */
 	if(bpp == 16)	
@@ -381,9 +391,13 @@ void DrawFile(TCHAR *fname)
 
 end:
 
+#if defined(LCD_QD024CPS25)
+	/* TODO: put something here */
+#else
 	/* revert address mode */
-	LCD_WR_REG(0x0036);		/* CMD_SET_ADDRESS_MODE */
+	LCD_WR_Control(0x0036);		/* CMD_SET_ADDRESS_MODE */
 	LCD_WR_Data(0x00);
+#endif
 
 	return;
 }

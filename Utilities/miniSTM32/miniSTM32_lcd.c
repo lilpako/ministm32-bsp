@@ -8,13 +8,16 @@
 #include "miniSTM32.h"
 #include "miniSTM32_lcd.h"
 
-/* backlight control */
-#if (defined(LCD_HSD043I9W) || defined(LCD_AT043TN13))
-	/* backlight controlled by MCU */
+/* display contrller and backlight control method */
+#if defined(LCD_QD024CPS25)
+	#define ILI9325
+	#define MCU_BLTCONTROL
+#elif (defined(LCD_HSD043I9W) || defined(LCD_AT043TN13))
+	#define SSD1963
 	#define MCU_BLTCONTROL
 #elif defined(LCD_AT070TN83)
-	/* backlight controlled by display controller */
-	#define SSD1963_BLTCONTROL
+	#define SSD1963
+	#define CTR_BLTCONTROL
 #endif
 
 /* MCU backlight control port */
@@ -23,9 +26,15 @@
 
 
 /* FSMC use NOR(BANK1) interface with A16 as RS 
+ *
+ * For SSD1963
  * RS(A16) = 0 : register (8bit)
  * RS(A16) = 1 : data (16bit)
-*/
+ *
+ * For ILI9325
+ * RS(A16) = 0: write index, read status
+ * RS(A16) = 1: write control register or data, read data
+ */
 #define Bank1_LCD_Ctrl			((uint32_t)0x60000000) 
 #define Bank1_LCD_Data			((uint32_t)0x60020000)
 
@@ -125,6 +134,67 @@
 #define CMD_RESERVED_5			0x00FF
 #define CMD_DUMMY				0x00A5
 
+/* SSD ILI9325 Command Code */
+#define CTR_OSC_START			0x0000
+#define CTR_DRV_OUTPUT1			0x0001
+#define CTR_DRV_WAVE			0x0002
+#define CTR_ENTRY_MODE			0x0003
+#define CTR_RESIZE				0x0004
+#define CTR_DISPLAY1			0x0007
+#define CTR_DISPLAY2			0x0008
+#define CTR_DISPLAY3			0x0009
+#define CTR_DISPLAY4			0x000A
+#define CTR_RGB_INTERFACE1		0x000C
+#define CTR_FRM_MARKER			0x000D
+#define CTR_RGB_INTERFACE2		0x000F
+#define CTR_POWER1				0x0010
+#define CTR_POWER2				0x0011
+#define CTR_POWER3				0x0012
+#define CTR_POWER4				0x0013
+#define CTR_HORZ_ADDRESS		0x0020
+#define CTR_VERT_ADDRESS		0x0021
+#define CTR_WRITE_DATA			0x0022
+#define CTR_READ_DATA			0x0022
+#define CTR_POWER7				0x0029
+#define CTR_FRM_COLOR			0x002B
+#define CTR_GAMMA1				0x0030
+#define CTR_GAMMA2				0x0031
+#define CTR_GAMMA3				0x0032
+#define CTR_GAMMA4				0x0035
+#define CTR_GAMMA5				0x0036
+#define CTR_GAMMA6				0x0037
+#define CTR_GAMMA7				0x0038
+#define CTR_GAMMA8				0x0039
+#define CTR_GAMMA9				0x003C
+#define CTR_GAMMA10				0x003D
+#define CTR_HORZ_START			0x0050
+#define CTR_HORZ_END			0x0051
+#define CTR_VERT_START			0x0052
+#define CTR_VERT_END			0x0053
+#define CTR_DRV_OUTPUT2			0x0060
+#define CTR_BASE_IMAGE			0x0061
+#define CTR_VERT_SCROLL			0x006A
+#define CTR_PIMG1_POS			0x0080
+#define CTR_PIMG1_START			0x0081
+#define CTR_PIMG1_END			0x0082
+#define CTR_PIMG2_POS			0x0083
+#define CTR_PIMG2_START			0x0084
+#define CTR_PIMG2_END			0x0085
+#define CTR_PANEL_INTERFACE1	0x0090
+#define CTR_PANEL_INTERFACE2	0x0092
+#define CTR_PANEL_INTERFACE4	0x0095
+#define CTR_OTP_VCMPROGRAM		0x00A1
+#define CTR_OTP_VCMSTATUS		0x00A2
+#define CTR_OTP_IDKEY			0x00A5
+
+#define CTR_UNDOCUMENTED_93		0x0093
+#define CTR_UNDOCUMENTED_97		0x0097
+#define CTR_UNDOCUMENTED_98		0x0098
+#define CTR_UNDOCUMENTED_E3		0x00E3
+#define CTR_UNDOCUMENTED_E7		0x00E7
+#define CTR_UNDOCUMENTED_EF		0x00EF
+
+
 /* LCD delay routine : 1 msec interval */
 #define LCD_DELAY(x)			do{uLCD_Delay = x; while( uLCD_Delay);} while(0)
 #define ABS(x)					((x) > 0 ? (x) : -(x))    
@@ -136,14 +206,13 @@ volatile uint16_t uPenWidth = 1;
 volatile uint16_t uLCD_Delay = 0;
 static LCDFONT *sLCDFont;
 
-#if 0 /* obsolete */
-static sFONT *sLCDFont;
-#endif
 
 /* register control functions */
-inline void LCD_WR_REG(uint16_t command);
+inline void LCD_WR_Control(uint16_t command);
 inline void LCD_WR_Data(uint16_t val);
-uint16_t LCD_RD_REG(uint16_t command);
+inline void LCD_WR_CtrData(uint16_t index, uint16_t data);
+
+uint16_t LCD_RD_Control(uint16_t command);
 uint16_t LCD_RD_Data(void);
 void LCD_SetColumnPageAddr(int16_t colS, int16_t colE, int16_t pagS, int16_t pagE);
 
@@ -152,21 +221,24 @@ void LCD_SetScrollArea(uint16_t top, uint16_t scroll, uint16_t bottom);
 void LCD_SetScrollStart(uint16_t line);
 void LCD_SetTearingCfg(unsigned char state, unsigned char mode);
 
-//	Write a command to the LCD Register
-inline void LCD_WR_REG(uint16_t command)
+
+inline void LCD_WR_Control(uint16_t command)
 {
 	*(__IO uint16_t *) (Bank1_LCD_Ctrl) =  command;
 }
 
-//	Write a pixel in the display. The address counter is incremented by
-// 	this command.
 inline void LCD_WR_Data(uint16_t val)
 {   
 	*(__IO uint16_t *) (Bank1_LCD_Data) =  val; 	
 }
 
-// 	Read a value from an LCD Register
-uint16_t LCD_RD_REG(uint16_t command)
+inline void LCD_WR_CtrData(uint16_t index, uint16_t data)
+{
+	*(__IO uint16_t *) (Bank1_LCD_Ctrl) =  index;
+	*(__IO uint16_t *) (Bank1_LCD_Data) =  data; 	
+}
+
+uint16_t LCD_RD_Control(uint16_t command)
 {
 	 *(__IO uint16_t *) (Bank1_LCD_Ctrl) =  command;
 
@@ -184,6 +256,46 @@ uint16_t LCD_RD_Data(void)
 	return(a);	
 }
 
+
+void LCD_SetColumnPageAddr(int16_t colS, int16_t colE, int16_t pagS, int16_t pagE)
+{
+
+#if defined(ILI9325)
+
+	/* Note that this does not work if some conditions are not met */
+	LCD_WR_CtrData(CTR_HORZ_START, colS);
+	LCD_WR_CtrData(CTR_HORZ_END, colE);
+	LCD_WR_CtrData(CTR_VERT_START, pagS);
+	LCD_WR_CtrData(CTR_VERT_END, pagE);
+
+	/* place the cursor at the starting point */
+	LCD_WR_CtrData(CTR_HORZ_ADDRESS, colS);
+	LCD_WR_CtrData(CTR_VERT_ADDRESS, pagS);
+
+#elif defined(SSD1963)
+
+	/* set column address */
+	LCD_WR_Control(CMD_SET_COL_ADDRESS);
+	/* start column */
+	LCD_WR_Data(colS >> 8);
+	LCD_WR_Data(colS & 0x00ff);
+	/* end column */
+	LCD_WR_Data(colE >> 8);
+	LCD_WR_Data(colE & 0x00ff);
+
+	/* set page address */
+    LCD_WR_Control(CMD_SET_PAGE_ADDRESS);
+	/* start page */
+	LCD_WR_Data(pagS >> 8);
+	LCD_WR_Data(pagS & 0x00ff);
+	/* end page */
+	LCD_WR_Data(pagE >> 8); 
+	LCD_WR_Data(pagE & 0x00ff);
+
+#endif
+
+}
+
 // 	Initialize the SSD1963 LCD
 // 	PLL == Phase Lock Loop
 //	Registers get selected with LCD-WR_REG and then the required data is written
@@ -197,9 +309,99 @@ void LCD_Init(void)
 	/* FSMC setting */
 	MCU_FSMCInit();
 
+#if defined(ILI9325)
+	/* LPL 2.4inch initialization code */
+
+	/* initial hard reset: PE1 */
+	GPIO_ResetBits(GPIOE, GPIO_Pin_1);
+	LCD_DELAY(10);
+
+	GPIO_SetBits(GPIOE, GPIO_Pin_1);
+	LCD_DELAY(50);
+
+	/* initial sequence */
+	//LCD_WR_CtrData(CTR_UNDOCUMENTED_E3, 0x3008);
+	//LCD_WR_CtrData(CTR_UNDOCUMENTED_E7, 0x0012);
+	//LCD_WR_CtrData(CTR_UNDOCUMENTED_EF, 0x1231);
+
+	LCD_WR_CtrData(CTR_OSC_START, 0x0001);
+	LCD_WR_CtrData(CTR_DRV_OUTPUT1, 0x0100);
+	LCD_WR_CtrData(CTR_DRV_WAVE, 0x0700);
+	LCD_WR_CtrData(CTR_ENTRY_MODE, 0x1030);
+	LCD_WR_CtrData(CTR_RESIZE, 0x0000);
+	LCD_WR_CtrData(CTR_DISPLAY2, 0x0207);
+	LCD_WR_CtrData(CTR_DISPLAY3, 0x0000);
+	LCD_WR_CtrData(CTR_DISPLAY4, 0x0000);
+	LCD_WR_CtrData(CTR_RGB_INTERFACE1, 0x0001);
+	LCD_WR_CtrData(CTR_FRM_MARKER, 0x0000);
+	LCD_WR_CtrData(CTR_RGB_INTERFACE2, 0x0000);
+
+	/* power on sequence */
+	LCD_WR_CtrData(CTR_POWER1, 0x0000);
+	LCD_WR_CtrData(CTR_POWER2, 0x0007);
+	LCD_WR_CtrData(CTR_POWER3, 0x0000);
+	LCD_WR_CtrData(CTR_POWER4, 0x0000);
+
+	LCD_DELAY(200);
+	LCD_WR_CtrData(CTR_POWER1, 0x1590);		/* SAP, BT, AP, DSTB, SLP, STB */
+	LCD_WR_CtrData(CTR_POWER2, 0x0227);		/* DC, VC */
+
+	LCD_DELAY(50);
+	LCD_WR_CtrData(CTR_POWER3, 0x009C);		/* internal voltage reference */
+	
+	LCD_DELAY(50);
+	LCD_WR_CtrData(CTR_POWER4, 0x1900);		/* VDV */
+	LCD_WR_CtrData(CTR_POWER7, 0x1900);		/* VCM */
+	LCD_WR_CtrData(CTR_FRM_COLOR, 0x000E);	/* frame rate */
+
+	LCD_DELAY(50);
+	LCD_WR_CtrData(CTR_HORZ_ADDRESS, 0x0000);
+	LCD_WR_CtrData(CTR_VERT_ADDRESS, 0x0000);
+
+	/* gamma curve */
+	LCD_WR_CtrData(CTR_GAMMA1, 0x0007);
+	LCD_WR_CtrData(CTR_GAMMA3, 0x0707);
+	LCD_WR_CtrData(CTR_GAMMA3, 0x0006);
+	LCD_WR_CtrData(CTR_GAMMA4, 0x0704);
+	LCD_WR_CtrData(CTR_GAMMA5, 0x1F04);
+	LCD_WR_CtrData(CTR_GAMMA6, 0x0004);
+	LCD_WR_CtrData(CTR_GAMMA7, 0x0000);
+	LCD_WR_CtrData(CTR_GAMMA8, 0x0706);
+	LCD_WR_CtrData(CTR_GAMMA9, 0x0701);
+	LCD_WR_CtrData(CTR_GAMMA10, 0x000F);
+
+	/* GRAM */
+	LCD_WR_CtrData(CTR_HORZ_START, 0x0000);
+	LCD_WR_CtrData(CTR_HORZ_END, 0x00EF);
+	LCD_WR_CtrData(CTR_VERT_START, 0x0000);
+	LCD_WR_CtrData(CTR_VERT_END, 0x013F);
+	LCD_WR_CtrData(CTR_DRV_OUTPUT2, 0xA700);
+	LCD_WR_CtrData(CTR_BASE_IMAGE, 0x0001);
+	LCD_WR_CtrData(CTR_VERT_SCROLL, 0x0000);
+
+	/* partial display */
+	LCD_WR_CtrData(CTR_PIMG1_POS, 0x0000);
+	LCD_WR_CtrData(CTR_PIMG1_START, 0x0000);
+	LCD_WR_CtrData(CTR_PIMG1_END, 0x0000);
+	LCD_WR_CtrData(CTR_PIMG2_POS, 0x0000);
+	LCD_WR_CtrData(CTR_PIMG2_START, 0x0000);
+	LCD_WR_CtrData(CTR_PIMG2_END, 0x0000);
+
+	/* panel */
+	LCD_WR_CtrData(CTR_PANEL_INTERFACE1, 0x0010);
+	LCD_WR_CtrData(CTR_PANEL_INTERFACE2, 0x0000);
+	LCD_WR_CtrData(CTR_PANEL_INTERFACE4, 0x0110);
+
+	LCD_WR_CtrData(CTR_UNDOCUMENTED_93, 0x0003);
+	LCD_WR_CtrData(CTR_UNDOCUMENTED_97, 0x0000);
+	LCD_WR_CtrData(CTR_UNDOCUMENTED_98, 0x0000);
+
+#elif defined(SSD1963)
+
 	/* initial hard reset: PE1 */
 	GPIO_ResetBits(GPIOE, GPIO_Pin_1);
 	LCD_DELAY(1);
+
 	GPIO_SetBits(GPIOE, GPIO_Pin_1);
 	LCD_DELAY(1);
 
@@ -212,26 +414,26 @@ void LCD_Init(void)
 	 * multiplier			: 33 (M = 0x20)
 	 * divider				: 3 (N = 0x02)
 	 */
-	LCD_WR_REG(CMD_SET_PLL_MN);
+	LCD_WR_Control(CMD_SET_PLL_MN);
 	LCD_WR_Data(0x0020);
 	LCD_WR_Data(0x0002);
 	LCD_WR_Data(CMD_DUMMY);
 	
 	/* enable pll */
-	LCD_WR_REG(CMD_SET_PLL);
+	LCD_WR_Control(CMD_SET_PLL);
 	LCD_WR_Data(0x0001);
 
 	/* 100 usec delay for locking */
 	LCD_DELAY(1);
 
 	/* activate pll output */
-	LCD_WR_REG(CMD_SET_PLL);
+	LCD_WR_Control(CMD_SET_PLL);
 	LCD_WR_Data(0x0003); 
 
 	LCD_DELAY(1);
 
 	/* soft reset */
-	LCD_WR_REG(CMD_SOFT_RESET);
+	LCD_WR_Control(CMD_SOFT_RESET);
 
 	LCD_DELAY(1);
 
@@ -240,7 +442,7 @@ void LCD_Init(void)
 	/* set post processing */
 
 	/* pixel data interface (host) */
-	LCD_WR_REG(CMD_SET_PIXDATA_IF_FMT);
+	LCD_WR_Control(CMD_SET_PIXDATA_IF_FMT);
 	LCD_WR_Data(0x0003);	/* 16bit 565 */
 
 #if defined(LCD_HSD043I9W)
@@ -252,7 +454,7 @@ void LCD_Init(void)
 	 * target frequency : 9MHz
 	 * LCDC_FPR			: 85793 (0x014F21)
 	 */
-	LCD_WR_REG(CMD_SET_PIXCLK_FREQ);
+	LCD_WR_Control(CMD_SET_PIXCLK_FREQ);
 	LCD_WR_Data(0x0001);
 	LCD_WR_Data(0x004F);
 	LCD_WR_Data(0x0021);
@@ -267,7 +469,7 @@ void LCD_Init(void)
 	 * P7(0x00): RGB sequence don't care
 	 *
 	 */
-	LCD_WR_REG(CMD_SET_LCD_MODE);
+	LCD_WR_Control(CMD_SET_LCD_MODE);
 	LCD_WR_Data(0x14);
 	LCD_WR_Data(0x00);
 	LCD_WR_Data(0x01);
@@ -286,7 +488,7 @@ void LCD_Init(void)
 	 * P7(0x00): LPS - horizontal sync pulse location : 0 (0x00)
 	 * P8(0x00): horizontal sync pulse subpixel start position(LPSPP) : N/A
 	 */
-	LCD_WR_REG(CMD_SET_HORIZ_PERIOD);
+	LCD_WR_Control(CMD_SET_HORIZ_PERIOD);
 	LCD_WR_Data(0x0002);
 	LCD_WR_Data(0x000D);
 	LCD_WR_Data(0x0000);
@@ -305,7 +507,7 @@ void LCD_Init(void)
 	 * P6(0x00): FPS - vertical sync pulse location : 0 (0x00)
 	 * P7(0x00): FPS - vertical sync pulse location : 0 (0x00)
 	 */
-	LCD_WR_REG(CMD_SET_VERT_PERIOD);
+	LCD_WR_Control(CMD_SET_VERT_PERIOD);
 	LCD_WR_Data(0x02);
 	LCD_WR_Data(0x0C);
 	LCD_WR_Data(0x00);
@@ -317,7 +519,7 @@ void LCD_Init(void)
 	/* set address mode 
 	 * flip vertical, flip horizontal
 	 */
-	LCD_WR_REG(CMD_SET_ADDRESS_MODE);
+	LCD_WR_Control(CMD_SET_ADDRESS_MODE);
 	LCD_WR_Data(0x03);
 
 #elif defined(LCD_AT043TN13)
@@ -329,7 +531,7 @@ void LCD_Init(void)
 	 * target frequency : 9MHz
 	 * LCDC_FPR			: 85793 (0x014F21)
 	 */
-	LCD_WR_REG(CMD_SET_PIXCLK_FREQ);
+	LCD_WR_Control(CMD_SET_PIXCLK_FREQ);
 	LCD_WR_Data(0x0001);
 	LCD_WR_Data(0x004F);
 	LCD_WR_Data(0x0021);
@@ -344,7 +546,7 @@ void LCD_Init(void)
 	 * P7(0x00): RGB sequence don't care
 	 *
 	 */
-	LCD_WR_REG(CMD_SET_LCD_MODE);
+	LCD_WR_Control(CMD_SET_LCD_MODE);
 	LCD_WR_Data(0x10);
 	LCD_WR_Data(0x00);
 	LCD_WR_Data(0x01);
@@ -363,7 +565,7 @@ void LCD_Init(void)
 	 * P7(0x00): LPS - horizontal sync pulse location : 0 (0x00)
 	 * P8(0x00): horizontal sync pulse subpixel start position(LPSPP) : N/A
 	 */
-	LCD_WR_REG(CMD_SET_HORIZ_PERIOD);
+	LCD_WR_Control(CMD_SET_HORIZ_PERIOD);
 	LCD_WR_Data(0x0002);
 	LCD_WR_Data(0x000D);
 	LCD_WR_Data(0x0000);
@@ -382,7 +584,7 @@ void LCD_Init(void)
 	 * P6(0x00): FPS - vertical sync pulse location : 0 (0x00)
 	 * P7(0x00): FPS - vertical sync pulse location : 0 (0x00)
 	 */
-	LCD_WR_REG(CMD_SET_VERT_PERIOD);
+	LCD_WR_Control(CMD_SET_VERT_PERIOD);
 	LCD_WR_Data(0x02);
 	LCD_WR_Data(0x0A);
 	LCD_WR_Data(0x00);
@@ -394,7 +596,7 @@ void LCD_Init(void)
 	/* set address mode 
 	 * flip vertical, flip horizontal
 	 */
-	LCD_WR_REG(CMD_SET_ADDRESS_MODE);
+	LCD_WR_Control(CMD_SET_ADDRESS_MODE);
 	LCD_WR_Data(0x03);
 
 #elif defined(LCD_AT070TN83)
@@ -406,7 +608,7 @@ void LCD_Init(void)
 	 * target frequency : 33.3MHz
 	 * LCDC_FPR			: 317433 (0x04D7F9)
 	 */
-	LCD_WR_REG(CMD_SET_PIXCLK_FREQ);
+	LCD_WR_Control(CMD_SET_PIXCLK_FREQ);
 	LCD_WR_Data(0x0004);
 	LCD_WR_Data(0x00D7);
 	LCD_WR_Data(0x00F9);
@@ -421,7 +623,7 @@ void LCD_Init(void)
 	 * P7(0x00): RGB sequence don't care
 	 *
 	 */
-	LCD_WR_REG(CMD_SET_LCD_MODE);
+	LCD_WR_Control(CMD_SET_LCD_MODE);
 	LCD_WR_Data(0x10);
 	LCD_WR_Data(0x00);
 	LCD_WR_Data(0x03);
@@ -440,7 +642,7 @@ void LCD_Init(void)
 	 * P7(0x00): LPS - horizontal sync pulse location : 0 (0x00)
 	 * P8(0x00): horizontal sync pulse subpixel start position(LPSPP) : N/A
 	 */
-	LCD_WR_REG(CMD_SET_HORIZ_PERIOD);
+	LCD_WR_Control(CMD_SET_HORIZ_PERIOD);
 	LCD_WR_Data(0x0003);
 	LCD_WR_Data(0x00CF);
 	LCD_WR_Data(0x0000);
@@ -459,7 +661,7 @@ void LCD_Init(void)
 	 * P6(0x00): FPS - vertical sync pulse location : 0 (0x00)
 	 * P7(0x00): FPS - vertical sync pulse location : 0 (0x00)
 	 */
-	LCD_WR_REG(CMD_SET_VERT_PERIOD);
+	LCD_WR_Control(CMD_SET_VERT_PERIOD);
 	LCD_WR_Data(0x02);
 	LCD_WR_Data(0x0C);
 	LCD_WR_Data(0x00);
@@ -469,10 +671,12 @@ void LCD_Init(void)
 	LCD_WR_Data(0x00);
 
 	/* set address mode */
-	LCD_WR_REG(CMD_SET_ADDRESS_MODE);
+	LCD_WR_Control(CMD_SET_ADDRESS_MODE);
 	LCD_WR_Data(0x00);
 
 #endif /* LCD_AT070TN83 */
+
+#endif /* SSD_1963, ILI9325 */
 
 	/* clear lcd */
 	LCD_Clear(LCD_COLOR_BLACK);
@@ -485,7 +689,7 @@ void LCD_BacklightOn(void)
 
 	GPIO_SetBits(BLTCONTROL_PORT, BLTCONTROL_PIN);
 
-#elif defined(SSD1963_BLTCONTROL)
+#elif defined(CTR_BLTCONTROL)
 
 	/* pwm configuration (300Hz, 100%)
 	 * P1(0x06) : PWMF - PWM frequency in system clock : 6 (0x06)
@@ -496,7 +700,7 @@ void LCD_BacklightOn(void)
 	 * p6(0x00) : brightness prescaler : (0x00)
 	 */
 
-	LCD_WR_REG(CMD_SET_PWM_CONF);
+	LCD_WR_Control(CMD_SET_PWM_CONF);
 	LCD_WR_Data(0x0006);
 	LCD_WR_Data(0x00FF);
 	LCD_WR_Data(0x0001);
@@ -514,7 +718,7 @@ void LCD_BacklightOff(void)
 
 	GPIO_ResetBits(BLTCONTROL_PORT, BLTCONTROL_PIN);
 
-#elif defined(SSD1963_BLTCONTROL)
+#elif defined(CTR_BLTCONTROL)
 
 	/* pwm configuration (300Hz, 100%)
 	 * P1(0x00) : PWMF - PWM frequency in system clock : 0 (0x00)
@@ -525,7 +729,7 @@ void LCD_BacklightOff(void)
 	 * p6(0x00) : brightness prescaler : (0x00)
 	 */
 
-	LCD_WR_REG(CMD_SET_PWM_CONF); //set PWM for Backlight. Manual p.53
+	LCD_WR_Control(CMD_SET_PWM_CONF); //set PWM for Backlight. Manual p.53
 	LCD_WR_Data(0x0000);
 	LCD_WR_Data(0x0000);
 	LCD_WR_Data(0x0000);
@@ -546,23 +750,37 @@ void LCD_Clear(LCDCOLOR col)
 	uint32_t index = 0;
 
 	LCD_SetColumnPageAddr(0, LCD_WIDTH-1, 0, LCD_HEIGHT-1);
-	LCD_WR_REG(CMD_WRITE_MEM_START);
+
+#if defined(ILI9325)
+	LCD_WR_Control(CTR_WRITE_DATA);
+#elif defined(SSD1963)
+	LCD_WR_Control(CMD_WRITE_MEM_START);
+#endif
 
 	while( index < (LCD_WIDTH * LCD_HEIGHT) )
 	{
 		LCD_WR_Data(col);
 		index++;
 	}
+
 }
 
 void LCD_DisplayOn(void)
 {
-	LCD_WR_REG(CMD_SET_DISPLAY_ON);
+#if defined(ILI9325)
+	LCD_WR_CtrData(CTR_DISPLAY1, 0x0133);
+#elif defined(SSD1963)
+	LCD_WR_Control(CMD_SET_DISPLAY_ON);
+#endif
 }
 
 void LCD_DisplayOff(void)
 {
-	LCD_WR_REG(CMD_SET_DISPLAY_OFF);
+#if defined(ILI9325)
+	LCD_WR_CtrData(CTR_DISPLAY1, 0x0131);
+#elif defined(SSD1963)
+	LCD_WR_Control(CMD_SET_DISPLAY_OFF);
+#endif
 }
 
 void LCD_SetFGColor(LCDCOLOR col)
@@ -599,30 +817,14 @@ void LCD_GetColors(LCDCOLOR *pfgcol, LCDCOLOR *pbgcol)
 
 void LCD_DrawPixel(int16_t x, int16_t y)
 {
+#if defined(ILI9325)
+	LCD_WR_CtrData(CTR_HORZ_ADDRESS, x);
+	LCD_WR_CtrData(CTR_VERT_ADDRESS, y);
+	LCD_WR_CtrData(CTR_WRITE_DATA, col_fgnd);
+#elif defined(SSD1963)
 	LCD_SetColumnPageAddr(x, x, y, y);
-	LCD_WR_REG(CMD_WRITE_MEM_START);
-	LCD_WR_Data(col_fgnd);
-}
-
-void LCD_SetColumnPageAddr(int16_t colS, int16_t colE, int16_t pagS, int16_t pagE)
-{
-	/* set column address */
-	LCD_WR_REG(CMD_SET_COL_ADDRESS);
-	/* start column */
-	LCD_WR_Data(colS >> 8);
-	LCD_WR_Data(colS & 0x00ff);
-	/* end column */
-	LCD_WR_Data(colE >> 8);
-	LCD_WR_Data(colE & 0x00ff);
-
-	/* set page address */
-    LCD_WR_REG(CMD_SET_PAGE_ADDRESS);
-	/* start page */
-	LCD_WR_Data(pagS >> 8);
-	LCD_WR_Data(pagS & 0x00ff);
-	/* end page */
-	LCD_WR_Data(pagE >> 8); 
-	LCD_WR_Data(pagE & 0x00ff);
+	LCD_WR_CtrData(CMD_WRITE_MEM_START, col_fgnd);
+#endif
 }
 
 /**
@@ -767,10 +969,39 @@ void LCD_DrawRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 void LCD_DrawFillRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 {
 	int16_t ref_x;
-	LCD_SetColumnPageAddr(x1, x2, y1, y2);
-	LCD_WR_REG(CMD_WRITE_MEM_START);
+
+#if defined(ILI9325)
+
+	/* Due to the restriction of ILI9325, pixel by pixel drawing
+	 * is required here
+	 */
+	int16_t ref_y;
+
+	if(x1 > x2) INTSWAP(x1, x2);
+	if(y1 > y2) INTSWAP(y1, y2);
 
 	ref_x = x1;
+
+	while(ref_x <= x2)
+	{
+		ref_y = y1;
+
+		while(ref_y <= y2)
+		{
+			LCD_DrawPixel(ref_x, ref_y);
+			ref_y++;
+		}
+
+		ref_x++;
+	}
+
+#elif defined(SSD1963)
+
+	LCD_SetColumnPageAddr(x1, x2, y1, y2);
+	LCD_WR_Control(CMD_WRITE_MEM_START);
+
+	ref_x = x1;
+
 	while(y1 <= y2)
 	{
 		while(x1 <= x2)
@@ -781,6 +1012,9 @@ void LCD_DrawFillRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 		y1++;
 		x1 = ref_x;
 	}
+
+#endif 
+
 }
 
 /**
@@ -1203,7 +1437,12 @@ void LCD_DrawRawImage(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t *p
 	int16_t y0 = y1;
 
 	LCD_SetColumnPageAddr(x1, x2, y1, y2);
-	LCD_WR_REG(CMD_WRITE_MEM_START);
+
+#if defined(ILI9325)
+	LCD_WR_Control(CTR_WRITE_DATA);
+#elif defined(SSD1963)
+	LCD_WR_Control(CMD_WRITE_MEM_START);
+#endif
 	
 	while(x1 <= x2)
 	{
@@ -1817,7 +2056,7 @@ void LCD_DrawLineB(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 ********************************************************************/
 void LCD_SetScrollArea(uint16_t top, uint16_t scroll, uint16_t bottom)
 {
-	LCD_WR_REG(CMD_SET_SCROLL_AREA);
+	LCD_WR_Control(CMD_SET_SCROLL_AREA);
 	LCD_WR_Data(top>>8);
 	LCD_WR_Data(top);
 	LCD_WR_Data(scroll>>8);
@@ -1850,7 +2089,7 @@ void LCD_SetScrollArea(uint16_t top, uint16_t scroll, uint16_t bottom)
 ********************************************************************/
 void LCD_SetScrollStart(uint16_t line)
 {
-	LCD_WR_REG(CMD_SET_SCROLL_START);
+	LCD_WR_Control(CMD_SET_SCROLL_START);
 	LCD_WR_Data(line>>8);
 	LCD_WR_Data(line);	
 }
@@ -1876,15 +2115,13 @@ void LCD_SetTearingCfg(unsigned char state, unsigned char mode)
 {
 	if(state  == 1)
 	{
-		LCD_WR_REG(CMD_SET_TEAR_ON);
-		LCD_WR_Data(mode&0x01);
+		LCD_WR_CtrData(CMD_SET_TEAR_ON, (mode & 0x01));
 	}
 	else
 	{
-		LCD_WR_REG(CMD_SET_TEAR_OFF);
+		LCD_WR_Control(CMD_SET_TEAR_OFF);
 	}
 }
-
 
 void LCD_SetFont(LCDFONT *pFont)
 {
@@ -1912,7 +2149,11 @@ unsigned int LCD_DrawChar(int16_t x, int16_t y, const uint8_t *ch)
 	width = ch[0];
 
 	/* pixel by pixel drawing */
+#if defined(ILI9325)
+	if(1)
+#elif defined(SSD1963)
 	if( LCD_COLOR_TRANSPARENT == col_bgnd )
+#endif
 	{
 		i = 1;
 		line = 0;
@@ -1949,10 +2190,21 @@ unsigned int LCD_DrawChar(int16_t x, int16_t y, const uint8_t *ch)
 				
 				if(chbyte & (0x80 >> k))
 				{
+				#if defined(ILI9325)
+					LCD_DrawPixel(x+column, y+line);
+				#elif defined(SSD1963)
 					LCD_SetColumnPageAddr(x+column, x+column, y+line, y+line);
-					LCD_WR_REG(CMD_WRITE_MEM_START);
-					LCD_WR_Data(col_fgnd);
+					LCD_WR_CtrData(CMD_WRITE_MEM_START, col_fgnd);
+				#endif
 				}
+			#if defined(ILI9325)
+				else
+				{
+					LCD_WR_CtrData(CTR_HORZ_ADDRESS, x+column);
+					LCD_WR_CtrData(CTR_VERT_ADDRESS, y+line);
+					LCD_WR_CtrData(CTR_WRITE_DATA, col_bgnd);
+				}
+			#endif
 
 				column++;
 			}
@@ -1960,14 +2212,14 @@ unsigned int LCD_DrawChar(int16_t x, int16_t y, const uint8_t *ch)
 			line++;
 		}
 	}
-	/* block drawing */
+	/* block drawing : note that ILI9325 does not support this mode */
 	else
 	{
 		/* set column page address */
 		LCD_SetColumnPageAddr(x, x + width - 1, y, y + sLCDFont->Height - 1);
 
 		/* start data transfer */
-		LCD_WR_REG(CMD_WRITE_MEM_START);
+		LCD_WR_Control(CMD_WRITE_MEM_START);
 
 		i = 1;
 		line = 0;
@@ -2068,7 +2320,7 @@ unsigned int LCD_DrawChar(int16_t x, int16_t y, const uint16_t *ch)
 		y + sLCDFont->Height - 1);
 
 	/* start data transfer */
-	LCD_WR_REG(CMD_WRITE_MEM_START);
+	LCD_WR_Control(CMD_WRITE_MEM_START);
 
 	i = 0;
 	while(i < sLCDFont->Height)
@@ -2180,7 +2432,11 @@ void LCD_WriteBMP(int16_t x, int16_t y, uint32_t BmpAddress)
 	/* TODO: check the size of bitmap here */
 	LCD_SetColumnPageAddr(x, x + width, y, y + height);
 
-	LCD_WR_REG(CMD_WRITE_MEM_START);
+#if defined(ILI9325)
+	LCD_WR_Control(CTR_WRITE_DATA);
+#elif defind(SSD1963)
+	LCD_WR_Control(CMD_WRITE_MEM_START);
+#endif
 
 	for(i = 0; i < height; i++)
 	{

@@ -75,7 +75,7 @@ CFLAGS += -D USE_STDPERIPH_DRIVER
 CFLAGS += -ffunction-sections 
 CFLAGS += -Wl,--gc-sections
 # hardware specific definitions
-#CFLAGS += -D LCD_KWH024Q04
+#CFLAGS += -D LCD_QD024CPS25
 #CFLAGS += -D LCD_HSD043I9W
 CFLAGS += -D LCD_AT043TN13
 #CFLAGS += -D LCD_AT070TN83

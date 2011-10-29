@@ -49,7 +49,7 @@ int main(void)
 
 	/* Initialize LCD support */
 	LCD_Init();
-	LCD_Clear(LCD_COLOR_BLACK);
+	LCD_Clear(LCD_COLOR_RED);
 	LCD_DisplayOn();
 	printf("LCD initialized.\n");
 	LCD_BacklightOn();

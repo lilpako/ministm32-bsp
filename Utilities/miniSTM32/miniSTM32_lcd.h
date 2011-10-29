@@ -17,15 +17,19 @@
 #endif 
 
 /* LCD type definition (default) */
-#if (!defined(LCD_KWH024Q04) && !defined(LCD_HSD043I9W) && !defined(LCD_AT043TN13) && !defined(LCD_AT070TN83))
-//	#define LCD_KWH024Q04			/* Formike 2.4 inch  */
+#if (!defined(LCD_QD024CPS25) && !defined(LCD_HSD043I9W) \
+	&& !defined(LCD_AT043TN13) && !defined(LCD_AT070TN83))
+//	#define LCD_QD024CPS25			/* unknown 2.4 inch  */
 //	#define LCD_HSD043I9W			/* HannStar 4.3 inch */
 	#define LCD_AT043TN13			/* Innolux 4.3 inch  */
 //	#define LCD_AT070TN83			/* Innolux 7.0 inch  */
 #endif
 
 /* LCD size definition */
-#if (defined(LCD_HSD043I9W) || defined(LCD_AT043TN13))
+#if defined(LCD_QD024CPS25)
+	#define LCD_WIDTH				(240)
+	#define LCD_HEIGHT				(320)
+#elif (defined(LCD_HSD043I9W) || defined(LCD_AT043TN13))
 	#define LCD_WIDTH				(480)
 	#define LCD_HEIGHT				(272)
 #elif defined(LCD_AT070TN83)
