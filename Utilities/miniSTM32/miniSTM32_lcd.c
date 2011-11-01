@@ -263,6 +263,21 @@ void LCD_SetColumnPageAddr(int16_t colS, int16_t colE, int16_t pagS, int16_t pag
 #if defined(ILI9325)
 
 	/* Note that this does not work if some conditions are not met */
+
+	#if defined(LANDSCAPE_MODE)
+
+	/* x and y are switched */
+	LCD_WR_CtrData(CTR_HORZ_START, pagS);
+	LCD_WR_CtrData(CTR_HORZ_END, pagE);
+	LCD_WR_CtrData(CTR_VERT_START, colS);
+	LCD_WR_CtrData(CTR_VERT_END, colE);
+
+	/* place the cursor at the starting point */
+	LCD_WR_CtrData(CTR_HORZ_ADDRESS, pagS);
+	LCD_WR_CtrData(CTR_VERT_ADDRESS, colS);
+
+	#else
+
 	LCD_WR_CtrData(CTR_HORZ_START, colS);
 	LCD_WR_CtrData(CTR_HORZ_END, colE);
 	LCD_WR_CtrData(CTR_VERT_START, pagS);
@@ -271,6 +286,8 @@ void LCD_SetColumnPageAddr(int16_t colS, int16_t colE, int16_t pagS, int16_t pag
 	/* place the cursor at the starting point */
 	LCD_WR_CtrData(CTR_HORZ_ADDRESS, colS);
 	LCD_WR_CtrData(CTR_VERT_ADDRESS, pagS);
+
+	#endif
 
 #elif defined(SSD1963)
 
@@ -375,7 +392,8 @@ void LCD_Init(void)
 	LCD_WR_CtrData(CTR_HORZ_END, 0x00EF);
 	LCD_WR_CtrData(CTR_VERT_START, 0x0000);
 	LCD_WR_CtrData(CTR_VERT_END, 0x013F);
-	LCD_WR_CtrData(CTR_DRV_OUTPUT2, 0xA700);
+	//LCD_WR_CtrData(CTR_DRV_OUTPUT2, 0xA700);
+	LCD_WR_CtrData(CTR_DRV_OUTPUT2, 0x2700);
 	LCD_WR_CtrData(CTR_BASE_IMAGE, 0x0001);
 	LCD_WR_CtrData(CTR_VERT_SCROLL, 0x0000);
 
@@ -818,12 +836,22 @@ void LCD_GetColors(LCDCOLOR *pfgcol, LCDCOLOR *pbgcol)
 void LCD_DrawPixel(int16_t x, int16_t y)
 {
 #if defined(ILI9325)
+
+	#if defined(LANDSCAPE_MODE)
+	LCD_WR_CtrData(CTR_HORZ_ADDRESS, y);
+	LCD_WR_CtrData(CTR_VERT_ADDRESS, x);
+	#else
 	LCD_WR_CtrData(CTR_HORZ_ADDRESS, x);
 	LCD_WR_CtrData(CTR_VERT_ADDRESS, y);
+	#endif
+
 	LCD_WR_CtrData(CTR_WRITE_DATA, col_fgnd);
+
 #elif defined(SSD1963)
+
 	LCD_SetColumnPageAddr(x, x, y, y);
 	LCD_WR_CtrData(CMD_WRITE_MEM_START, col_fgnd);
+
 #endif
 }
 
@@ -994,6 +1022,7 @@ void LCD_DrawFillRect(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 
 		ref_x++;
 	}
+
 
 #elif defined(SSD1963)
 
@@ -2200,8 +2229,13 @@ unsigned int LCD_DrawChar(int16_t x, int16_t y, const uint8_t *ch)
 			#if defined(ILI9325)
 				else
 				{
+					#if defined(LANDSCAPE_MODE)
+					LCD_WR_CtrData(CTR_HORZ_ADDRESS, y+line);
+					LCD_WR_CtrData(CTR_VERT_ADDRESS, x+column);
+					#else
 					LCD_WR_CtrData(CTR_HORZ_ADDRESS, x+column);
 					LCD_WR_CtrData(CTR_VERT_ADDRESS, y+line);
+					#endif
 					LCD_WR_CtrData(CTR_WRITE_DATA, col_bgnd);
 				}
 			#endif

@@ -27,8 +27,9 @@
 
 /* LCD size definition */
 #if defined(LCD_QD024CPS25)
-	#define LCD_WIDTH				(240)
-	#define LCD_HEIGHT				(320)
+	#define LCD_WIDTH				(320)
+	#define LCD_HEIGHT				(240)
+	#define LANDSCAPE_MODE
 #elif (defined(LCD_HSD043I9W) || defined(LCD_AT043TN13))
 	#define LCD_WIDTH				(480)
 	#define LCD_HEIGHT				(272)
