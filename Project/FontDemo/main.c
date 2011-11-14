@@ -12,7 +12,7 @@
 #include "lcdfonts.h"
 #include <stdio.h>
 
-#define START_X			20		/* text start point x */
+#define START_X			15		/* text start point x */
 #define START_Y			20		/* text start point y */
 #define	LINE_SEP		15		/* line separation */
 
@@ -21,6 +21,7 @@ enum{
 	MENU_FONT_TEST1 = 0,
 	MENU_FONT_TEST2,
 	MENU_FONT_TEST3,
+	MENU_FONT_TEST4,
 	MENU_END
 };
 
@@ -59,117 +60,175 @@ int main(void)
 			/* clear button interrupt flag */
 			uIRQFlag = 0;
 
-			/* Microsoft Sans Serif 11 pitch */
+			/* droid family fonts */
 
 			if( u16Menu == MENU_FONT_TEST1 ) {
 				uVal = START_Y;
 				LCD_Clear(LCD_COLOR_BLACK);
-			
-				LCD_SetFont(&MSSansSerif_11);
 				LCD_SetFGColor(LCD_COLOR_YELLOW);
 				LCD_SetBGColor(LCD_COLOR(40,40,80));
 
-				LCD_DisplayStringLine(START_X, uVal, "Microsoft Sans Serif 11 point");
-
-				LCD_SetFont(&MSSansSerif_13); 
-				uVal += MSSansSerif_11.Height + LINE_SEP;
-				LCD_DisplayStringLine(START_X, uVal, "Microsoft Sans Serif 13 point");
-
-				LCD_SetFont(&MSSansSerif_16);
-				uVal += MSSansSerif_13.Height + LINE_SEP;
-				LCD_DisplayStringLine(START_X, uVal, "Microsoft Sans Serif 16 point");
-
-				LCD_SetFont(&MSSansSerif_19);
-				uVal += MSSansSerif_16.Height + LINE_SEP;
-				LCD_DisplayStringLine(START_X, uVal, "Microsoft Sans Serif 19 point");
-
+			/* 2.4inch LCD has not enough space to draw long string */
 			#if defined(LCD_QD024CPS25)
-				/* 2.4inch LCD has not enough space to draw long string */
-				LCD_SetFont(&MSSansSerif_24);
-				uVal += MSSansSerif_19.Height + LINE_SEP;
-				LCD_DisplayStringLine(START_X, uVal, "Microsoft Sans Serif 24 pt");
 
-				LCD_SetFont(&MSSansSerif_32);
-				uVal += MSSansSerif_24.Height + LINE_SEP;
-				LCD_DisplayStringLine(START_X, uVal, "MS Sans Serif 32 pt");
+				LCD_SetFont(&DroidSans_18);
+				LCD_DisplayStringLine(START_X, uVal, "Droid Sans 18 point");
+
+				uVal += DroidSans_18.Height + LINE_SEP;
+				LCD_SetFont(&DroidSans_Bold_18); 
+				LCD_DisplayStringLine(START_X, uVal, "Droid Sans Bold 18 pt");
+
+				uVal += DroidSans_Bold_18.Height + LINE_SEP;
+				LCD_SetFont(&DroidSerif_18); 
+				LCD_DisplayStringLine(START_X, uVal, "Droid Serif 18 point");
+
+				uVal += DroidSerif_18.Height + LINE_SEP;
+				LCD_SetFont(&DroidSerif_Bold_18); 
+				LCD_DisplayStringLine(START_X, uVal, "Droid Serif Bold 18 pt");
+
+				uVal += DroidSerif_Bold_18.Height + LINE_SEP;
+				LCD_SetFont(&DroidSerif_Italic_18); 
+				LCD_DisplayStringLine(START_X, uVal, "Droid Serif Italic 18");
 
 			#else
 
-				LCD_SetFont(&MSSansSerif_24);
-				uVal += MSSansSerif_19.Height + LINE_SEP;
-				LCD_DisplayStringLine(START_X, uVal, "Microsoft Sans Serif 24 point");
+				LCD_SetFont(&DroidSans_18);
+				LCD_DisplayStringLine(START_X, uVal, "Droid Sans 18 point");
 
-				LCD_SetFont(&MSSansSerif_32);
-				uVal += MSSansSerif_24.Height + LINE_SEP;
-				LCD_DisplayStringLine(START_X, uVal, "Microsoft Sans Serif 32 point");
+				uVal += DroidSans_18.Height + LINE_SEP;
+				LCD_SetFont(&DroidSans_Bold_18); 
+				LCD_DisplayStringLine(START_X, uVal, "Droid Sans Bold 18 point");
+
+				uVal += DroidSans_Bold_18.Height + LINE_SEP;
+				LCD_SetFont(&DroidSerif_18); 
+				LCD_DisplayStringLine(START_X, uVal, "Droid Serif 18 point");
+
+				uVal += DroidSerif_18.Height + LINE_SEP;
+				LCD_SetFont(&DroidSerif_Bold_18); 
+				LCD_DisplayStringLine(START_X, uVal, "Droid Serif Bold 18 point");
+
+				uVal += DroidSerif_Bold_18.Height + LINE_SEP;
+				LCD_SetFont(&DroidSerif_Italic_18); 
+				LCD_DisplayStringLine(START_X, uVal, "Droid Serif Italic 18 point");
+
 			#endif
 			}
+
+			/* liberation family fonts, federant font */
+
 			else if( u16Menu == MENU_FONT_TEST2 ) {
 				uVal = START_Y;
 				LCD_Clear(LCD_COLOR_BLACK);
-			
-				LCD_SetFont(&MSSerif_11);
 				LCD_SetFGColor(LCD_COLOR_YELLOW);
 				LCD_SetBGColor(LCD_COLOR(40,40,80));
 
-				LCD_DisplayStringLine(START_X, uVal, "Microsoft Serif 11 point");
-
-				LCD_SetFont(&MSSerif_13); 
-				uVal += MSSerif_11.Height + LINE_SEP;
-				LCD_DisplayStringLine(START_X, uVal, "Microsoft Serif 13 point");
-
-				LCD_SetFont(&MSSerif_16);
-				uVal += MSSerif_13.Height + LINE_SEP;
-				LCD_DisplayStringLine(START_X, uVal, "Microsoft Serif 16 point");
-
-				LCD_SetFont(&MSSerif_19);
-				uVal += MSSerif_16.Height + LINE_SEP;
-				LCD_DisplayStringLine(START_X, uVal, "Microsoft Serif 19 point");
-
-				LCD_SetFont(&MSSerif_24);
-				uVal += MSSerif_19.Height + LINE_SEP;
-				LCD_DisplayStringLine(START_X, uVal, "Microsoft Serif 24 point");
-
+			/* 2.4inch LCD has not enough space to draw long string */
 			#if defined(LCD_QD024CPS25)
-				/* 2.4inch LCD has not enough space to draw long string */
-				LCD_SetFont(&MSSerif_32);
-				uVal += MSSerif_24.Height + LINE_SEP;
-				LCD_DisplayStringLine(START_X, uVal, "Microsoft Serif 32 pt");
+
+				LCD_SetFont(&LiberationSans_18);
+				LCD_DisplayStringLine(START_X, uVal, "Liberation Sans 18 point");
+
+				uVal += LiberationSans_18.Height + LINE_SEP;
+				LCD_SetFont(&LiberationSerif_18); 
+				LCD_DisplayStringLine(START_X, uVal, "Liberation Serif 18 point");
+
+				uVal += LiberationSerif_18.Height + LINE_SEP;
+				LCD_SetFont(&LiberationSerif_Italic_18); 
+				LCD_DisplayStringLine(START_X, uVal, "Liberation Serif Italic 18");
+
+				uVal += LiberationSerif_Italic_18.Height + LINE_SEP;
+				LCD_SetFont(&Federant_18); 
+				LCD_DisplayStringLine(START_X, uVal, "Federant 18 point");
+
 			#else
 
-				LCD_SetFont(&MSSerif_32);
-				uVal += MSSerif_24.Height + LINE_SEP;
-				LCD_DisplayStringLine(START_X, uVal, "Microsoft Serif 32 point");
+				LCD_SetFont(&LiberationSans_18);
+				LCD_DisplayStringLine(START_X, uVal, "Liberation Sans 18 point");
+
+				uVal += LiberationSans_18.Height + LINE_SEP;
+				LCD_SetFont(&LiberationSerif_18); 
+				LCD_DisplayStringLine(START_X, uVal, "Liberation Serif 18 point");
+
+				uVal += LiberationSerif_18.Height + LINE_SEP;
+				LCD_SetFont(&LiberationSerif_Italic_18); 
+				LCD_DisplayStringLine(START_X, uVal, "Liberation Serif Italic 18 point");
+
+				uVal += LiberationSerif_Italic_18.Height + LINE_SEP;
+				LCD_SetFont(&Federant_18); 
+				LCD_DisplayStringLine(START_X, uVal, "Federant 18 point");
+
 			#endif
 			}
+
+			/* Ubuntu family fonts */
+
 			else if( u16Menu == MENU_FONT_TEST3 ) {
 				uVal = START_Y;
 				LCD_Clear(LCD_COLOR_BLACK);
+				LCD_SetFGColor(LCD_COLOR_YELLOW);
+				LCD_SetBGColor(LCD_COLOR(40,40,80));
 			
-				LCD_SetFont(&Terminal_12);
+			/* 2.4inch LCD has not enough space to draw long string */
+			#if defined(LCD_QD024CPS25)
+
+				LCD_SetFont(&Ubuntu_18);
+				LCD_DisplayStringLine(START_X, uVal, "Ubuntu 18 point");
+
+				uVal += Ubuntu_18.Height + LINE_SEP;
+				LCD_SetFont(&Ubuntu_Bold_18); 
+				LCD_DisplayStringLine(START_X, uVal, "Ubuntu Bold 18 point");
+
+				uVal += Ubuntu_Bold_18.Height + LINE_SEP;
+				LCD_SetFont(&Ubuntu_Italic_18); 
+				LCD_DisplayStringLine(START_X, uVal, "Ubuntu Italic 18");
+
+			#else
+
+				LCD_SetFont(&Ubuntu_18);
+				LCD_DisplayStringLine(START_X, uVal, "Ubuntu 18 point");
+
+				uVal += Ubuntu_18.Height + LINE_SEP;
+				LCD_SetFont(&Ubuntu_Bold_18); 
+				LCD_DisplayStringLine(START_X, uVal, "Ubuntu Bold 18 point");
+
+				uVal += Ubuntu_Bold_18.Height + LINE_SEP;
+				LCD_SetFont(&Ubuntu_Italic_18); 
+				LCD_DisplayStringLine(START_X, uVal, "Ubuntu Italic 18 point");
+
+			#endif
+			}
+
+			/* various size of droid sans */
+
+			else if( u16Menu == MENU_FONT_TEST4 ) {
+				uVal = START_Y;
+				LCD_Clear(LCD_COLOR_BLACK);
 				LCD_SetFGColor(LCD_COLOR_YELLOW);
 				LCD_SetBGColor(LCD_COLOR(40,40,80));
 
-				LCD_DisplayStringLine(START_X, uVal, "Microsoft Terminal 12 point");
+				LCD_SetFont(&DroidSans_10);
+				LCD_DisplayStringLine(START_X, uVal, "DroidSans 10 point");
 
-				LCD_SetFont(&Terminal_16); 
-				uVal += Terminal_12.Height + LINE_SEP;
-				LCD_DisplayStringLine(START_X, uVal, "Microsoft Terminal 16 point");
+				uVal += DroidSans_10.Height + LINE_SEP;
+				LCD_SetFont(&DroidSans_12); 
+				LCD_DisplayStringLine(START_X, uVal, "DroidSans 12 point");
 
-				LCD_SetFont(&Terminal_20);
-				uVal += Terminal_16.Height + LINE_SEP;
-				LCD_DisplayStringLine(START_X, uVal, "Microsoft Terminal 20 point");
+				uVal += DroidSans_12.Height + LINE_SEP;
+				LCD_SetFont(&DroidSans_14); 
+				LCD_DisplayStringLine(START_X, uVal, "DroidSans 14 point");
 
-			#if defined(LCD_QD024CPS25)
-				/* 2.4inch LCD has not enough space to draw long string */
-				LCD_SetFont(&Terminal_23);
-				uVal += Terminal_20.Height + LINE_SEP;
-				LCD_DisplayStringLine(START_X, uVal, "Microsoft Terminal 23 pt");
-			#else
-				LCD_SetFont(&Terminal_23);
-				uVal += Terminal_20.Height + LINE_SEP;
-				LCD_DisplayStringLine(START_X, uVal, "Microsoft Terminal 23 point");
-			#endif
+				uVal += DroidSans_14.Height + LINE_SEP;
+				LCD_SetFont(&DroidSans_16); 
+				LCD_DisplayStringLine(START_X, uVal, "DroidSans 16 point");
+
+				uVal += DroidSans_16.Height + LINE_SEP;
+				LCD_SetFont(&DroidSans_18); 
+				LCD_DisplayStringLine(START_X, uVal, "DroidSans 18 point");
+
+				uVal += DroidSans_18.Height + LINE_SEP;
+				LCD_SetFont(&DroidSans_20); 
+				LCD_DisplayStringLine(START_X, uVal, "DroidSans 20 point");
+
 			}
 
 			/* at the end of menu, restart all over */

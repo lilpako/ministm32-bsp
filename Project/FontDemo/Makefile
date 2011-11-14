@@ -82,9 +82,9 @@ CFLAGS += -ffunction-sections
 CFLAGS += -Wl,--gc-sections
 
 # hardware specific definitions
-CFLAGS += -D LCD_QD024CPS25
+#CFLAGS += -D LCD_QD024CPS25
 #CFLAGS += -D LCD_HSD043I9W
-#CFLAGS += -D LCD_AT043TN13
+CFLAGS += -D LCD_AT043TN13
 #CFLAGS += -D LCD_AT070TN83
 
 # enable LCD test pattern drawing functions
@@ -179,22 +179,78 @@ C_SRC += ../../Utilities/Support/comm.c
 #C_SRC += ../../Utilities/FatFs/ff.c
 
 # Support functions : Fonts
-C_SRC += ../../Utilities/Fonts/MSSansSerif_11.c
-C_SRC += ../../Utilities/Fonts/MSSansSerif_13.c
-C_SRC += ../../Utilities/Fonts/MSSansSerif_16.c
-C_SRC += ../../Utilities/Fonts/MSSansSerif_19.c
-C_SRC += ../../Utilities/Fonts/MSSansSerif_24.c
-C_SRC += ../../Utilities/Fonts/MSSansSerif_32.c
-C_SRC += ../../Utilities/Fonts/MSSerif_11.c
-C_SRC += ../../Utilities/Fonts/MSSerif_13.c
-C_SRC += ../../Utilities/Fonts/MSSerif_16.c
-C_SRC += ../../Utilities/Fonts/MSSerif_19.c
-C_SRC += ../../Utilities/Fonts/MSSerif_24.c
-C_SRC += ../../Utilities/Fonts/MSSerif_32.c
-C_SRC += ../../Utilities/Fonts/Terminal_12.c
-C_SRC += ../../Utilities/Fonts/Terminal_16.c
-C_SRC += ../../Utilities/Fonts/Terminal_20.c
-C_SRC += ../../Utilities/Fonts/Terminal_23.c
+C_SRC += ../../Utilities/Fonts/DroidSans_10.c
+C_SRC += ../../Utilities/Fonts/DroidSans_12.c
+C_SRC += ../../Utilities/Fonts/DroidSans_14.c
+C_SRC += ../../Utilities/Fonts/DroidSans_16.c
+C_SRC += ../../Utilities/Fonts/DroidSans_18.c
+C_SRC += ../../Utilities/Fonts/DroidSans_20.c
+#C_SRC += ../../Utilities/Fonts/DroidSans_Bold_10.c
+#C_SRC += ../../Utilities/Fonts/DroidSans_Bold_12.c
+#C_SRC += ../../Utilities/Fonts/DroidSans_Bold_14.c
+#C_SRC += ../../Utilities/Fonts/DroidSans_Bold_16.c
+C_SRC += ../../Utilities/Fonts/DroidSans_Bold_18.c
+#C_SRC += ../../Utilities/Fonts/DroidSans_Bold_20.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_10.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_12.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_14.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_16.c
+C_SRC += ../../Utilities/Fonts/DroidSerif_18.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_20.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_Bold_10.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_Bold_12.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_Bold_14.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_Bold_16.c
+C_SRC += ../../Utilities/Fonts/DroidSerif_Bold_18.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_Bold_20.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_Italic_10.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_Italic_12.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_Italic_14.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_Italic_16.c
+C_SRC += ../../Utilities/Fonts/DroidSerif_Italic_18.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_Italic_20.c
+#C_SRC += ../../Utilities/Fonts/Federant_10.c
+#C_SRC += ../../Utilities/Fonts/Federant_12.c
+#C_SRC += ../../Utilities/Fonts/Federant_14.c
+#C_SRC += ../../Utilities/Fonts/Federant_16.c
+C_SRC += ../../Utilities/Fonts/Federant_18.c
+#C_SRC += ../../Utilities/Fonts/Federant_20.c
+#C_SRC += ../../Utilities/Fonts/LiberationSans_10.c
+#C_SRC += ../../Utilities/Fonts/LiberationSans_12.c
+#C_SRC += ../../Utilities/Fonts/LiberationSans_14.c
+#C_SRC += ../../Utilities/Fonts/LiberationSans_16.c
+C_SRC += ../../Utilities/Fonts/LiberationSans_18.c
+#C_SRC += ../../Utilities/Fonts/LiberationSans_20.c
+#C_SRC += ../../Utilities/Fonts/LiberationSerif_10.c
+#C_SRC += ../../Utilities/Fonts/LiberationSerif_12.c
+#C_SRC += ../../Utilities/Fonts/LiberationSerif_14.c
+#C_SRC += ../../Utilities/Fonts/LiberationSerif_16.c
+C_SRC += ../../Utilities/Fonts/LiberationSerif_18.c
+#C_SRC += ../../Utilities/Fonts/LiberationSerif_20.c
+#C_SRC += ../../Utilities/Fonts/LiberationSerif_Italic_10.c
+#C_SRC += ../../Utilities/Fonts/LiberationSerif_Italic_12.c
+#C_SRC += ../../Utilities/Fonts/LiberationSerif_Italic_14.c
+#C_SRC += ../../Utilities/Fonts/LiberationSerif_Italic_16.c
+C_SRC += ../../Utilities/Fonts/LiberationSerif_Italic_18.c
+#C_SRC += ../../Utilities/Fonts/LiberationSerif_Italic_20.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_10.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_12.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_14.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_16.c
+C_SRC += ../../Utilities/Fonts/Ubuntu_18.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_20.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_Bold_10.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_Bold_12.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_Bold_14.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_Bold_16.c
+C_SRC += ../../Utilities/Fonts/Ubuntu_Bold_18.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_Bold_20.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_Italic_10.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_Italic_12.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_Italic_14.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_Italic_16.c
+C_SRC += ../../Utilities/Fonts/Ubuntu_Italic_18.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_Italic_20.c
 
 # Startup 
 S_SRC = ../../Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x/startup/gcc_ride7/startup_stm32f10x_hd.s
@@ -260,6 +316,7 @@ $(EXE_DIR)/flash.bin: $(EXE_DIR)/$(PROJECTNAME).out
 clean: 
 	$(RM) $(OBJ_DIR) $(LST_DIR) $(EXE_DIR)
 	$(RM) cscope.out
+	$(RM) Session.vim
 
 # Create cross-reference file for cscope
 xref:

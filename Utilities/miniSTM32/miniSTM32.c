@@ -174,8 +174,7 @@ __io_putchar(int ch)
 	USART_SendData(MAIN_COM_USART, (uint8_t) ch);
 
 	/* Loop until the end of transmission */
-	while (USART_GetFlagStatus(MAIN_COM_USART, USART_FLAG_TC) == RESET)
-	{}
+	while (USART_GetFlagStatus(MAIN_COM_USART, USART_FLAG_TC) == RESET) {}
 
 	return ch;
 }
