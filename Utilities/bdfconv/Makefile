@@ -1,6 +1,7 @@
 #
 # Usage 
 #
+#	0. be sure to install otf2bdf utility
 #	1. create the executable: make bdfconv
 #	2. put otf fonts in the OTF directory
 #	3. generate font data: make POINT=14 data

@@ -8,19 +8,13 @@
 # Definitions                                                      #
 ####################################################################
 
-PROJECTNAME = LCDDemo
+PROJECTNAME = FontDemo
 OBJ_DIR = build
 EXE_DIR = exe
 LST_DIR = lst
 SCRIPTDIR = ../../Utilities/Script
 #JTAGDEV = flyswatter
 JTAGDEV = luminary-icdi
-#TOOLCHAIN = cslite
-TOOLCHAIN = sat
-LCDTYPE =  LCD_QD024CPS25
-#LCDTYPE =  LCD_HSD043I9W
-#LCDTYPE =  LCD_AT043TN13
-#LCDTYPE =  LCD_AT070TN83
 
 ####################################################################
 # Tool Chain Definitions                                           #
@@ -47,7 +41,6 @@ RM = $(TOOLDIR)\bin\cs-rm -rf
 # Linux
 else
 
-ifeq ($(TOOLCHAIN), cslite)
 TOOLDIR = ${HOME}/CodeSourcery/arm-2011.03
 GCCVERSION = 4.5.2
 CC = $(TOOLDIR)/bin/arm-none-eabi-gcc
@@ -56,18 +49,6 @@ AR = $(TOOLDIR)/bin/arm-none-eabi-ar
 GDB = $(TOOLDIR)/bin/arm-none-eabi-gdb
 OBJCOPY = $(TOOLDIR)/bin/arm-none-eabi-objcopy
 RM = rm -rf
-endif
-
-ifeq ($(TOOLCHAIN), sat)
-TOOLDIR = ${HOME}/sat
-GCCVERSION = 4.5.2
-CC = $(TOOLDIR)/bin/arm-none-eabi-gcc
-LD = $(TOOLDIR)/bin/arm-none-eabi-ld
-AR = $(TOOLDIR)/bin/arm-none-eabi-ar
-GDB = $(TOOLDIR)/bin/arm-none-eabi-gdb
-OBJCOPY = $(TOOLDIR)/bin/arm-none-eabi-objcopy
-RM = rm -rf
-endif
 
 endif
 
@@ -77,31 +58,43 @@ endif
 
 # C Dialect
 CFLAGS += -fsigned-char 
+
 # ARM specific
 CFLAGS += -mthumb 
 CFLAGS += -mcpu=cortex-m3
 CFLAGS += -mlittle-endian
+
 # Gdb support
 CFLAGS += -g 
+
 # Optimization
 CFLAGS += -Os 
+
 # preprocessor
 CFLAGS += -MD 
+
 # stm32f10x.h specific
 CFLAGS += -D STM32F10X_HD
 CFLAGS += -D USE_STDPERIPH_DRIVER 
+
 # garbage collection: this doesn't seem to work with CSLite
 CFLAGS += -ffunction-sections 
 CFLAGS += -Wl,--gc-sections
+
 # hardware specific definitions
-CFLAGS += -D $(LCDTYPE)
-# enable test pattern drawing function
-CFLAGS += -D LCD_TEST
+#CFLAGS += -D LCD_QD024CPS25
+#CFLAGS += -D LCD_HSD043I9W
+CFLAGS += -D LCD_AT043TN13
+#CFLAGS += -D LCD_AT070TN83
+
+# enable LCD test pattern drawing functions
+#CFLAGS += -D LCD_TEST
 
 # ARM specific
 ASMFLAGS += -mthumb 
 ASMFLAGS += -mcpu=cortex-m3
 ASMFLAGS += -mlittle-endian
+
 # Passing options to assembler
 ASMFLAGS += -Wa,-EL 
 
@@ -112,25 +105,11 @@ LDFLAGS += -mlittle-endian
 # Passing options to linker
 LDFLAGS += -Xlinker 
 LDFLAGS += -Map=$(LST_DIR)/$(PROJECTNAME).map 
-
-ifeq ($(TOOLCHAIN), cslite)
-LDFLAGS += -T$(SCRIPTDIR)/Linker/miniSTM32.ld
+LDFLAGS += -T$(SCRIPTDIR)/Linker/cs6800.ld
 LDFLAGS += -L$(TOOLDIR)/arm-none-eabi/lib/thumb2
 LDFLAGS += -L$(TOOLDIR)/lib/gcc/arm-none-eabi/$(GCCVERSION)/thumb2
-endif
 
-ifeq ($(TOOLCHAIN), sat)
-LDFLAGS += -T$(SCRIPTDIR)/Linker/sat.ld
-#LDFLAGS += -T$(SCRIPTDIR)/Linker/miniSTM32.ld
-#LDFLAGS += -T$(SCRIPTDIR)/Linker/gcc.ld
-#LDFLAGS += -T$(SCRIPTDIR)/Linker/stm32_flash.ld
-LDFLAGS += -L$(TOOLDIR)/lib/gcc/arm-none-eabi/$(GCCVERSION)/thumb2
-endif
-
-LIBS += -lc 
-ifeq ($(TOOLCHAIN), cslite)
-LIBS += -lcs3 -lcs3unhosted
-endif
+LIBS += -lc -lcs3 -lcs3unhosted
 
 INCLUDEPATHS += -I . 
 INCLUDEPATHS += -I ../../Libraries/CMSIS/CM3/CoreSupport
@@ -199,23 +178,79 @@ C_SRC += ../../Utilities/Support/comm.c
 # Support functions : FAT
 #C_SRC += ../../Utilities/FatFs/ff.c
 
-# Support functions : Font
-#C_SRC += ../../Utilities/Fonts/MSSansSerif_11.c
-#C_SRC += ../../Utilities/Fonts/MSSansSerif_13.c
-#C_SRC += ../../Utilities/Fonts/MSSansSerif_16.c
-#C_SRC += ../../Utilities/Fonts/MSSansSerif_19.c
-#C_SRC += ../../Utilities/Fonts/MSSansSerif_24.c
-#C_SRC += ../../Utilities/Fonts/MSSansSerif_32.c
-#C_SRC += ../../Utilities/Fonts/MSSerif_11.c
-#C_SRC += ../../Utilities/Fonts/MSSerif_13.c
-#C_SRC += ../../Utilities/Fonts/MSSerif_16.c
-#C_SRC += ../../Utilities/Fonts/MSSerif_19.c
-#C_SRC += ../../Utilities/Fonts/MSSerif_24.c
-#C_SRC += ../../Utilities/Fonts/MSSerif_32.c
-#C_SRC += ../../Utilities/Fonts/Terminal_12.c
-#C_SRC += ../../Utilities/Fonts/Terminal_16.c
-#C_SRC += ../../Utilities/Fonts/Terminal_20.c
-#C_SRC += ../../Utilities/Fonts/Terminal_23.c
+# Support functions : Fonts
+C_SRC += ../../Utilities/Fonts/DroidSans_10.c
+C_SRC += ../../Utilities/Fonts/DroidSans_12.c
+C_SRC += ../../Utilities/Fonts/DroidSans_14.c
+C_SRC += ../../Utilities/Fonts/DroidSans_16.c
+C_SRC += ../../Utilities/Fonts/DroidSans_18.c
+C_SRC += ../../Utilities/Fonts/DroidSans_20.c
+#C_SRC += ../../Utilities/Fonts/DroidSans_Bold_10.c
+#C_SRC += ../../Utilities/Fonts/DroidSans_Bold_12.c
+#C_SRC += ../../Utilities/Fonts/DroidSans_Bold_14.c
+#C_SRC += ../../Utilities/Fonts/DroidSans_Bold_16.c
+C_SRC += ../../Utilities/Fonts/DroidSans_Bold_18.c
+#C_SRC += ../../Utilities/Fonts/DroidSans_Bold_20.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_10.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_12.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_14.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_16.c
+C_SRC += ../../Utilities/Fonts/DroidSerif_18.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_20.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_Bold_10.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_Bold_12.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_Bold_14.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_Bold_16.c
+C_SRC += ../../Utilities/Fonts/DroidSerif_Bold_18.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_Bold_20.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_Italic_10.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_Italic_12.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_Italic_14.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_Italic_16.c
+C_SRC += ../../Utilities/Fonts/DroidSerif_Italic_18.c
+#C_SRC += ../../Utilities/Fonts/DroidSerif_Italic_20.c
+#C_SRC += ../../Utilities/Fonts/Federant_10.c
+#C_SRC += ../../Utilities/Fonts/Federant_12.c
+#C_SRC += ../../Utilities/Fonts/Federant_14.c
+#C_SRC += ../../Utilities/Fonts/Federant_16.c
+C_SRC += ../../Utilities/Fonts/Federant_18.c
+#C_SRC += ../../Utilities/Fonts/Federant_20.c
+#C_SRC += ../../Utilities/Fonts/LiberationSans_10.c
+#C_SRC += ../../Utilities/Fonts/LiberationSans_12.c
+#C_SRC += ../../Utilities/Fonts/LiberationSans_14.c
+#C_SRC += ../../Utilities/Fonts/LiberationSans_16.c
+C_SRC += ../../Utilities/Fonts/LiberationSans_18.c
+#C_SRC += ../../Utilities/Fonts/LiberationSans_20.c
+#C_SRC += ../../Utilities/Fonts/LiberationSerif_10.c
+#C_SRC += ../../Utilities/Fonts/LiberationSerif_12.c
+#C_SRC += ../../Utilities/Fonts/LiberationSerif_14.c
+#C_SRC += ../../Utilities/Fonts/LiberationSerif_16.c
+C_SRC += ../../Utilities/Fonts/LiberationSerif_18.c
+#C_SRC += ../../Utilities/Fonts/LiberationSerif_20.c
+#C_SRC += ../../Utilities/Fonts/LiberationSerif_Italic_10.c
+#C_SRC += ../../Utilities/Fonts/LiberationSerif_Italic_12.c
+#C_SRC += ../../Utilities/Fonts/LiberationSerif_Italic_14.c
+#C_SRC += ../../Utilities/Fonts/LiberationSerif_Italic_16.c
+C_SRC += ../../Utilities/Fonts/LiberationSerif_Italic_18.c
+#C_SRC += ../../Utilities/Fonts/LiberationSerif_Italic_20.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_10.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_12.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_14.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_16.c
+C_SRC += ../../Utilities/Fonts/Ubuntu_18.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_20.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_Bold_10.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_Bold_12.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_Bold_14.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_Bold_16.c
+C_SRC += ../../Utilities/Fonts/Ubuntu_Bold_18.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_Bold_20.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_Italic_10.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_Italic_12.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_Italic_14.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_Italic_16.c
+C_SRC += ../../Utilities/Fonts/Ubuntu_Italic_18.c
+#C_SRC += ../../Utilities/Fonts/Ubuntu_Italic_20.c
 
 # Startup 
 S_SRC = ../../Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x/startup/gcc_ride7/startup_stm32f10x_hd.s
@@ -281,6 +316,7 @@ $(EXE_DIR)/flash.bin: $(EXE_DIR)/$(PROJECTNAME).out
 clean: 
 	$(RM) $(OBJ_DIR) $(LST_DIR) $(EXE_DIR)
 	$(RM) cscope.out
+	$(RM) Session.vim
 
 # Create cross-reference file for cscope
 xref:

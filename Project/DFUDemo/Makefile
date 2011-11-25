@@ -8,19 +8,13 @@
 # Definitions                                                      #
 ####################################################################
 
-PROJECTNAME = LCDDemo
+PROJECTNAME = DFUDemo
 OBJ_DIR = build
 EXE_DIR = exe
 LST_DIR = lst
 SCRIPTDIR = ../../Utilities/Script
 #JTAGDEV = flyswatter
 JTAGDEV = luminary-icdi
-#TOOLCHAIN = cslite
-TOOLCHAIN = sat
-LCDTYPE =  LCD_QD024CPS25
-#LCDTYPE =  LCD_HSD043I9W
-#LCDTYPE =  LCD_AT043TN13
-#LCDTYPE =  LCD_AT070TN83
 
 ####################################################################
 # Tool Chain Definitions                                           #
@@ -47,7 +41,6 @@ RM = $(TOOLDIR)\bin\cs-rm -rf
 # Linux
 else
 
-ifeq ($(TOOLCHAIN), cslite)
 TOOLDIR = ${HOME}/CodeSourcery/arm-2011.03
 GCCVERSION = 4.5.2
 CC = $(TOOLDIR)/bin/arm-none-eabi-gcc
@@ -56,18 +49,6 @@ AR = $(TOOLDIR)/bin/arm-none-eabi-ar
 GDB = $(TOOLDIR)/bin/arm-none-eabi-gdb
 OBJCOPY = $(TOOLDIR)/bin/arm-none-eabi-objcopy
 RM = rm -rf
-endif
-
-ifeq ($(TOOLCHAIN), sat)
-TOOLDIR = ${HOME}/sat
-GCCVERSION = 4.5.2
-CC = $(TOOLDIR)/bin/arm-none-eabi-gcc
-LD = $(TOOLDIR)/bin/arm-none-eabi-ld
-AR = $(TOOLDIR)/bin/arm-none-eabi-ar
-GDB = $(TOOLDIR)/bin/arm-none-eabi-gdb
-OBJCOPY = $(TOOLDIR)/bin/arm-none-eabi-objcopy
-RM = rm -rf
-endif
 
 endif
 
@@ -84,7 +65,7 @@ CFLAGS += -mlittle-endian
 # Gdb support
 CFLAGS += -g 
 # Optimization
-CFLAGS += -Os 
+CFLAGS += -Os
 # preprocessor
 CFLAGS += -MD 
 # stm32f10x.h specific
@@ -93,10 +74,8 @@ CFLAGS += -D USE_STDPERIPH_DRIVER
 # garbage collection: this doesn't seem to work with CSLite
 CFLAGS += -ffunction-sections 
 CFLAGS += -Wl,--gc-sections
-# hardware specific definitions
-CFLAGS += -D $(LCDTYPE)
-# enable test pattern drawing function
-CFLAGS += -D LCD_TEST
+# platform specific
+CFLAGS += -D USE_STRIVE_MINI
 
 # ARM specific
 ASMFLAGS += -mthumb 
@@ -112,34 +91,18 @@ LDFLAGS += -mlittle-endian
 # Passing options to linker
 LDFLAGS += -Xlinker 
 LDFLAGS += -Map=$(LST_DIR)/$(PROJECTNAME).map 
-
-ifeq ($(TOOLCHAIN), cslite)
 LDFLAGS += -T$(SCRIPTDIR)/Linker/miniSTM32.ld
 LDFLAGS += -L$(TOOLDIR)/arm-none-eabi/lib/thumb2
 LDFLAGS += -L$(TOOLDIR)/lib/gcc/arm-none-eabi/$(GCCVERSION)/thumb2
-endif
-
-ifeq ($(TOOLCHAIN), sat)
-LDFLAGS += -T$(SCRIPTDIR)/Linker/sat.ld
-#LDFLAGS += -T$(SCRIPTDIR)/Linker/miniSTM32.ld
-#LDFLAGS += -T$(SCRIPTDIR)/Linker/gcc.ld
-#LDFLAGS += -T$(SCRIPTDIR)/Linker/stm32_flash.ld
-LDFLAGS += -L$(TOOLDIR)/lib/gcc/arm-none-eabi/$(GCCVERSION)/thumb2
-endif
 
 LIBS += -lc 
-ifeq ($(TOOLCHAIN), cslite)
-LIBS += -lcs3 -lcs3unhosted
-endif
+LIBS += -lcs3 -lcs3unhosted 
 
 INCLUDEPATHS += -I . 
 INCLUDEPATHS += -I ../../Libraries/CMSIS/CM3/CoreSupport
 INCLUDEPATHS += -I ../../Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x
 INCLUDEPATHS += -I ../../Libraries/STM32F10x_StdPeriph_Driver/inc
-INCLUDEPATHS += -I ../../Utilities/miniSTM32
-INCLUDEPATHS += -I ../../Utilities/FatFs
-INCLUDEPATHS += -I ../../Utilities/Fonts
-INCLUDEPATHS += -I ../../Utilities/Support
+INCLUDEPATHS += -I ../../Libraries/STM32_USB-FS-Device_Driver/inc
 
 # CSCOPE search path
 XREFSPATHS = -s .
@@ -153,6 +116,13 @@ XREFSPATHS += -s ../../Utilities
 C_SRC = ./main.c
 C_SRC += ./stm32f10x_it.c
 C_SRC += ./system_stm32f10x.c
+C_SRC += ./dfu_mal.c
+C_SRC += ./flash_if.c
+C_SRC += ./hw_config.c
+C_SRC += ./usb_desc.c
+C_SRC += ./usb_istr.c
+C_SRC += ./usb_prop.c
+C_SRC += ./usb_pwr.c
 
 # CMSIS support
 C_SRC += ../../Libraries/CMSIS/CM3/CoreSupport/core_cm3.c
@@ -166,56 +136,29 @@ C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/misc.c
 #C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_crc.c
 #C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_dac.c
 #C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_dbgmcu.c
-C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_dma.c
-C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_exti.c
-#C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_flash.c
-C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_fsmc.c
+#C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_dma.c
+#C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_exti.c
+C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_flash.c
+#C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_fsmc.c
 C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_gpio.c
-C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_i2c.c
+#C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_i2c.c
 #C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c
 #C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_pwr.c
 C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_rcc.c
-C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_rtc.c
-C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_sdio.c
-C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_spi.c
-C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_tim.c
-C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_usart.c
+#C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_rtc.c
+#C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_sdio.c
+#C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_spi.c
+#C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_tim.c
+#C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_usart.c
 #C_SRC += ../../Libraries/STM32F10x_StdPeriph_Driver/src/stm32f10x_wwdg.c
 
-# Board support 
-C_SRC += ../../Utilities/miniSTM32/miniSTM32.c
-#C_SRC += ../../Utilities/miniSTM32/miniSTM32_sdc.c
-#C_SRC += ../../Utilities/miniSTM32/miniSTM32_diskio.c
-#C_SRC += ../../Utilities/miniSTM32/miniSTM32_flash.c
-C_SRC += ../../Utilities/miniSTM32/miniSTM32_lcd.c
-#C_SRC += ../../Utilities/miniSTM32/miniSTM32_tsc.c
-#C_SRC += ../../Utilities/miniSTM32/miniSTM32_sio.c
-
-# Support functions : NewLibrary
-C_SRC += ../../Utilities/Support/syscalls.c
-C_SRC += ../../Utilities/Support/term_io.c
-C_SRC += ../../Utilities/Support/comm.c
-
-# Support functions : FAT
-#C_SRC += ../../Utilities/FatFs/ff.c
-
-# Support functions : Font
-#C_SRC += ../../Utilities/Fonts/MSSansSerif_11.c
-#C_SRC += ../../Utilities/Fonts/MSSansSerif_13.c
-#C_SRC += ../../Utilities/Fonts/MSSansSerif_16.c
-#C_SRC += ../../Utilities/Fonts/MSSansSerif_19.c
-#C_SRC += ../../Utilities/Fonts/MSSansSerif_24.c
-#C_SRC += ../../Utilities/Fonts/MSSansSerif_32.c
-#C_SRC += ../../Utilities/Fonts/MSSerif_11.c
-#C_SRC += ../../Utilities/Fonts/MSSerif_13.c
-#C_SRC += ../../Utilities/Fonts/MSSerif_16.c
-#C_SRC += ../../Utilities/Fonts/MSSerif_19.c
-#C_SRC += ../../Utilities/Fonts/MSSerif_24.c
-#C_SRC += ../../Utilities/Fonts/MSSerif_32.c
-#C_SRC += ../../Utilities/Fonts/Terminal_12.c
-#C_SRC += ../../Utilities/Fonts/Terminal_16.c
-#C_SRC += ../../Utilities/Fonts/Terminal_20.c
-#C_SRC += ../../Utilities/Fonts/Terminal_23.c
+# USB support
+C_SRC += ../../Libraries/STM32_USB-FS-Device_Driver/src/usb_core.c
+C_SRC += ../../Libraries/STM32_USB-FS-Device_Driver/src/usb_init.c
+C_SRC += ../../Libraries/STM32_USB-FS-Device_Driver/src/usb_int.c
+C_SRC += ../../Libraries/STM32_USB-FS-Device_Driver/src/usb_mem.c
+C_SRC += ../../Libraries/STM32_USB-FS-Device_Driver/src/usb_regs.c
+C_SRC += ../../Libraries/STM32_USB-FS-Device_Driver/src/usb_sil.c
 
 # Startup 
 S_SRC = ../../Libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x/startup/gcc_ride7/startup_stm32f10x_hd.s
